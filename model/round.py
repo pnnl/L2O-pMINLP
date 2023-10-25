@@ -5,12 +5,18 @@ from model.func import diffFloor, diffBinarize
 from model.layer import layerFC
 
 class roundModel(nn.Module):
-    def __init__(self, input_dim, hidden_dims, output_dim, int_ind, continuous_update=False, tolerance=1e-3):
+    def __init__(self, param_key, var_key, output_keys, int_ind, input_dim, hidden_dims, output_dim,
+                 continuous_update=False, tolerance=1e-3, name=None):
         super(roundModel, self).__init__()
+        # data keys
+        self.param_key, self.var_key, self.output_keys = param_key, var_key, output_keys
+        self.input_keys = [self.param_key, self.var_key]
         # index of integer variables
         self.int_ind = int_ind
         # update continuous or not
         self.continuous_update = continuous_update
+        # name
+        self.name = name
         # floor
         self.floor = diffFloor()
         # sequence
@@ -23,7 +29,9 @@ class roundModel(nn.Module):
         self.bin = diffBinarize()
         self.tolerance = tolerance
 
-    def forward(self, p, x):
+    def forward(self, data):
+        # get vars & params
+        p, x = data[self.param_key], data[self.var_key]
         # concatenate all features: params + sol
         f = torch.cat([p, x], dim=-1)
         # forward
@@ -38,7 +46,9 @@ class roundModel(nn.Module):
         x_rnd = x + self.continuous_update * h
         # learnable round down: floor + 0 / round up: floor + 1
         x_rnd[:,self.int_ind] = x_flr + bnr
-        return x_rnd
+        # add to data
+        data[self.output_keys] = x_rnd
+        return data
 
     def _intMask(self, bnr, x):
         # difference
@@ -106,15 +116,17 @@ if __name__ == "__main__":
     sol_map = nm.system.Node(func, ["p"], ["x_bar"], name="smap")
 
     # round x
-    round_func = roundModel(input_dim=num_vars*2, hidden_dims=[80]*2, output_dim=num_vars, int_ind=model.intInd)
-    l_round = nm.system.Node(round_func, ["p", "x_bar"], ["x_rnd"], name="round")
+    round_func = roundModel(param_key="p", var_key="x_bar", output_keys="x_rnd",
+                            int_ind=model.intInd, input_dim=num_vars*2, hidden_dims=[80]*2, output_dim=num_vars,
+                            name="round")
 
     # trainable components
-    components = [sol_map, l_round]
+    components = [sol_map, round_func]
 
     # penalty loss
 
-    loss = (nm.loss.PenaltyLoss(obj_bar, constrs_bar) + 0.5 * nm.loss.PenaltyLoss(obj_rnd, constrs_rnd))
+    #loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar) + 0.5 * nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
+    loss = nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
     problem = nm.problem.Problem(components, loss)
 
     # training

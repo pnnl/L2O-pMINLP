@@ -53,8 +53,9 @@ if __name__ == "__main__":
     sol_map = nm.system.Node(func, ["p"], ["x_bar"], name="smap")
 
     # round x
-    round_func = roundModel(input_dim=num_vars*2, hidden_dims=[80]*2, output_dim=num_vars, int_ind=model.intInd)
-    l_round = nm.system.Node(round_func, ["p", "x_bar"], ["x_rnd"], name="round")
+    round_func = roundModel(param_key="p", var_key="x_bar", output_keys="x_rnd",
+                            int_ind=model.intInd, input_dim=num_vars*2, hidden_dims=[80]*2, output_dim=num_vars,
+                            name="round")
 
     # proj x to feasible region
     num_steps = 5
@@ -70,7 +71,7 @@ if __name__ == "__main__":
 
 
     # trainable components
-    components = [sol_map, proj, l_round]
+    components = [sol_map, proj, round_func]
 
     # penalty loss
     loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar)
@@ -79,7 +80,7 @@ if __name__ == "__main__":
 
     # training
     lr = 0.001    # step size for gradient descent
-    epochs = 4#00  # number of training epochs
+    epochs = 400  # number of training epochs
     warmup = 50   # number of epochs to wait before enacting early stopping policy
     patience = 50 # number of epochs with no improvement in eval metric to allow before early stopping
     # set adamW as optimizer
@@ -100,5 +101,4 @@ if __name__ == "__main__":
     print("neuroMANCER:")
     datapoints = {"p": torch.tensor(p, dtype=torch.float32),
                   "name": "test"}
-    #test.nmTest(problem, datapoints, model, x_name="test_x_rnd")
-    test.nmTest(problem, datapoints, model, x_name="test_x_bar")
+    test.nmTest(problem, datapoints, model, x_name="test_x_rnd")
