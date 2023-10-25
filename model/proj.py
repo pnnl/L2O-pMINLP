@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
 
     # trainable components
-    components = [sol_map, proj]
+    components = [sol_map, proj, l_round]
 
     # penalty loss
     loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar)
