@@ -14,14 +14,16 @@ def nnRastrigin(num_vars, func, alpha=100):
     a = nm.constraint.variable("a")
     # variables
     x = nm.constraint.variable("x")
-    # penalty loss
-    loss = lossRastrigin(x, p, a, num_vars, alpha)
+    # obj & constr
+    obj, constrs = probRastrigin(x, p, a, num_vars, alpha)
+    # merit loss function
+    loss = nm.loss.PenaltyLoss(obj, constrs)
     # optimization solver
     problem = nm.problem.Problem(components, loss)
     return problem
 
 
-def lossRastrigin(x, p, a, num_vars, alpha=100):
+def probRastrigin(x, p, a, num_vars, alpha=100):
     # objective function
     f = sum(a[:, i] + x[:, i] ** 2 - a[:, i] * torch.cos(2 * math.pi * x[:, i]) for i in range(num_vars))
     obj = f.minimize(weight=1.0, name="obj")
@@ -51,9 +53,7 @@ def lossRastrigin(x, p, a, num_vars, alpha=100):
         ub = alpha * (x[:, i] <= 5.12)
         ub.name = "ub{}".format(i)
         constraints.append(ub)
-    # merit loss function
-    loss = nm.loss.PenaltyLoss(objectives, constraints)
-    return loss
+    return objectives, constraints
 
 
 if __name__ == "__main__":

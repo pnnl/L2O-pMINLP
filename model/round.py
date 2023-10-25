@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 
 from model.func import diffFloor, diffBinarize
@@ -90,6 +91,10 @@ if __name__ == "__main__":
     # variables
     x_bar = nm.constraint.variable("x_bar")
     x_rnd = nm.constraint.variable("x_rnd")
+    # model
+    from problem.neural import probQuadratic
+    obj_bar, constrs_bar = probQuadratic(x_bar, p, num_vars=10, alpha=100)
+    obj_rnd, constrs_rnd = probQuadratic(x_rnd, p, num_vars=10, alpha=100)
 
     # define neural architecture for the solution mapping
     func = nm.modules.blocks.MLP(insize=num_vars, outsize=num_vars, bias=True,
@@ -108,8 +113,8 @@ if __name__ == "__main__":
     components = [sol_map, l_round]
 
     # penalty loss
-    from problem.neural import lossQuadratic
-    loss = lossQuadratic(x_rnd, p, num_vars=10, alpha=100) + 0.5 * lossQuadratic(x_bar, p, num_vars=10, alpha=100)
+
+    loss = (nm.loss.PenaltyLoss(obj_bar, constrs_bar) + 0.5 * nm.loss.PenaltyLoss(obj_rnd, constrs_rnd))
     problem = nm.problem.Problem(components, loss)
 
     # training
