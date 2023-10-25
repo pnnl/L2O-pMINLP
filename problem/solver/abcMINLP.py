@@ -80,10 +80,10 @@ class abcParamModel(ABC):
         lhs = pe.value(constr.body)
         # check if LHS is below the lower bound
         if constr.lower is not None and lhs < pe.value(constr.lower) - 1e-5:
-            return pe.value(constr.lower) - lhs
+            return pe.value(constr.lower)[0] - lhs
         # check if LHS is above the upper bound
         elif constr.upper is not None and lhs > pe.value(constr.upper) + 1e-5:
-            return lhs - pe.value(constr.upper)
+            return lhs - pe.value(constr.upper)[0]
         return 0.0
 
     def clone(self):
