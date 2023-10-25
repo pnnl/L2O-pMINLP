@@ -1,10 +1,13 @@
 import torch
 from torch import nn
 
-from model.func import diffFloor, diffBinarize
+from model.func import diffFloor, diffBinarize, diffGumbelBinarize
 from model.layer import layerFC
 
 class roundModel(nn.Module):
+    """
+    Learnable model to round integer variables
+    """
     def __init__(self, param_key, var_key, output_keys, int_ind, input_dim, hidden_dims, output_dim,
                  continuous_update=False, tolerance=1e-3, name=None):
         super(roundModel, self).__init__()
@@ -60,6 +63,22 @@ class roundModel(nn.Module):
         return bnr
 
 
+class roundGumbelModel(roundModel):
+    """
+    Learnable model to round integer variables with Gumbel-Softmax trick
+    """
+    def __init__(self, param_key, var_key, output_keys, int_ind, input_dim, hidden_dims, output_dim,
+                 continuous_update=False, temperature=1.0, tolerance=1e-3, name=None):
+        super(roundGumbelModel, self).__init__(param_key, var_key, output_keys,
+                                               int_ind, input_dim, hidden_dims, output_dim,
+                                               continuous_update, tolerance, name)
+        # random temperature
+        self.temperature = temperature
+        # binarize
+        self.bin = diffGumbelBinarize(temperature=self.temperature)
+
+
+
 if __name__ == "__main__":
 
     import numpy as np
@@ -68,7 +87,7 @@ if __name__ == "__main__":
     import neuromancer as nm
 
     from problem.solver import exactQuadratic
-    from heuristic import feasibility_round
+    from heuristic import naive_round
     from utlis import test
 
     # random seed
@@ -116,17 +135,20 @@ if __name__ == "__main__":
     sol_map = nm.system.Node(func, ["p"], ["x_bar"], name="smap")
 
     # round x
-    round_func = roundModel(param_key="p", var_key="x_bar", output_keys="x_rnd",
-                            int_ind=model.intInd, input_dim=num_vars*2, hidden_dims=[80]*2, output_dim=num_vars,
-                            name="round")
+    #round_func = roundModel(param_key="p", var_key="x_bar", output_keys="x_rnd",
+    #                        int_ind=model.intInd, input_dim=num_vars*2, hidden_dims=[80]*2, output_dim=num_vars,
+    #                        name="round")
+    round_func = roundGumbelModel(param_key="p", var_key="x_bar", output_keys="x_rnd",
+                                  int_ind=model.intInd, input_dim=num_vars*2, hidden_dims=[80]*2, output_dim=num_vars,
+                                  name="round")
 
     # trainable components
     components = [sol_map, round_func]
 
     # penalty loss
 
-    loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar) + 0.5 * nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
-    #loss = nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
+    #loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar) + 0.5 * nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
+    loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar)
     problem = nm.problem.Problem(components, loss)
 
     # training
@@ -155,7 +177,7 @@ if __name__ == "__main__":
 
     # rounding
     print("Round:")
-    test.heurTest(feasibility_round, model, xval)
+    test.heurTest(naive_round, model, xval)
 
     # get solution from neuroMANCER
     print("neuroMANCER:")

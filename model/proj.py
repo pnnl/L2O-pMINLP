@@ -8,7 +8,7 @@ if __name__ == "__main__":
     import neuromancer as nm
 
     from problem.solver import exactQuadratic
-    from model import roundModel
+    from model import roundModel, roundGumbelModel
     from utlis import test
 
     # random seed
@@ -53,9 +53,12 @@ if __name__ == "__main__":
     sol_map = nm.system.Node(func, ["p"], ["x_bar"], name="smap")
 
     # round x
-    round_func = roundModel(param_key="p", var_key="x_bar", output_keys="x_rnd",
-                            int_ind=model.intInd, input_dim=num_vars*2, hidden_dims=[80]*2, output_dim=num_vars,
-                            name="round")
+    #round_func = roundModel(param_key="p", var_key="x_bar", output_keys="x_rnd",
+    #                        int_ind=model.intInd, input_dim=num_vars*2, hidden_dims=[80]*2, output_dim=num_vars,
+    #                        name="round")
+    round_func = roundGumbelModel(param_key="p", var_key="x_bar", output_keys="x_rnd",
+                                  int_ind=model.intInd, input_dim=num_vars*2, hidden_dims=[80]*2, output_dim=num_vars,
+                                  name="round")
 
     # proj x to feasible region
     num_steps = 5
@@ -68,21 +71,13 @@ if __name__ == "__main__":
                               step_size=step_size,  # step size of the solver method
                               decay=decay,  # decay factor of the step size
                               name="proj")
-    proj2 = GradientProjection(constraints=constrs_bar,  # inequality constraints to be corrected
-                               input_keys=["x_rnd"],  # primal variables to be updated
-                               output_keys = ["x_bar"], # updated primal variables
-                               num_steps=num_steps,  # number of rollout steps of the solver method
-                               step_size=step_size,  # step size of the solver method
-                               decay=decay,  # decay factor of the step size
-                               name="proj_2")
-
 
     # trainable components
     components = [sol_map, proj, round_func]
 
     # penalty loss
-    loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar) + 0.5 * nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
-    #loss = nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
+    #loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar) + 0.5 * nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
+    loss = nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
     problem = nm.problem.Problem(components, loss, grad_inference=True)
 
     # training
