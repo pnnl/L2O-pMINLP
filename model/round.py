@@ -148,12 +148,12 @@ if __name__ == "__main__":
     # penalty loss
 
     #loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar) + 0.5 * nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
-    loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar)
+    loss = nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
     problem = nm.problem.Problem(components, loss)
 
     # training
     lr = 0.001    # step size for gradient descent
-    epochs = 400  # number of training epochs
+    epochs = 4#00  # number of training epochs
     warmup = 50   # number of epochs to wait before enacting early stopping policy
     patience = 50 # number of epochs with no improvement in eval metric to allow before early stopping
     # set adamW as optimizer
