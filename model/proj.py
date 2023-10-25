@@ -68,13 +68,20 @@ if __name__ == "__main__":
                               step_size=step_size,  # step size of the solver method
                               decay=decay,  # decay factor of the step size
                               name="proj")
+    proj2 = GradientProjection(constraints=constrs_bar,  # inequality constraints to be corrected
+                               input_keys=["x_rnd"],  # primal variables to be updated
+                               output_keys = ["x_bar"], # updated primal variables
+                               num_steps=num_steps,  # number of rollout steps of the solver method
+                               step_size=step_size,  # step size of the solver method
+                               decay=decay,  # decay factor of the step size
+                               name="proj_2")
 
 
     # trainable components
     components = [sol_map, proj, round_func]
 
     # penalty loss
-    loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar)
+    loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar) + 0.5 * nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
     #loss = nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
     problem = nm.problem.Problem(components, loss, grad_inference=True)
 
@@ -102,3 +109,8 @@ if __name__ == "__main__":
     datapoints = {"p": torch.tensor(p, dtype=torch.float32),
                   "name": "test"}
     test.nmTest(problem, datapoints, model, x_name="test_x_rnd")
+
+    # get solution from Ipopt
+    print("SCIP:")
+    model.setParamValue(*p[0])
+    test.solverTest(model, solver="scip")

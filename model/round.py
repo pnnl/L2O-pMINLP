@@ -125,8 +125,8 @@ if __name__ == "__main__":
 
     # penalty loss
 
-    #loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar) + 0.5 * nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
-    loss = nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
+    loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar) + 0.5 * nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
+    #loss = nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
     problem = nm.problem.Problem(components, loss)
 
     # training
