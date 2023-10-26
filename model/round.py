@@ -8,12 +8,12 @@ class roundModel(nn.Module):
     """
     Learnable model to round integer variables
     """
-    def __init__(self, param_key, var_key, output_keys, int_ind, input_dim, hidden_dims, output_dim,
+    def __init__(self, param_keys, var_keys, output_keys, int_ind, input_dim, hidden_dims, output_dim,
                  continuous_update=False, tolerance=1e-3, name=None):
         super(roundModel, self).__init__()
         # data keys
-        self.param_key, self.var_key, self.output_keys = param_key, var_key, output_keys
-        self.input_keys = [self.param_key, self.var_key]
+        self.param_keys, self.var_keys, self.output_keys = param_keys, var_keys, output_keys
+        self.input_keys = self.param_keys + self.var_keys
         # index of integer variables
         self.int_ind = int_ind
         # update continuous or not
@@ -23,35 +23,42 @@ class roundModel(nn.Module):
         # floor
         self.floor = diffFloor()
         # sequence
-        sizes = [input_dim] + hidden_dims + [output_dim]
-        layers = []
-        for i in range(len(sizes) - 1):
-            layers.append(layerFC(sizes[i], sizes[i + 1]))
-        self.layers = nn.Sequential(*layers)
+        self.layers = self._getSequence(input_dim, hidden_dims, output_dim)
         # binarize
         self.bin = diffBinarize()
         self.tolerance = tolerance
 
     def forward(self, data):
         # get vars & params
-        p, x = data[self.param_key], data[self.var_key]
+        p, x = [data[k] for k in self.param_keys], [data[k] for k in self.var_keys]
         # concatenate all features: params + sol
-        f = torch.cat([p, x], dim=-1)
+        f = torch.cat(p+x, dim=-1)
         # forward
         h = self.layers(f)
-        # floor
-        x_flr = self.floor(x[:,self.int_ind])
-        # binary
-        bnr = self.bin(h[:,self.int_ind])
-        # mask if already integer
-        bnr = self._intMask(bnr, x[:,self.int_ind])
-        # update continuous variables
-        x_rnd = x + self.continuous_update * h
-        # learnable round down: floor + 0 / round up: floor + 1
-        x_rnd[:,self.int_ind] = x_flr + bnr
-        # add to data
-        data[self.output_keys] = x_rnd
+        # rounding
+        for i, (key, int_ind) in enumerate(self.int_ind.items()):
+            # floor
+            x_flr = self.floor(data[key][:,int_ind])
+            # binary
+            bnr = self.bin(h[:,int_ind])
+            # mask if already integer
+            bnr = self._intMask(bnr, data[key][:, int_ind])
+            # update continuous variables
+            x_rnd = data[key] + self.continuous_update * h
+            # cut off used h
+            h = h[:,data[key].shape[1]+1:]
+            # learnable round down: floor + 0 / round up: floor + 1
+            x_rnd[:,int_ind] = x_flr + bnr
+            # add to data
+            data[self.output_keys[i]] = x_rnd
         return data
+
+    def _getSequence(self, input_dim, hidden_dims, output_dim):
+        sizes = [input_dim] + hidden_dims + [output_dim]
+        layers = []
+        for i in range(len(sizes) - 1):
+            layers.append(layerFC(sizes[i], sizes[i + 1]))
+        return nn.Sequential(*layers)
 
     def _intMask(self, bnr, x):
         # difference
@@ -67,9 +74,9 @@ class roundGumbelModel(roundModel):
     """
     Learnable model to round integer variables with Gumbel-Softmax trick
     """
-    def __init__(self, param_key, var_key, output_keys, int_ind, input_dim, hidden_dims, output_dim,
+    def __init__(self, param_keys, var_keys, output_keys, int_ind, input_dim, hidden_dims, output_dim,
                  continuous_update=False, temperature=1.0, tolerance=1e-3, name=None):
-        super(roundGumbelModel, self).__init__(param_key, var_key, output_keys,
+        super(roundGumbelModel, self).__init__(param_keys, var_keys, output_keys,
                                                int_ind, input_dim, hidden_dims, output_dim,
                                                continuous_update, tolerance, name)
         # random temperature
@@ -135,11 +142,11 @@ if __name__ == "__main__":
     sol_map = nm.system.Node(func, ["p"], ["x_bar"], name="smap")
 
     # round x
-    #round_func = roundModel(param_key="p", var_key="x_bar", output_keys="x_rnd",
-    #                        int_ind=model.intInd, input_dim=num_vars*2, hidden_dims=[80]*2, output_dim=num_vars,
+    #round_func = roundModel(param_keys=["p"], var_keys=["x_bar"], output_keys=["x_rnd"],
+    #                        int_ind={"x_bar":model.intInd}, input_dim=num_vars*2, hidden_dims=[80]*2, output_dim=num_vars,
     #                        name="round")
-    round_func = roundGumbelModel(param_key="p", var_key="x_bar", output_keys="x_rnd",
-                                  int_ind=model.intInd, input_dim=num_vars*2, hidden_dims=[80]*2, output_dim=num_vars,
+    round_func = roundGumbelModel(param_keys=["p"], var_keys=["x_bar"], output_keys=["x_rnd"],
+                                  int_ind={"x_bar":model.intInd}, input_dim=num_vars*2, hidden_dims=[80]*4, output_dim=num_vars,
                                   name="round")
 
     # trainable components
