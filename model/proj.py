@@ -1,6 +1,65 @@
 from torch import nn
 
 from neuromancer.modules.solvers import GradientProjection as gradProj
+from neuromancer.gradients import gradient
+
+from model.layer import layerFC
+
+class solPredGradProj(nn.Module):
+    """
+    re-predict solution then project onto feasible region
+    """
+    def __init__(self, constraints, input_dim, hidden_dims, output_dim,
+                 param_keys, var_keys, output_keys=[],
+                 residual=True, decay=0.1, num_steps=1, step_size=0.01, name=None):
+        super(solPredGradProj, self).__init__()
+        # data keys
+        self.param_keys, self.var_keys, self.output_keys = param_keys, var_keys, output_keys
+        self.input_keys = self.param_keys + self.var_keys
+        self.output_keys = output_keys if output_keys else [self.var_key]
+        # name
+        self.name = name
+        # list of neuromancer constraints
+        self.constraints = constraints
+        # flag to only predict residual of solution
+        self.residual = residual
+        # projection
+        self.num_steps = num_steps
+        self.step_size = step_size
+        self.decay = decay
+        self.gradProj = gradProj(constraints=self.constraints, input_keys=self.var_keys, output_keys=self.output_keys,
+                                 num_steps=self.num_steps, step_size=self.step_size, decay=self.decay)
+        # sequence
+        self.layers = self._getSequence(input_dim, hidden_dims, output_dim)
+
+    def forward(self, data):
+        # get vars & params
+        p, x = [data[k] for k in self.param_keys], [data[k] for k in self.var_keys]
+        # get grad of violation
+        energy = self.gradProj.con_viol_energy(data)
+        grads = []
+        for k in self.var_keys:
+            step = gradient(energy, data[k]).detach()
+            grads.append(step)
+        # concatenate all features: params + sol
+        f = torch.cat(p + x + grads, dim=-1)
+        # forward
+        out = self.layers(f)
+        for k_in, k_out in zip(self.var_keys, self.output_keys):
+            # new solution
+            data[k_out] = self.residual * data[k_in] + out[:,:data[k_in].shape[1]+1]
+            # cut off out
+            out = out[:,data[k_in].shape[1]+1:]
+        return data
+
+
+    def _getSequence(self, input_dim, hidden_dims, output_dim):
+        sizes = [input_dim] + hidden_dims + [output_dim]
+        layers = []
+        for i in range(len(sizes) - 1):
+            layers.append(layerFC(sizes[i], sizes[i + 1]))
+        return nn.Sequential(*layers)
+
 
 if __name__ == "__main__":
 
@@ -66,25 +125,28 @@ if __name__ == "__main__":
     num_steps = 5
     step_size = 0.1
     decay = 0.1
-    proj = gradProj(constraints=constrs_rnd,  # inequality constraints to be corrected
-                    input_keys=["x_rnd"],  # primal variables to be updated
-                    output_keys=["x_bar"], # updated primal variables
-                    num_steps=num_steps,  # number of rollout steps of the solver method
-                    step_size=step_size,  # step size of the solver method
-                    decay=decay,  # decay factor of the step size
-                    name="proj")
+    proj = solPredGradProj(constraints=constrs_rnd,  # inequality constraints to be corrected
+                           input_dim=num_vars*3, # dimension of input feature
+                           hidden_dims=[80]*4, # dimensions of hidden layers
+                           output_dim=num_vars, # dimension of output
+                           param_keys=["p"], # model parameters
+                           var_keys=["x_rnd"], # primal variables to be updated
+                           output_keys=["x_bar"], # updated primal variables
+                           num_steps=num_steps,  # number of rollout steps of the solver method
+                           step_size=step_size,  # step size of the solver method
+                           decay=decay,  # decay factor of the step size
+                           name="proj")
 
     # trainable components
     components = [sol_map, round_func, proj]
 
     # penalty loss
-    #loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar) + 0.5 * nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
-    loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar)
+    loss = nm.loss.PenaltyLoss(obj_rnd, constrs_rnd) + nm.loss.PenaltyLoss(obj_bar, constrs_bar)
     problem = nm.problem.Problem(components, loss, grad_inference=True)
 
     # training
     lr = 0.001    # step size for gradient descent
-    epochs = 4#00  # number of training epochs
+    epochs = 400  # number of training epochs
     warmup = 50   # number of epochs to wait before enacting early stopping policy
     patience = 50 # number of epochs with no improvement in eval metric to allow before early stopping
     # set adamW as optimizer
