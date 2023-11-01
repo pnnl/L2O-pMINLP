@@ -40,12 +40,12 @@ Set ``continuous_update`` as ``True``.
 |---------------------------|-----------------------|-----------------------|-------------------|---------------------------------|---------------------------------|-------------------------------------|
 |                           |                       |                       | **Sol Distance**  | **Sol Distance + Obj Function** | **Int Sol from Fixed Rounding** | **Trained with Learnable Rounding** |
 | **Continuous Relaxation** |                       |                       | ✓                 |                                 | ✓                               | N/A                                 |
-| **Proj Grad**             |                       |                       |                   |                                 |                                 |                                     |
+| **Proj Grad**             |                       |                       | ✓                 |                                 |                                 |                                     |
 | **Signed Proj Grad**      |                       |                       |                   |                                 |                                 |                                     |
 | **NN Mapping**            | **Sol Pred**          | **without Proj Grad** |                   |                                 |                                 |                                     |
-|                           |                       | **with Proj Grad**    |                   |                                 |                                 |                                     |
+|                           |                       | **with Proj Grad**    | ✓                 |  ✓                              |                                 | ✓                                   |
 |                           | **Residual Sol Pred** | **without Proj Grad** |                   |                                 |                                 |                                     |
-|                           |                       | **with Proj Grad**    |                   |                                 |                                 |                                     |
+|                           |                       | **with Proj Grad**    | ✓                 |  ✓                              |                                 | ✓                                   |
 
 ##### Projected Gradient: 
 

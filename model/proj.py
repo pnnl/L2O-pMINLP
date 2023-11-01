@@ -70,6 +70,7 @@ if __name__ == "__main__":
 
     from problem.solver import exactQuadratic
     from model import roundModel, roundGumbelModel
+    from heuristic import naive_round
     from utlis import test
 
     # random seed
@@ -136,12 +137,15 @@ if __name__ == "__main__":
                            step_size=step_size,  # step size of the solver method
                            decay=decay,  # decay factor of the step size
                            name="proj")
+    # solution distance
+    f = sum((x_bar[:, i] - x_rnd[:, i]) ** 2 for i in range(num_vars))
+    sol_dist = [f.minimize(weight=1.0, name="obj")]
 
     # trainable components
     components = [sol_map, round_func, proj]
 
     # penalty loss
-    loss = nm.loss.PenaltyLoss(obj_rnd, constrs_rnd) + nm.loss.PenaltyLoss(obj_bar, constrs_bar)
+    loss = nm.loss.PenaltyLoss(obj_rnd, constrs_rnd) + nm.loss.PenaltyLoss(sol_dist, constrs_bar)
     problem = nm.problem.Problem(components, loss, grad_inference=True)
 
     # training
@@ -162,6 +166,15 @@ if __name__ == "__main__":
     print("Parameters p:", list(p[0]))
     print()
 
+    # get solution from Ipopt
+    print("Ipopt:")
+    model_rel = model.relax()
+    model_rel.setParamValue(*p[0])
+    xval, _ = test.solverTest(model_rel, solver="ipopt")
+
+    # rounding
+    print("Round:")
+    test.heurTest(naive_round, model, xval)
 
     # get solution from neuroMANCER
     print("neuroMANCER:")
