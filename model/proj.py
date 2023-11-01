@@ -115,12 +115,12 @@ if __name__ == "__main__":
     sol_map = nm.system.Node(func, ["p"], ["x_bar"], name="smap")
 
     # round x
-    #round_func = roundModel(param_keys=["p"], var_keys=["x_bar"], output_keys=["x_rnd"],
-    #                        int_ind={"x_bar":model.intInd}, input_dim=num_vars*2, hidden_dims=[80]*2, output_dim=num_vars,
-    #                        name="round")
-    round_func = roundGumbelModel(param_keys=["p"], var_keys=["x_bar"], output_keys=["x_rnd"],
-                                  int_ind={"x_bar":model.intInd}, input_dim=num_vars*2, hidden_dims=[80]*4, output_dim=num_vars,
-                                  name="round")
+    round_func = roundModel(param_keys=["p"], var_keys=["x_bar"], output_keys=["x_rnd"],
+                            int_ind={"x_bar":model.intInd}, input_dim=num_vars*2, hidden_dims=[80]*2, output_dim=num_vars,
+                            name="round")
+    #round_func = roundGumbelModel(param_keys=["p"], var_keys=["x_bar"], output_keys=["x_rnd"],
+    #                              int_ind={"x_bar":model.intInd}, input_dim=num_vars*2, hidden_dims=[80]*4, output_dim=num_vars,
+    #                              name="round")
 
     # proj x to feasible region
     num_steps = 5
