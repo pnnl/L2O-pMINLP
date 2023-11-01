@@ -9,14 +9,16 @@ def nnQuadratic(num_vars, func, alpha=100):
     p = nm.constraint.variable("p")
     # variables
     x = nm.constraint.variable("x")
-    # penalty loss
-    loss = lossQuadratic(x, p, num_vars, alpha)
+    # obj & constr
+    obj, constrs = probQuadratic(x, p, num_vars, alpha)
+    # merit loss function
+    loss = nm.loss.PenaltyLoss(obj, constrs)
     # optimization solver
     problem = nm.problem.Problem(components, loss)
     return problem
 
 
-def lossQuadratic(x, p, num_vars, alpha=100):
+def probQuadratic(x, p, num_vars, alpha=100):
     # objective function
     f = sum(x[:, i] ** 2 for i in range(num_vars))
     obj = f.minimize(weight=1.0, name="obj")
@@ -42,9 +44,7 @@ def lossQuadratic(x, p, num_vars, alpha=100):
     con = alpha * (g <= 5)
     con.name = "c{}_u".format(num_vars - 1)
     constraints.append(con)
-    # merit loss function
-    loss = nm.loss.PenaltyLoss(objectives, constraints)
-    return loss
+    return objectives, constraints
 
 
 if __name__ == "__main__":

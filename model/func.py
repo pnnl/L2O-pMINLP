@@ -2,6 +2,47 @@ import torch
 from torch import nn
 from torch.autograd import Function
 
+class diffGumbelBinarize(nn.Module):
+    """
+    An autograd model to binarize numbers under Gumbel-Softmax trick
+    """
+    def __init__(self, temperature=1.0):
+        self.temperature = temperature
+        super(diffGumbelBinarize, self).__init__()
+
+    def forward(self, x):
+        # train mode
+        if self.training:
+            x = _gumbelSigmoidFuncSTE.apply(x, self.temperature)
+        # eval mode
+        else:
+            x = (torch.sigmoid(x) > 0).float()
+        return x
+
+
+class _gumbelSigmoidFuncSTE(Function):
+    @staticmethod
+    def forward(ctx, logit, temperature=1.0):
+        # Gumbel-Sigmoid sampling
+        eps = 1e-20
+        gumbel_noise_0 = -torch.log(-torch.log(torch.rand_like(logit) + eps) + eps)
+        gumbel_noise_1 = -torch.log(-torch.log(torch.rand_like(logit) + eps) + eps)
+        # sigmoid with Gumbel
+        noisy_diff = logit + gumbel_noise_1 - gumbel_noise_0
+        soft_sample = torch.sigmoid(noisy_diff / temperature)
+        # rounding
+        hard_sample = torch.round(soft_sample)
+        # store soft sample for backward pass
+        ctx.save_for_backward(soft_sample)
+        return hard_sample
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        soft_sample, = ctx.saved_tensors
+        grad_input = grad_output * soft_sample * (1 - soft_sample)
+        return grad_input, None
+
+
 class diffBinarize(nn.Module):
     """
     An autograd model to binarize numbers
@@ -133,6 +174,19 @@ if __name__ == "__main__":
     # Reset gradients
     x.grad.zero_()
     print()
+
+    # binarize
+    bin = diffGumbelBinarize()
+    x_bin = bin(x)
+    print("Gumbel Binarize vector", x_bin)
+    loss = x_bin.sum()
+    loss.backward()
+    print("Grad:", x.grad)
+
+    # Reset gradients
+    x.grad.zero_()
+    print()
+
 
     # solver
     from problem.solver import exactQuadratic

@@ -1,57 +1,57 @@
-import torch
 from torch import nn
 
-from model.func import diffFloor, diffBinarize, diffGumbelBinarize
+from neuromancer.modules.solvers import GradientProjection as gradProj
+from neuromancer.gradients import gradient
+
 from model.layer import layerFC
 
-class roundModel(nn.Module):
+class solPredGradProj(nn.Module):
     """
-    Learnable model to round integer variables
+    re-predict solution then project onto feasible region
     """
-    def __init__(self, param_keys, var_keys, output_keys, int_ind, input_dim, hidden_dims, output_dim,
-                 continuous_update=False, tolerance=1e-3, name=None):
-        super(roundModel, self).__init__()
+    def __init__(self, constraints, input_dim, hidden_dims, output_dim,
+                 param_keys, var_keys, output_keys=[],
+                 residual=True, decay=0.1, num_steps=1, step_size=0.01, name=None):
+        super(solPredGradProj, self).__init__()
         # data keys
         self.param_keys, self.var_keys, self.output_keys = param_keys, var_keys, output_keys
         self.input_keys = self.param_keys + self.var_keys
-        # index of integer variables
-        self.int_ind = int_ind
-        # update continuous or not
-        self.continuous_update = continuous_update
+        self.output_keys = output_keys if output_keys else [self.var_key]
         # name
         self.name = name
-        # floor
-        self.floor = diffFloor()
+        # list of neuromancer constraints
+        self.constraints = constraints
+        # flag to only predict residual of solution
+        self.residual = residual
+        # projection
+        self.num_steps = num_steps
+        self.step_size = step_size
+        self.decay = decay
+        self.gradProj = gradProj(constraints=self.constraints, input_keys=self.var_keys, output_keys=self.output_keys,
+                                 num_steps=self.num_steps, step_size=self.step_size, decay=self.decay)
         # sequence
         self.layers = self._getSequence(input_dim, hidden_dims, output_dim)
-        # binarize
-        self.bin = diffBinarize()
-        self.tolerance = tolerance
 
     def forward(self, data):
         # get vars & params
         p, x = [data[k] for k in self.param_keys], [data[k] for k in self.var_keys]
+        # get grad of violation
+        energy = self.gradProj.con_viol_energy(data)
+        grads = []
+        for k in self.var_keys:
+            step = gradient(energy, data[k]).detach()
+            grads.append(step)
         # concatenate all features: params + sol
-        f = torch.cat(p+x, dim=-1)
+        f = torch.cat(p + x + grads, dim=-1)
         # forward
-        h = self.layers(f)
-        # rounding
-        for i, (key, int_ind) in enumerate(self.int_ind.items()):
-            # floor
-            x_flr = self.floor(data[key][:,int_ind])
-            # binary
-            bnr = self.bin(h[:,int_ind])
-            # mask if already integer
-            bnr = self._intMask(bnr, data[key][:, int_ind])
-            # update continuous variables
-            x_rnd = data[key] + self.continuous_update * h
-            # cut off used h
-            h = h[:,data[key].shape[1]+1:]
-            # learnable round down: floor + 0 / round up: floor + 1
-            x_rnd[:,int_ind] = x_flr + bnr
-            # add to data
-            data[self.output_keys[i]] = x_rnd
+        out = self.layers(f)
+        for k_in, k_out in zip(self.var_keys, self.output_keys):
+            # new solution
+            data[k_out] = self.residual * data[k_in] + out[:,:data[k_in].shape[1]+1]
+            # cut off out
+            out = out[:,data[k_in].shape[1]+1:]
         return data
+
 
     def _getSequence(self, input_dim, hidden_dims, output_dim):
         sizes = [input_dim] + hidden_dims + [output_dim]
@@ -59,31 +59,6 @@ class roundModel(nn.Module):
         for i in range(len(sizes) - 1):
             layers.append(layerFC(sizes[i], sizes[i + 1]))
         return nn.Sequential(*layers)
-
-    def _intMask(self, bnr, x):
-        # difference
-        diff_flr = torch.abs(x - torch.floor(x))
-        diff_cl = torch.abs(x - torch.ceil(x))
-        # mask
-        bnr[diff_flr < self.tolerance] = 0.0
-        bnr[diff_cl < self.tolerance] = 1.0
-        return bnr
-
-
-class roundGumbelModel(roundModel):
-    """
-    Learnable model to round integer variables with Gumbel-Softmax trick
-    """
-    def __init__(self, param_keys, var_keys, output_keys, int_ind, input_dim, hidden_dims, output_dim,
-                 continuous_update=False, temperature=1.0, tolerance=1e-3, name=None):
-        super(roundGumbelModel, self).__init__(param_keys, var_keys, output_keys,
-                                               int_ind, input_dim, hidden_dims, output_dim,
-                                               continuous_update, tolerance, name)
-        # random temperature
-        self.temperature = temperature
-        # binarize
-        self.bin = diffGumbelBinarize(temperature=self.temperature)
-
 
 
 if __name__ == "__main__":
@@ -94,7 +69,7 @@ if __name__ == "__main__":
     import neuromancer as nm
 
     from problem.solver import exactQuadratic
-    from heuristic import naive_round
+    from model import roundModel, roundGumbelModel
     from utlis import test
 
     # random seed
@@ -135,9 +110,6 @@ if __name__ == "__main__":
     # define neural architecture for the solution mapping
     func = nm.modules.blocks.MLP(insize=num_vars, outsize=num_vars, bias=True,
                                  linear_map=nm.slim.maps["linear"], nonlin=nn.ReLU, hsizes=[80]*4)
-    # define solver for solution
-    #from model.func import solverWrapper
-    #func = solverWrapper(model)
     # solution map from model parameters: sol_map(p) -> x
     sol_map = nm.system.Node(func, ["p"], ["x_bar"], name="smap")
 
@@ -149,18 +121,32 @@ if __name__ == "__main__":
                                   int_ind={"x_bar":model.intInd}, input_dim=num_vars*2, hidden_dims=[80]*4, output_dim=num_vars,
                                   name="round")
 
+    # proj x to feasible region
+    num_steps = 5
+    step_size = 0.1
+    decay = 0.1
+    proj = solPredGradProj(constraints=constrs_rnd,  # inequality constraints to be corrected
+                           input_dim=num_vars*3, # dimension of input feature
+                           hidden_dims=[80]*4, # dimensions of hidden layers
+                           output_dim=num_vars, # dimension of output
+                           param_keys=["p"], # model parameters
+                           var_keys=["x_rnd"], # primal variables to be updated
+                           output_keys=["x_bar"], # updated primal variables
+                           num_steps=num_steps,  # number of rollout steps of the solver method
+                           step_size=step_size,  # step size of the solver method
+                           decay=decay,  # decay factor of the step size
+                           name="proj")
+
     # trainable components
-    components = [sol_map, round_func]
+    components = [sol_map, round_func, proj]
 
     # penalty loss
-
-    #loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar) + 0.5 * nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
-    loss = nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
-    problem = nm.problem.Problem(components, loss)
+    loss = nm.loss.PenaltyLoss(obj_rnd, constrs_rnd) + nm.loss.PenaltyLoss(obj_bar, constrs_bar)
+    problem = nm.problem.Problem(components, loss, grad_inference=True)
 
     # training
     lr = 0.001    # step size for gradient descent
-    epochs = 4#00  # number of training epochs
+    epochs = 400  # number of training epochs
     warmup = 50   # number of epochs to wait before enacting early stopping policy
     patience = 50 # number of epochs with no improvement in eval metric to allow before early stopping
     # set adamW as optimizer
@@ -176,15 +162,6 @@ if __name__ == "__main__":
     print("Parameters p:", list(p[0]))
     print()
 
-    # get solution from Ipopt
-    print("Ipopt:")
-    model_rel = model.relax()
-    model_rel.setParamValue(*p[0])
-    xval, _ = test.solverTest(model_rel, solver="ipopt")
-
-    # rounding
-    print("Round:")
-    test.heurTest(naive_round, model, xval)
 
     # get solution from neuroMANCER
     print("neuroMANCER:")

@@ -12,14 +12,16 @@ def nnRosenBrock(num_vars, func, alpha=100):
     a = nm.constraint.variable("a")
     # variables
     x = nm.constraint.variable("x")
-    # penalty loss
-    loss = lossRosenBrock(x, p, a, num_vars, alpha)
+    # obj & constr
+    obj, constrs = probRosenBrock(x, p, a, num_vars, alpha)
+    # merit loss function
+    loss = nm.loss.PenaltyLoss(obj, constrs)
     # optimization solver
     problem = nm.problem.Problem(components, loss)
     return problem
 
 
-def lossRosenBrock(x, p, a, num_vars, alpha=100):
+def probRosenBrock(x, p, a, num_vars, alpha=100):
     # objective function
     f = sum((1 - x[:, i]) ** 2 + a[:, i] * (x[:, i + 1] - x[:, i] ** 2) ** 2 for i in range(num_vars-1))
     obj = f.minimize(weight=1.0, name="obj")
@@ -41,9 +43,7 @@ def lossRosenBrock(x, p, a, num_vars, alpha=100):
     con = alpha * (g <= p[:, 0])
     con.name = "c2"
     constraints.append(con)
-    # merit loss function
-    loss = nm.loss.PenaltyLoss(objectives, constraints)
-    return loss
+    return objectives, constraints
 
 
 if __name__ == "__main__":
