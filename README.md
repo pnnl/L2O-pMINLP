@@ -15,9 +15,21 @@
 
 ##### Rounding Classification with Fixed Continuous Vars:
 
+[Code](https://github.com/pnnl/DMIPL/blob/master/model/round.py#L7)
+
+[Code with Gumbel-Softmax trick](https://github.com/pnnl/DMIPL/blob/master/model/round.py#L73)
+
+Set ``continuous_update`` as ``False``.
+
 <p align="center"><img width="100%" src="img/algo/rndcls.png" /></p>
 
 ##### Rounding Classification with Updating Continuous Vars:
+
+[Code](https://github.com/pnnl/DMIPL/blob/master/model/round.py#L7)
+
+[Code with Gumbel-Softmax trick](https://github.com/pnnl/DMIPL/blob/master/model/round.py#L73)
+
+Set ``continuous_update`` as ``True``.
 
 <p align="center"><img width="100%" src="img/algo/rndclsuc.png" /></p>
 
@@ -35,7 +47,9 @@
 |                           | **Residual Sol Pred** | **without Proj Grad** |                   |                                 |                                 |                                     |
 |                           |                       | **with Proj Grad**    |                   |                                 |                                 |                                     |
 
-##### Projected Gradient:
+##### Projected Gradient: 
+
+[Code](https://github.com/pnnl/neuromancer/blob/develop/src/neuromancer/modules/solvers.py#L45)
 
 <p align="center"><img width="100%" src="img/algo/projgrad.png" /></p>
 
@@ -49,6 +63,10 @@
 
 ##### Solution Prediction with Projected Gradient:
 
+[Code](https://github.com/pnnl/DMIPL/blob/master/model/proj.py)
+
+Set ``residual`` as ``False``.
+
 <p align="center"><img width="100%" src="img/algo/solpredproj.png" /></p>
 
 ##### Residual Solution Prediction:
@@ -56,6 +74,10 @@
 <p align="center"><img width="100%" src="img/algo/ressolpred.png" /></p>
 
 ##### Residual Solution Prediction with Projected Gradient:
+
+[Code](https://github.com/pnnl/DMIPL/blob/master/model/proj.py)
+
+Set ``residual`` as ``False``.
 
 <p align="center"><img width="100%" src="img/algo/ressolpredproj.png" /></p>
 
