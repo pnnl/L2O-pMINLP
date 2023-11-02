@@ -1,5 +1,18 @@
 from torch import nn
 
+class netFC(nn.Module):
+    def __init__(self, input_dim, hidden_dims, output_dim):
+        super(netFC, self).__init__()
+        self.layers = nn.ModuleList()
+        sizes = [input_dim] + hidden_dims + [output_dim]
+        for i in range(len(sizes) - 1):
+            self.layers.append(layerFC(sizes[i], sizes[i + 1]))
+
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        return x
+
 class layerFC(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(layerFC, self).__init__()
@@ -23,7 +36,7 @@ if __name__ == "__main__":
     torch.manual_seed(42)
 
     # initialize the model
-    layer = layerFC(input_dim=10, output_dim=10)
+    layer = netFC(input_dim=10, hidden_dims=[20,20], output_dim=10)
     print(layer)
 
     # generate random input data: batch size = 32

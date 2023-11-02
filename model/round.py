@@ -2,13 +2,14 @@ import torch
 from torch import nn
 
 from model.func import diffFloor, diffBinarize, diffGumbelBinarize
-from model.layer import layerFC
+from model.layer import netFC
+
 
 class roundModel(nn.Module):
     """
     Learnable model to round integer variables
     """
-    def __init__(self, param_keys, var_keys, output_keys, int_ind, input_dim, hidden_dims, output_dim,
+    def __init__(self, layers, param_keys, var_keys, output_keys, int_ind,
                  continuous_update=False, tolerance=1e-3, name=None):
         super(roundModel, self).__init__()
         # data keys
@@ -23,7 +24,7 @@ class roundModel(nn.Module):
         # floor
         self.floor = diffFloor()
         # sequence
-        self.layers = self._getSequence(input_dim, hidden_dims, output_dim)
+        self.layers = layers
         # binarize
         self.bin = diffBinarize()
         self.tolerance = tolerance
@@ -53,13 +54,6 @@ class roundModel(nn.Module):
             data[self.output_keys[i]] = x_rnd
         return data
 
-    def _getSequence(self, input_dim, hidden_dims, output_dim):
-        sizes = [input_dim] + hidden_dims + [output_dim]
-        layers = []
-        for i in range(len(sizes) - 1):
-            layers.append(layerFC(sizes[i], sizes[i + 1]))
-        return nn.Sequential(*layers)
-
     def _intMask(self, bnr, x):
         # difference
         diff_flr = torch.abs(x - torch.floor(x))
@@ -74,10 +68,9 @@ class roundGumbelModel(roundModel):
     """
     Learnable model to round integer variables with Gumbel-Softmax trick
     """
-    def __init__(self, param_keys, var_keys, output_keys, int_ind, input_dim, hidden_dims, output_dim,
+    def __init__(self, param_keys, var_keys, output_keys, int_ind, layers,
                  continuous_update=False, temperature=1.0, tolerance=1e-3, name=None):
-        super(roundGumbelModel, self).__init__(param_keys, var_keys, output_keys,
-                                               int_ind, input_dim, hidden_dims, output_dim,
+        super(roundGumbelModel, self).__init__(param_keys, var_keys, output_keys, int_ind, layers,
                                                continuous_update, tolerance, name)
         # random temperature
         self.temperature = temperature
@@ -142,18 +135,16 @@ if __name__ == "__main__":
     sol_map = nm.system.Node(func, ["p"], ["x_bar"], name="smap")
 
     # round x
-    #round_func = roundModel(param_keys=["p"], var_keys=["x_bar"], output_keys=["x_rnd"],
-    #                        int_ind={"x_bar":model.intInd}, input_dim=num_vars*2, hidden_dims=[80]*2, output_dim=num_vars,
-    #                        name="round")
-    round_func = roundGumbelModel(param_keys=["p"], var_keys=["x_bar"], output_keys=["x_rnd"],
-                                  int_ind={"x_bar":model.intInd}, input_dim=num_vars*2, hidden_dims=[80]*4, output_dim=num_vars,
-                                  name="round")
+    layers_rnd = netFC(input_dim=num_vars*2, hidden_dims=[80]*4, output_dim=num_vars)
+    round_func = roundModel(layers=layers_rnd, param_keys=["p"], var_keys=["x_bar"], output_keys=["x_rnd"],
+                            int_ind={"x_bar":model.intInd}, name="round")
+    #round_func = roundGumbelModel(layers=layers_rnd, param_keys=["p"], var_keys=["x_bar"], output_keys=["x_rnd"],
+    #                              temperature=10, int_ind={"x_bar":model.intInd}, layers=layers_rnd, name="round")
 
     # trainable components
     components = [sol_map, round_func]
 
     # penalty loss
-
     #loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar) + 0.5 * nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
     loss = nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
     problem = nm.problem.Problem(components, loss)

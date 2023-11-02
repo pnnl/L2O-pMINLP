@@ -3,14 +3,13 @@ from torch import nn
 from neuromancer.modules.solvers import GradientProjection as gradProj
 from neuromancer.gradients import gradient
 
-from model.layer import layerFC
+from model.layer import netFC
 
 class solPredGradProj(nn.Module):
     """
     re-predict solution then project onto feasible region
     """
-    def __init__(self, constraints, input_dim, hidden_dims, output_dim,
-                 param_keys, var_keys, output_keys=[],
+    def __init__(self,  constraints, layers, param_keys, var_keys, output_keys=[],
                  residual=True, decay=0.1, num_steps=1, step_size=0.01, name=None):
         super(solPredGradProj, self).__init__()
         # data keys
@@ -30,7 +29,7 @@ class solPredGradProj(nn.Module):
         self.gradProj = gradProj(constraints=self.constraints, input_keys=self.var_keys, output_keys=self.output_keys,
                                  num_steps=self.num_steps, step_size=self.step_size, decay=self.decay)
         # sequence
-        self.layers = self._getSequence(input_dim, hidden_dims, output_dim)
+        self.layers = layers
 
     def forward(self, data):
         # get vars & params
@@ -51,14 +50,6 @@ class solPredGradProj(nn.Module):
             # cut off out
             out = out[:,data[k_in].shape[1]+1:]
         return data
-
-
-    def _getSequence(self, input_dim, hidden_dims, output_dim):
-        sizes = [input_dim] + hidden_dims + [output_dim]
-        layers = []
-        for i in range(len(sizes) - 1):
-            layers.append(layerFC(sizes[i], sizes[i + 1]))
-        return nn.Sequential(*layers)
 
 
 if __name__ == "__main__":
@@ -115,21 +106,19 @@ if __name__ == "__main__":
     sol_map = nm.system.Node(func, ["p"], ["x_bar"], name="smap")
 
     # round x
-    round_func = roundModel(param_keys=["p"], var_keys=["x_bar"], output_keys=["x_rnd"],
-                            int_ind={"x_bar":model.intInd}, input_dim=num_vars*2, hidden_dims=[80]*2, output_dim=num_vars,
-                            name="round")
-    #round_func = roundGumbelModel(param_keys=["p"], var_keys=["x_bar"], output_keys=["x_rnd"],
-    #                              int_ind={"x_bar":model.intInd}, input_dim=num_vars*2, hidden_dims=[80]*4, output_dim=num_vars,
-    #                              name="round")
+    layers_rnd = netFC(input_dim=num_vars*2, hidden_dims=[80]*4, output_dim=num_vars)
+    round_func = roundModel(layers=layers_rnd, param_keys=["p"], var_keys=["x_bar"], output_keys=["x_rnd"],
+                            int_ind={"x_bar":model.intInd}, name="round")
+    #round_func = roundGumbelModel(layers=layers_rnd, param_keys=["p"], var_keys=["x_bar"], output_keys=["x_rnd"],
+    #                              temperature=10, int_ind={"x_bar":model.intInd}, layers=layers_rnd, name="round")
 
     # proj x to feasible region
+    layers_proj = netFC(input_dim=num_vars*3, hidden_dims=[80] * 4, output_dim=num_vars)
     num_steps = 5
     step_size = 0.1
     decay = 0.1
     proj = solPredGradProj(constraints=constrs_rnd,  # inequality constraints to be corrected
-                           input_dim=num_vars*3, # dimension of input feature
-                           hidden_dims=[80]*4, # dimensions of hidden layers
-                           output_dim=num_vars, # dimension of output
+                           layers=layers_proj, # nn to predict solution
                            param_keys=["p"], # model parameters
                            var_keys=["x_rnd"], # primal variables to be updated
                            output_keys=["x_bar"], # updated primal variables
@@ -137,6 +126,7 @@ if __name__ == "__main__":
                            step_size=step_size,  # step size of the solver method
                            decay=decay,  # decay factor of the step size
                            name="proj")
+    # proj = proj.gradProj # just do projection
     # solution distance
     f = sum((x_bar[:, i] - x_rnd[:, i]) ** 2 for i in range(num_vars))
     sol_dist = [f.minimize(weight=1.0, name="obj")]
@@ -180,7 +170,7 @@ if __name__ == "__main__":
     print("neuroMANCER:")
     datapoints = {"p": torch.tensor(p, dtype=torch.float32),
                   "name": "test"}
-    test.nmTest(problem, datapoints, model, x_name="test_x_rnd")
+    test.nmTest(problem, datapoints, model, x_name="test_x_bar")
 
     # get solution from Ipopt
     print("SCIP:")
