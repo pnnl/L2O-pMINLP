@@ -49,6 +49,8 @@ class solPredGradProj(nn.Module):
             data[k_out] = self.residual * data[k_in] + out[:,:data[k_in].shape[1]+1]
             # cut off out
             out = out[:,data[k_in].shape[1]+1:]
+        # proj
+        data = self.gradProj(data)
         return data
 
 
