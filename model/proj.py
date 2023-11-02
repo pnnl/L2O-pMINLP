@@ -9,8 +9,8 @@ class solPredGradProj(nn.Module):
     """
     re-predict solution then project onto feasible region
     """
-    def __init__(self,  constraints, layers, param_keys, var_keys, output_keys=[],
-                 residual=True, decay=0.1, num_steps=1, step_size=0.01, name=None):
+    def __init__(self, constraints, layers, param_keys, var_keys, output_keys=[],
+                 grad_proj=None, residual=True, name=None):
         super(solPredGradProj, self).__init__()
         # data keys
         self.param_keys, self.var_keys, self.output_keys = param_keys, var_keys, output_keys
@@ -26,8 +26,7 @@ class solPredGradProj(nn.Module):
         self.num_steps = num_steps
         self.step_size = step_size
         self.decay = decay
-        self.gradProj = gradProj(constraints=self.constraints, input_keys=self.var_keys, output_keys=self.output_keys,
-                                 num_steps=self.num_steps, step_size=self.step_size, decay=self.decay)
+        self.gradProj = grad_proj
         # sequence
         self.layers = layers
 
@@ -35,7 +34,7 @@ class solPredGradProj(nn.Module):
         # get vars & params
         p, x = [data[k] for k in self.param_keys], [data[k] for k in self.var_keys]
         # get grad of violation
-        energy = self.gradProj.con_viol_energy(data)
+        energy = self._calViolation(data)
         grads = []
         for k in self.var_keys:
             step = gradient(energy, data[k]).detach()
@@ -50,8 +49,18 @@ class solPredGradProj(nn.Module):
             # cut off out
             out = out[:,data[k_in].shape[1]+1:]
         # proj
-        data = self.gradProj(data)
+        if self.gradProj is not None:
+            data = self.gradProj(data)
         return data
+
+    def _calViolation(self, data):
+        violations = []
+        for constr in self.constraints:
+            output = constr(data)
+            violation = output[constr.output_keys[2]]
+            violations.append(violation.reshape(violation.shape[0], -1))
+        energy = torch.mean(torch.abs(torch.cat(violations, dim=-1)), dim=1)
+        return energy
 
 
 if __name__ == "__main__":
@@ -115,20 +124,21 @@ if __name__ == "__main__":
     #                              temperature=10, int_ind={"x_bar":model.intInd}, layers=layers_rnd, name="round")
 
     # proj x to feasible region
-    layers_proj = netFC(input_dim=num_vars*3, hidden_dims=[80] * 4, output_dim=num_vars)
+    layers_proj = netFC(input_dim=num_vars * 3, hidden_dims=[100] * 3, output_dim=num_vars)
     num_steps = 5
     step_size = 0.1
     decay = 0.1
-    proj = solPredGradProj(constraints=constrs_rnd,  # inequality constraints to be corrected
+    grad_proj = gradProj(constraints=constrs_bar, input_keys=["x_bar"],
+                         num_steps=num_steps, step_size=step_size, decay=decay)
+    proj = solPredGradProj(constraints=constrs_rnd,  # inequality constraints
                            layers=layers_proj, # nn to predict solution
                            param_keys=["p"], # model parameters
                            var_keys=["x_rnd"], # primal variables to be updated
                            output_keys=["x_bar"], # updated primal variables
-                           num_steps=num_steps,  # number of rollout steps of the solver method
-                           step_size=step_size,  # step size of the solver method
-                           decay=decay,  # decay factor of the step size
+                           grad_proj=grad_proj, # gradient projection node
                            name="proj")
-    # proj = proj.gradProj # just do projection
+    #proj = gradProj(constraints=constrs_rnd, input_keys=["x_rnd"], output_keys=["x_bar"],
+    #                num_steps=num_steps, step_size=step_size, decay=decay)
     # solution distance
     f = sum((x_bar[:, i] - x_rnd[:, i]) ** 2 for i in range(num_vars))
     sol_dist = [f.minimize(weight=1.0, name="obj")]
