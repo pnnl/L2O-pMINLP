@@ -37,6 +37,7 @@ class roundModel(nn.Module):
         # forward
         h = self.layers(f)
         # rounding
+        output_data = {}
         for i, (key, int_ind) in enumerate(self.int_ind.items()):
             # floor
             x_flr = self.floor(data[key][:,int_ind])
@@ -51,8 +52,8 @@ class roundModel(nn.Module):
             # learnable round down: floor + 0 / round up: floor + 1
             x_rnd[:,int_ind] = x_flr + bnr
             # add to data
-            data[self.output_keys[i]] = x_rnd
-        return data
+            output_data[self.output_keys[i]] = x_rnd
+        return output_data
 
     def _intMask(self, bnr, x):
         # difference
@@ -62,6 +63,20 @@ class roundModel(nn.Module):
         bnr[diff_flr < self.tolerance] = 0.0
         bnr[diff_cl < self.tolerance] = 1.0
         return bnr
+
+    def freeze(self):
+        """
+        Freezes the parameters of the callable in this node
+        """
+        for param in self.layers.parameters():
+            param.requires_grad = False
+
+    def unfreeze(self):
+        """
+        Unfreezes the parameters of the callable in this node
+        """
+        for param in self.layers.parameters():
+            param.requires_grad = True
 
 
 class roundGumbelModel(roundModel):
@@ -128,9 +143,6 @@ if __name__ == "__main__":
     # define neural architecture for the solution mapping
     func = nm.modules.blocks.MLP(insize=num_vars, outsize=num_vars, bias=True,
                                  linear_map=nm.slim.maps["linear"], nonlin=nn.ReLU, hsizes=[80]*4)
-    # define solver for solution
-    #from model.func import solverWrapper
-    #func = solverWrapper(model)
     # solution map from model parameters: sol_map(p) -> x
     sol_map = nm.system.Node(func, ["p"], ["x_bar"], name="smap")
 
@@ -151,7 +163,7 @@ if __name__ == "__main__":
 
     # training
     lr = 0.001    # step size for gradient descent
-    epochs = 4#00  # number of training epochs
+    epochs = 400  # number of training epochs
     warmup = 50   # number of epochs to wait before enacting early stopping policy
     patience = 50 # number of epochs with no improvement in eval metric to allow before early stopping
     # set adamW as optimizer

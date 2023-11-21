@@ -46,7 +46,7 @@ class solPredGradProj(nn.Module):
         for k_in, k_out in zip(self.var_keys, self.output_keys):
             # new solution
             data[k_out] = self.residual * data[k_in] + out[:,:data[k_in].shape[1]+1]
-            # cut off out
+            # cut off used out
             out = out[:,data[k_in].shape[1]+1:]
         # proj
         if self.gradProj is not None:
@@ -61,6 +61,21 @@ class solPredGradProj(nn.Module):
             violations.append(violation.reshape(violation.shape[0], -1))
         energy = torch.mean(torch.abs(torch.cat(violations, dim=-1)), dim=1)
         return energy
+
+    def freeze(self):
+        """
+        Freezes the parameters of the callable in this node
+        """
+        for param in self.layers.parameters():
+            param.requires_grad = False
+
+    def unfreeze(self):
+        """
+        Unfreezes the parameters of the callable in this node
+        """
+        for param in self.layers.parameters():
+            param.requires_grad = True
+
 
 
 if __name__ == "__main__":
@@ -125,7 +140,7 @@ if __name__ == "__main__":
 
     # proj x to feasible region
     layers_proj = netFC(input_dim=num_vars * 3, hidden_dims=[100] * 3, output_dim=num_vars)
-    num_steps = 5
+    num_steps = 10
     step_size = 0.1
     decay = 0.1
     grad_proj = gradProj(constraints=constrs_bar, input_keys=["x_bar"],
