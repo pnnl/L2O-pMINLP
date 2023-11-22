@@ -2,13 +2,34 @@ import torch
 from torch import nn
 from torch.autograd import Function
 
+class thresholdBinarize(nn.Module):
+    """
+    smoothly rounds the elements in `x` based on the corresponding values in `threshold`
+    using a sigmoid function.
+    """
+    def __init__(self, slope=10):
+        super(thresholdBinarize, self).__init__()
+        self.slope = slope
+
+    def forward(self, x, threshold):
+        # ensure the threshold_tensor values are between 0 and 1
+        threshold = torch.clamp(threshold, 0, 1)
+        # hard rounding
+        hard_round = (x >= threshold).float()
+        # calculate the difference and apply the sigmoid function
+        diff = self.slope * (x - threshold)
+        smoothed_round = torch.sigmoid(diff)
+        # return with STE grad
+        return hard_round + (smoothed_round - smoothed_round.detach())
+
+
 class diffGumbelBinarize(nn.Module):
     """
     An autograd model to binarize numbers under Gumbel-Softmax trick
     """
     def __init__(self, temperature=1.0):
-        self.temperature = temperature
         super(diffGumbelBinarize, self).__init__()
+        self.temperature = temperature
 
     def forward(self, x):
         # train mode
@@ -146,6 +167,17 @@ class _solverFuncFakeGrad(Function):
 
 
 if __name__ == "__main__":
+
+    x = torch.tensor([0.2, 0.5, 0.8])
+    v = torch.tensor([0.3, 0.5, 0.7], requires_grad=True)
+    round_func = thresholdBinarize()
+    print("Input tensor:", x)
+    print("Threshold:", v)
+    res = round_func(x, v)
+    print(res)
+    res.backward(torch.ones_like(res))
+    print("Grad:", v.grad)
+    print()
 
     # input tensor
     x = torch.tensor([[-1.2, -0.5, 0.0, 0.5, 1.2]], requires_grad=True)
