@@ -1,5 +1,5 @@
 import random
-#import yfinance as yf
+import yfinance as yf
 import pandas as pd
 from sklearn.model_selection import train_test_split
 import torch
@@ -65,28 +65,28 @@ def getDatasetMarkowitz(num_data, num_vars, test_size=0, val_size=0, random_stat
     return exp_returns, cov_matrix, datasets
 
 def genParamMarkowitz(num_data, num_vars, random_state=42):
-    # descriptive data on S&P 500
-    #sp500_url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-    #sp500_df = pd.read_html(sp500_url)[0]
-    # ticker symbol
-    #sp500_symbols = sp500_df['Symbol'].tolist()
-    # random selection
-    #local_random = random.Random(random_state)
-    #selected_stocks = local_random.sample(sp500_symbols, num_vars)
-    # daily closing prices
-    #data = yf.download(selected_stocks, start="2021-01-01", end="2022-01-01")["Close"]
-    # daily returns
-    #returns = data.pct_change().dropna()
     # expected returns
-    #exp_returns = returns.mean().values
+    #exp_returns = np.random.uniform(0.002, 0.01, num_vars)
     # covariance matrix
-    #cov_matrix = returns.cov().values
-    # expected returns
-    exp_returns = np.random.uniform(0.002, 0.01, num_vars)
-    # covariance matrix
-    A = np.random.rand(num_vars,num_vars)
+    #A = np.random.rand(num_vars,num_vars)
     # positive semi-definite matrix
-    cov_matrix = A @ A.T / 1000
+    #cov_matrix = A @ A.T / 1000
+    # descriptive data on S&P 500
+    sp500_url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
+    sp500_df = pd.read_html(sp500_url)[0]
+    # ticker symbol
+    sp500_symbols = sp500_df['Symbol'].tolist()
+    # random selection
+    local_random = random.Random(random_state)
+    selected_stocks = local_random.sample(sp500_symbols, num_vars)
+    # daily closing prices
+    data = yf.download(selected_stocks, start="2021-01-01", end="2022-01-01")["Close"]
+    # daily returns
+    returns = data.pct_change().dropna()
+    # expected returns
+    exp_returns = returns.mean().values
+    # covariance matrix
+    cov_matrix = returns.cov().values
     # parameters
     p_low, p_high = max(min(exp_returns),0), max(exp_returns)
     p_samples = torch.FloatTensor(num_data, 1).uniform_(p_low, p_high)
