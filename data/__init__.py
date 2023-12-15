@@ -1,1 +1,1 @@
-from data.dataset import getDatasetQradratic, getDatasetRosenbrock, getDatasetRatrigin, getDatasetMarkowitz
+from data.dataset import getDatasetQradratic, getDatasetRosenbrock, getDatasetRatrigin, getDatasetMarkowitz, getDatasetQradratic2

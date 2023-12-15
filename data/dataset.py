@@ -92,6 +92,55 @@ def genParamMarkowitz(num_data, num_vars, random_state=42):
     p_samples = torch.FloatTensor(num_data, 1).uniform_(p_low, p_high)
     return exp_returns, cov_matrix, {"p": p_samples}
 
+def getDatasetQradratic2(num_data, test_size=0, val_size=0, random_state=42):
+    # coefficients
+    c = torch.Tensor([[0.0200],
+                      [0.0300]])
+    Q = torch.Tensor([[0.0196, 0.0063],
+                      [0.0063, 0.0199]])
+    d = torch.Tensor([[-0.3000],
+                      [-0.3100]])
+    b = torch.Tensor([[0.417425],
+                      [3.582575],
+                      [0.413225],
+                      [0.467075],
+                      [1.090200],
+                      [2.909800],
+                      [1.000000]])
+    A = torch.Tensor([[ 1.0000,  0.0000],
+                      [-1.0000,  0.0000],
+                      [-0.0609,  0.0000],
+                      [-0.0064,  0.0000],
+                      [ 0.0000,  1.0000],
+                      [ 0.0000, -1.0000],
+                      [ 0.0000,  0.0000]])
+    E = torch.Tensor([[-1.0000,  0.0000],
+                      [-1.0000,  0.0000],
+                      [ 0.0000, -0.5000],
+                      [ 0.0000, -0.7000],
+                      [-0.6000,  0.0000],
+                      [-0.5000,  0.0000],
+                      [ 1.0000,  1.0000]])
+    F = torch.Tensor([[ 3.16515,  3.7546],
+                      [-3.16515, -3.7546],
+                      [ 0.17355, -0.2717],
+                      [ 0.06585,  0.4714],
+                      [ 1.81960, -3.2841],
+                      [-1.81960,  3.2841],
+                      [ 0.00000,  0.0000]])
+    # dictionary of parameters
+    paramdict = genParamQradratic2(num_data)
+    # dictionary datasets
+    datasets = getDataset(paramdict, test_size=test_size, val_size=val_size, random_state=random_state)
+    return c, Q, d, b, A, E, F, datasets
+
+
+def genParamQradratic2(num_data):
+    # data sample from uniform distribution
+    p_low, p_high = 0.0, 1.0
+    p_samples = torch.FloatTensor(num_data, 2).uniform_(p_low, p_high)
+    return {"p":p_samples}
+
 
 def getDataset(paramdict, test_size=0, val_size=0, random_state=42):
     datasets = {"train":None}
@@ -136,3 +185,13 @@ if __name__ == "__main__":
         print(len(dataset))
         print(dataset[0])
     print()
+
+    print("Quadratic 2")
+    c, Q, d, b, A, E, F, datasets = getDatasetQradratic2(num_data=100, random_state=42)
+    print("c:", c)
+    print("Q:", Q)
+    print("d:", d)
+    print("b:", b)
+    print("A:", A)
+    print("E:", E)
+    print("F:", F)
