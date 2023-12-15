@@ -94,7 +94,15 @@ class abcParamModel(ABC):
         model_new = copy.copy(self)
         # clone pyomo model
         model_new.model = model_new.model.clone()
-        model_new.x, model_new.cons = model_new.model.x, model_new.model.cons
+        # clone variables
+        model_new.x = {}
+        ind = 0
+        for v in model_new.model.component_objects(pe.Var, active=True):
+            for i in v:
+                model_new.x[ind] = v[i]
+                ind += 1
+        # clone constraints
+        model_new.cons = model_new.model.cons
         model_new.params = {param: getattr(model_new.model, param) for param in self.params}
         return model_new
 
