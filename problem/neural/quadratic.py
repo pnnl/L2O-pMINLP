@@ -32,11 +32,11 @@ def probQuadratic(x, p, num_vars, alpha=100):
         con.name = "c{}_l".format(i)
         constraints.append(con)
         # x[i] + x[i+1] - p[i] <= 5
-        con = alpha * (g >= 0)
+        con = alpha * (g <= 5)
         con.name = "c{}_u".format(i)
         constraints.append(con)
-    g = x[:, -1] - x[:, 0] - p[:, -1]
     # x[-1] - x[0] - p[-1] >= 0
+    g = x[:, -1] - x[:, 0] - p[:, -1]
     con = alpha * (g >= 0)
     con.name = "c{}_l".format(num_vars - 1)
     constraints.append(con)
@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
     # init
     num_data = 5000   # number of data
-    num_vars = 10     # number of decision variables
+    num_vars = 5      # number of decision variables
     num_ints = 5      # number of integer decision variables
     test_size = 1000  # number of test size
     val_size = 1000   # number of validation size
