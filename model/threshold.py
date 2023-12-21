@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 
 from model.func import thresholdBinarize, diffFloor
