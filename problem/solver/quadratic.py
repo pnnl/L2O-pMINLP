@@ -10,7 +10,7 @@ class exactQuadratic(abcParamModel):
     def __init__(self, n_vars=None, n_integers=0):
         super().__init__()
         # create model
-        m = pe.ConcreteModel()
+        m = pe.ConcreteModel("Quadratic")
         # parameters
         m.p = pe.Param(pe.RangeSet(0, n_vars-1), default=0, mutable=True)
         # variables
@@ -33,8 +33,9 @@ class exactQuadratic(abcParamModel):
         # constraints
         m.cons = pe.ConstraintList()
         for i in range(n_vars-1):
-            m.cons.add(m.x[i] + m.x[(i+1)] - m.p[i] >= 0)
-            m.cons.add(m.x[i] + m.x[(i+1)] - m.p[i] <= 5)
+            sign = (-1) ** i
+            m.cons.add(m.x[i] + sign * m.x[(i+1)] - m.p[i] >= 0)
+            m.cons.add(m.x[i] + sign * m.x[(i+1)] - m.p[i] <= 5)
         m.cons.add(m.x[n_vars-1] - m.x[0] - m.p[n_vars-1] >= 0)
         m.cons.add(m.x[n_vars-1] - m.x[0] - m.p[n_vars-1] <= 5)
         # attribute

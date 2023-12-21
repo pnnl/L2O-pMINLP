@@ -26,7 +26,8 @@ def probQuadratic(x, p, num_vars, alpha=100):
     # constraints
     constraints = []
     for i in range(num_vars - 1):
-        g = x[:, i] + x[:, i + 1] - p[:, i]
+        sign = (-1) ** i
+        g = x[:, i] + sign * x[:, i + 1] - p[:, i]
         # x[i] + x[i+1] - p[i] >= 0
         con = alpha * (g >= 0)
         con.name = "c{}_l".format(i)
@@ -35,8 +36,8 @@ def probQuadratic(x, p, num_vars, alpha=100):
         con = alpha * (g <= 5)
         con.name = "c{}_u".format(i)
         constraints.append(con)
-    # x[-1] - x[0] - p[-1] >= 0
     g = x[:, -1] - x[:, 0] - p[:, -1]
+    # x[-1] - x[0] - p[-1] >= 0
     con = alpha * (g >= 0)
     con.name = "c{}_l".format(num_vars - 1)
     constraints.append(con)
