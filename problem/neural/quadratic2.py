@@ -81,8 +81,8 @@ if __name__ == "__main__":
     problem = nnQuadratic2(c, Q, d, b, A, E, F, func, alpha=100)
 
     # training
-    lr = 0.01    # step size for gradient descent
-    epochs = 200   # number of training epochs
+    lr = 0.001    # step size for gradient descent
+    epochs = 20   # number of training epochs
     warmup = 50   # number of epochs to wait before enacting early stopping policy
     patience = 50 # number of epochs with no improvement in eval metric to allow before early stopping
     # set adamW as optimizer
@@ -110,7 +110,7 @@ if __name__ == "__main__":
     print("Ipopt:")
     from problem.solver import exactQuadratic2
     c, Q, d, b, A, E, F = c.cpu().numpy(), Q.cpu().numpy(), d.cpu().numpy(), b.cpu().numpy(), A.cpu().numpy(), E.cpu().numpy(), F.cpu().numpy()
-    model = exactQuadratic2(c, Q, d, b, A, E, F)
+    model = exactQuadratic2(c, Q, d, b, A, E, F).relax()
     model.setParamValue(*p)
     test.solverTest(model, solver="ipopt")
 
