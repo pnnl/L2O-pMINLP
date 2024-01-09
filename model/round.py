@@ -111,7 +111,7 @@ if __name__ == "__main__":
 
     # init
     num_data = 5000   # number of data
-    num_vars = 10     # number of decision variables
+    num_vars = 5      # number of decision variables
     num_ints = 5      # number of integer decision variables
     test_size = 1000  # number of test size
     val_size = 1000   # number of validation size
