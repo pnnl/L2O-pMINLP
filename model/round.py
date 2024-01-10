@@ -1,8 +1,8 @@
 import torch
 from torch import nn
 
-from model.func import diffFloor, diffBinarize, diffGumbelBinarize
-from model.layer import netFC
+from func import diffFloor, diffBinarize, diffGumbelBinarize
+from layer import netFC
 
 
 class roundModel(nn.Module):
@@ -96,6 +96,12 @@ class roundGumbelModel(roundModel):
 
 if __name__ == "__main__":
 
+    # add system path
+    import sys
+    import os
+    sys.path.append(os.path.abspath("."))
+    sys.path.append(os.path.abspath(".."))
+
     import numpy as np
     import torch
     from torch import nn
@@ -137,8 +143,8 @@ if __name__ == "__main__":
     x_rnd = nm.constraint.variable("x_rnd")
     # model
     from problem.neural import probQuadratic
-    obj_bar, constrs_bar = probQuadratic(x_bar, p, num_vars=10, alpha=100)
-    obj_rnd, constrs_rnd = probQuadratic(x_rnd, p, num_vars=10, alpha=100)
+    obj_bar, constrs_bar = probQuadratic(x_bar, p, num_vars=num_vars, alpha=100)
+    obj_rnd, constrs_rnd = probQuadratic(x_rnd, p, num_vars=num_vars, alpha=100)
 
     # define neural architecture for the solution mapping
     func = nm.modules.blocks.MLP(insize=num_vars, outsize=num_vars, bias=True,
@@ -179,11 +185,11 @@ if __name__ == "__main__":
     print("Parameters p:", list(p[0]))
     print()
 
-    # get solution from Ipopt
-    print("Ipopt:")
+    # get relaxed solution
+    print("Relaxed:")
     model_rel = model.relax()
     model_rel.setParamValue(*p[0])
-    xval, _ = test.solverTest(model_rel, solver="ipopt")
+    xval, _ = test.solverTest(model_rel, solver="scip")
 
     # rounding
     print("Round:")
@@ -193,9 +199,9 @@ if __name__ == "__main__":
     print("neuroMANCER:")
     datapoints = {"p": torch.tensor(p, dtype=torch.float32),
                   "name": "test"}
-    test.nmTest(problem, datapoints, model, x_name="test_x_rnd")
+    test.nmTest(problem, datapoints, model, x_name="test_x_bar")
 
-    # get solution from Ipopt
-    print("SCIP:")
+    # get exact solution
+    print("Exact:")
     model.setParamValue(*p[0])
     test.solverTest(model, solver="scip")

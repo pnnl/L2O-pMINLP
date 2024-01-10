@@ -168,6 +168,12 @@ class _solverFuncFakeGrad(Function):
 
 if __name__ == "__main__":
 
+    # add system path
+    import sys
+    import os
+    sys.path.append(os.path.abspath("."))
+    sys.path.append(os.path.abspath(".."))
+
     x = torch.tensor([0.2, 0.5, 0.8])
     v = torch.tensor([0.3, 0.5, 0.7], requires_grad=True)
     round_func = thresholdBinarize()
