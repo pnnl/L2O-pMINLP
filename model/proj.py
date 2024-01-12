@@ -3,7 +3,7 @@ from torch import nn
 from neuromancer.modules.solvers import GradientProjection as gradProj
 from neuromancer.gradients import gradient
 
-from layer import netFC
+from model.layer import netFC
 
 class solPredGradProj(nn.Module):
     """

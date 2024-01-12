@@ -1,8 +1,8 @@
 import torch
 from torch import nn
 
-from func import thresholdBinarize, diffFloor
-from layer import netFC
+from model.func import thresholdBinarize, diffFloor
+from model.layer import netFC
 
 
 class roundThresholdModel(nn.Module):

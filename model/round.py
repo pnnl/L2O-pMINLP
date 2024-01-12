@@ -1,8 +1,8 @@
 import torch
 from torch import nn
 
-from func import diffFloor, diffBinarize, diffGumbelBinarize
-from layer import netFC
+from model.func import diffFloor, diffBinarize, diffGumbelBinarize
+from model.layer import netFC
 
 
 class roundModel(nn.Module):
