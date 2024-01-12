@@ -4,8 +4,6 @@ from neuromancer.modules.solvers import GradientProjection as gradProj
 from model.round import roundModel
 
 def feasibilityPumpModel(params, getProb, sol_func, rnd_layer, int_ind, num_iters):
-    # init losses list
-    losses = []
     # init trainable components
     components = []
     # solution map from model parameters: sol_map(p) -> x
@@ -14,14 +12,14 @@ def feasibilityPumpModel(params, getProb, sol_func, rnd_layer, int_ind, num_iter
     x_bar = nm.constraint.variable("x_bar_0") # variables
     obj_bar, constrs_bar = getProb(x_bar, *params) # obj & constr
     loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar) # penalty loss
-    losses = loss
+    # get problem
+    problem_rel = nm.problem.Problem([sol_map], loss)
     # feasibility pump iterations
     for i in range(num_iters):
         # rounding step
         x_rnd = nm.constraint.variable("x_rnd_{}".format(i)) # variables
         obj_rnd, constrs_rnd = getProb(x_rnd, *params) # obj & constr
-        loss = nm.loss.PenaltyLoss(obj_rnd, constrs_rnd) # penalty loss
-        losses += loss
+        loss += nm.loss.PenaltyLoss(obj_rnd, constrs_rnd) # penalty loss
         round_func = roundModel(layers=rnd_layer, param_keys=["p"],
                                 var_keys=["x_bar_{}".format(i)],
                                 output_keys=["x_rnd_{}".format(i)],
@@ -41,8 +39,8 @@ def feasibilityPumpModel(params, getProb, sol_func, rnd_layer, int_ind, num_iter
     # last step: rounding
     x_rnd = nm.constraint.variable("x_rnd") # variables
     obj_rnd, constrs_rnd = getProb(x_rnd, *params) # obj & constr
-    loss = nm.loss.PenaltyLoss(obj_rnd, constrs_rnd) # penalty loss
-    losses += loss
+    loss += nm.loss.PenaltyLoss(obj_rnd, constrs_rnd) # penalty loss
+    #losses += loss
     round_func = roundModel(layers=rnd_layer, param_keys=["p"],
                             var_keys=["x_bar_{}".format(i+1)],
                             output_keys=["x_rnd"],
@@ -50,8 +48,8 @@ def feasibilityPumpModel(params, getProb, sol_func, rnd_layer, int_ind, num_iter
                             name="round")
     components.append(round_func)
     # get problem
-    problem = nm.problem.Problem(components, losses, grad_inference=True)
-    return problem
+    problem_fp = nm.problem.Problem(components, loss, grad_inference=True)
+    return problem_rel, problem_fp
 
 
 if __name__ == "__main__":
