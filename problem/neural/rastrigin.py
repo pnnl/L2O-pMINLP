@@ -1,5 +1,6 @@
 import math
 
+import torch
 import neuromancer as nm
 
 def nnRastrigin(num_vars, func, alpha=100):
