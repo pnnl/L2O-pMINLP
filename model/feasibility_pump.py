@@ -24,7 +24,7 @@ def feasibilityPumpModel(input_keys, getProb, sol_func, rnd_layer, int_ind, num_
         x_rnd = nm.constraint.variable("x_rnd_{}".format(i)) # variables
         obj_rnd, constrs_rnd = getProb(x_rnd, *params) # obj & constr
         loss += nm.loss.PenaltyLoss(obj_rnd, constrs_rnd) # penalty loss
-        round_func = roundModel(layers=rnd_layer, param_keys=["p"],
+        round_func = roundModel(layers=rnd_layer, param_keys=input_keys,
                                 var_keys=["x_bar_{}".format(i)],
                                 output_keys=["x_rnd_{}".format(i)],
                                 int_ind={"x_bar_{}".format(i):int_ind},
@@ -45,7 +45,7 @@ def feasibilityPumpModel(input_keys, getProb, sol_func, rnd_layer, int_ind, num_
     obj_rnd, constrs_rnd = getProb(x_rnd, *params) # obj & constr
     loss += nm.loss.PenaltyLoss(obj_rnd, constrs_rnd) # penalty loss
     #losses += loss
-    round_func = roundModel(layers=rnd_layer, param_keys=["p"],
+    round_func = roundModel(layers=rnd_layer, param_keys=input_keys,
                             var_keys=["x_bar_{}".format(i+1)],
                             output_keys=["x_rnd"],
                             int_ind={"x_bar_{}".format(i+1):int_ind},
@@ -112,4 +112,4 @@ if __name__ == "__main__":
     p = nm.constraint.variable("p")
 
     # feasibility pump model
-    feasibilityPumpModel([p], getProb, sol_func, rnd_layer, int_ind=model.intInd, num_iters=10)
+    feasibilityPumpModel(["p", "a"], getProb, sol_func, rnd_layer, int_ind=model.intInd, num_iters=10)
