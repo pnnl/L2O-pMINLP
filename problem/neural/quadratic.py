@@ -19,11 +19,9 @@ def nnQuadratic(num_vars, func, alpha=100):
 
 
 def probQuadratic(x, p, num_vars, alpha=100):
-    # name as uid
-    name = x.key
     # objective function
     f = sum(x[:, i] ** 2 for i in range(num_vars))
-    obj = f.minimize(weight=1.0, name="obj_"+name)
+    obj = f.minimize(weight=1.0, name="obj_")
     objectives = [obj]
     # constraints
     constraints = []
@@ -32,20 +30,20 @@ def probQuadratic(x, p, num_vars, alpha=100):
         g = x[:, i] + sign * x[:, i + 1] - p[:, i]
         # x[i] + x[i+1] - p[i] >= 0
         con = alpha * (g >= 0)
-        con.name = "c{}_l_".format(i) + name
+        con.name = "c{}_l".format(i)
         constraints.append(con)
         # x[i] + x[i+1] - p[i] <= 5
         con = alpha * (g <= 5)
-        con.name = "c{}_u_".format(i) + name
+        con.name = "c{}_u".format(i)
         constraints.append(con)
     g = x[:, -1] - x[:, 0] - p[:, -1]
     # x[-1] - x[0] - p[-1] >= 0
     con = alpha * (g >= 0)
-    con.name = "c{}_l_".format(num_vars - 1) + name
+    con.name = "c{}_l".format(num_vars - 1)
     constraints.append(con)
     # x[-1] - x[0] - p[-1] <= 5
     con = alpha * (g <= 5)
-    con.name = "c{}_u_".format(num_vars - 1) + name
+    con.name = "c{}_u".format(num_vars - 1)
     constraints.append(con)
     return objectives, constraints
 
