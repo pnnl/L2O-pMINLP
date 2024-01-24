@@ -1,6 +1,6 @@
 import neuromancer as nm
 
-def nnRosenBrock(num_vars, func, alpha=100):
+def nnRosenbrock(num_vars, func, alpha=100):
     # features from parameters: z := <p, a>
     feat = nm.system.Node(lambda p, a: torch.cat([p, a], dim=-1), ["p", "a"], ["z"], name="feat")
     # solution map from model parameters: sol_map(z) -> x
@@ -13,7 +13,7 @@ def nnRosenBrock(num_vars, func, alpha=100):
     # variables
     x = nm.constraint.variable("x")
     # obj & constr
-    obj, constrs = probRosenBrock(x, p, a, num_vars, alpha)
+    obj, constrs = probRosenbrock(x, p, a, num_vars, alpha)
     # merit loss function
     loss = nm.loss.PenaltyLoss(obj, constrs)
     # optimization solver
@@ -21,7 +21,7 @@ def nnRosenBrock(num_vars, func, alpha=100):
     return problem
 
 
-def probRosenBrock(x, p, a, num_vars, alpha=100):
+def probRosenbrock(x, p, a, num_vars, alpha=100):
     # objective function
     f = sum((1 - x[:, i]) ** 2 + a[:, i] * (x[:, i + 1] - x[:, i] ** 2) ** 2 for i in range(num_vars-1))
     obj = f.minimize(weight=1.0, name="obj")
@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
 
     # get solver
-    problem = nnRosenBrock(num_vars, func, alpha=100)
+    problem = nnRosenbrock(num_vars, func, alpha=100)
 
     # training
     lr = 0.001    # step size for gradient descent
@@ -127,4 +127,3 @@ if __name__ == "__main__":
                  "a": torch.tensor([list(a)], dtype=torch.float32),
                  "name":"test"}
     test.nmTest(problem, datapoint, model)
-
