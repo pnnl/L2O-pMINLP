@@ -3,11 +3,15 @@ from neuromancer.modules.solvers import GradientProjection as gradProj
 
 from model.round import roundModel
 
-def feasibilityPumpModel(params, getProb, sol_func, rnd_layer, int_ind, num_iters):
+def feasibilityPumpModel(input_keys, getProb, sol_func, rnd_layer, int_ind, num_iters):
     # init trainable components
     components = []
+    # parameters
+    params = []
+    for key in input_keys:
+        params.append(nm.constraint.variable(key))
     # solution map from model parameters: sol_map(p) -> x
-    sol_map = nm.system.Node(sol_func, ["p"], ["x_bar_0"], name="smap") # mapping
+    sol_map = nm.system.Node(sol_func, input_keys, ["x_bar_0"], name="smap") # mapping
     components.append(sol_map)
     x_bar = nm.constraint.variable("x_bar_0") # variables
     obj_bar, constrs_bar = getProb(x_bar, *params) # obj & constr
