@@ -15,7 +15,7 @@ class abcParamModel(ABC):
         pass
 
     @property
-    def intInd(self):
+    def int_ind(self):
         int_ind = []
         for i in self.x:
             if self.x[i].domain is pe.Integers:
