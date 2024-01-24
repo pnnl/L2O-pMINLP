@@ -19,6 +19,7 @@ def nnQuadratic(num_vars, func, alpha=100):
 
 
 def probQuadratic(x, p, num_vars, alpha=100):
+    # name as uid
     name = x.key
     # objective function
     f = sum(x[:, i] ** 2 for i in range(num_vars))
