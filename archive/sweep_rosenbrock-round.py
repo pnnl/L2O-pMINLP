@@ -111,7 +111,7 @@ def train():
 
         # eval
         sols, objvals, conviols, elapseds = [], [], [], []
-        for p in tqdm(p_test):
+        for p, a in tqdm(list(zip(p_test, a_test))):
             datapoints = {"p": torch.tensor(np.array([p]), dtype=torch.float32),
                           "a":torch.tensor(np.array([a]), dtype=torch.float32),
                           "name": "test"}
