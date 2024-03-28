@@ -1,5 +1,5 @@
 """
-Parametric Mixed Integer Quadratic Programming with SCIP
+Parametric Mixed Integer Nonlinear Programming with SCIP
 """
 
 from abc import ABC, abstractmethod
