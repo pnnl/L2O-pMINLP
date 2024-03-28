@@ -17,7 +17,7 @@ class rosenbrock(abcParamSolver):
         # variables
         m.x = {}
         # discrete
-        m.x_int = pe.Var(pe.RangeSet(0, n_integers-1), domain=pe.Integers)
+        m.x_int = pe.Var(pe.RangeSet(0, n_integers-1), domain=pe.Binary)
         for i in range(n_integers):
             m.x[i] = m.x_int[i]
         # continuous
