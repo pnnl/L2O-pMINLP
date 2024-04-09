@@ -7,25 +7,25 @@ from pyomo import environ as pe
 from src.problem.math_solver import abcParamSolver
 
 class rosenbrock(abcParamSolver):
-    def __init__(self, n_vars, n_integers=0):
+    def __init__(self, num_vars, num_integers=0):
         super().__init__()
         # create model
         m = pe.ConcreteModel()
         # parameters
         m.p = pe.Param(pe.RangeSet(0, 0), default=0, mutable=True)
-        m.a = pe.Param(pe.RangeSet(0, n_vars-2), default=0, mutable=True)
+        m.a = pe.Param(pe.RangeSet(0, num_vars-2), default=0, mutable=True)
         # variables
         m.x = {}
         # discrete
-        m.x_int = pe.Var(pe.RangeSet(0, n_integers-1), domain=pe.Binary)
-        for i in range(n_integers):
+        m.x_int = pe.Var(pe.RangeSet(0, num_integers-1), domain=pe.Binary)
+        for i in range(num_integers):
             m.x[i] = m.x_int[i]
         # continuous
-        m.x_real = pe.Var(pe.RangeSet(n_integers, n_vars-1), domain=pe.Reals)
-        for i in range(n_integers, n_vars):
+        m.x_real = pe.Var(pe.RangeSet(num_integers, num_vars-1), domain=pe.Reals)
+        for i in range(num_integers, num_vars):
             m.x[i] = m.x_real[i]
         # objective
-        obj = sum((1 - m.x[i]) ** 2 + m.a[i] * (m.x[i+1] - m.x[i] ** 2) ** 2 for i in range(n_vars-1))
+        obj = sum((1 - m.x[i]) ** 2 + m.a[i] * (m.x[i+1] - m.x[i] ** 2) ** 2 for i in range(num_vars-1))
         m.obj = pe.Objective(sense=pe.minimize, expr=obj)
         # constraints
         m.cons = pe.ConstraintList()
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     p, a = 1.2, (0.4, 0.8)
     params = {"p":p, "a":a}
     # init model
-    model = rosenbrock(n_vars=3, n_integers=2)
+    model = rosenbrock(num_vars=3, num_integers=2)
 
     # solve the MIQP
     print("======================================================")
