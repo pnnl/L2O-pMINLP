@@ -7,11 +7,9 @@ from abc import ABC, abstractmethod
 import neuromancer as nm
 
 class abcNMProblem(nm.problem.Problem, ABC):
-    def __init__(self, vars, params, func, penalty_weight):
+    def __init__(self, vars, params, components, penalty_weight):
         # weight for penalty
         self.penalty_weight = penalty_weight
-        # solution map from model parameters: sol_map(p) -> x
-        sol_map = nm.system.Node(func, params, vars, name="smap")
         # mutable parameters
         self.params = {}
         for p in params:
@@ -26,7 +24,7 @@ class abcNMProblem(nm.problem.Problem, ABC):
         # merit loss function
         loss = nm.loss.PenaltyLoss([obj], constrs)
         # optimization solver
-        super().__init__([sol_map], loss)
+        super().__init__(components, loss)
 
     @abstractmethod
     def getObj(self, vars, params):

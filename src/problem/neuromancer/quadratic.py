@@ -11,7 +11,7 @@ import neuromancer as nm
 from src.problem.neuromancer import abcNMProblem
 
 class quadratic(abcNMProblem):
-    def __init__(self, vars, params, func, penalty_weight):
+    def __init__(self, vars, params, components, penalty_weight):
         # define the coefficients for the quadratic problem
         self.c = [0.0200,
                   0.0300]
@@ -48,7 +48,8 @@ class quadratic(abcNMProblem):
                   [-1.81960,  3.2841],
                   [ 0.00000,  0.0000]]
         # init
-        super().__init__(vars=vars, params=params, func=func, penalty_weight=penalty_weight)
+        super().__init__(vars=vars, params=params,
+                         components=components, penalty_weight=penalty_weight)
 
     def getObj(self, vars, params):
         """
@@ -117,13 +118,14 @@ if __name__ == "__main__":
     loader_dev   = DataLoader(data_dev, batch_size=32, num_workers=0,
                               collate_fn=data_dev.collate_fn, shuffle=True)
 
-    # define neural architecture for the solution map
+    # define neural architecture for the solution map smap(p) -> x
     import neuromancer as nm
     func = nm.modules.blocks.MLP(insize=2, outsize=4, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[10]*4)
+    components = [nm.system.Node(func, ["p"], ["x"], name="smap")]
     # build neuromancer problem
-    problem = quadratic(vars=["x"], params=["p"], func=func, penalty_weight=100)
+    problem = quadratic(vars=["x"], params=["p"], components=components, penalty_weight=100)
 
     # training
     lr = 0.001    # step size for gradient descent

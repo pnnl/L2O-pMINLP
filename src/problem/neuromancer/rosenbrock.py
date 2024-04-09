@@ -8,10 +8,10 @@ import neuromancer as nm
 from src.problem.neuromancer import abcNMProblem
 
 class rosenbrock(abcNMProblem):
-    def __init__(self, num_vars, vars, params, func, penalty_weight):
+    def __init__(self, num_vars, vars, params, components, penalty_weight):
         # init
         self.num_vars = num_vars
-        super().__init__(vars=vars, params=params, func=func, penalty_weight=penalty_weight)
+        super().__init__(vars=vars, params=params, components=components, penalty_weight=penalty_weight)
 
     def getObj(self, vars, params):
         """
@@ -87,14 +87,15 @@ if __name__ == "__main__":
     loader_dev   = DataLoader(data_dev, batch_size=32, num_workers=0,
                               collate_fn=data_dev.collate_fn, shuffle=True)
 
-    # define neural architecture for the solution map
+    # define neural architecture for the solution map smap(p, a) -> x
     import neuromancer as nm
     func = nm.modules.blocks.MLP(insize=num_vars, outsize=num_vars, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[10]*4)
+    components = [nm.system.Node(func, ["p", "a"], ["x"], name="smap")]
     # build neuromancer problem
     problem = rosenbrock(num_vars=num_vars, vars=["x"], params=["p", "a"],
-                         func=func, penalty_weight=100)
+                         components=components, penalty_weight=100)
 
     # training
     lr = 0.001    # step size for gradient descent
