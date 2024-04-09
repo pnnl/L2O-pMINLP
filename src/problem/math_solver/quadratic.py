@@ -53,18 +53,19 @@ class quadratic(abcParamSolver):
         # mutable parameters (parametric part of the problem)
         m.p = pe.Param(pe.RangeSet(0, 1), default=0, mutable=True)
         # decision variables
-        m.x = pe.Var(range(2), domain=pe.NonNegativeReals) # continuous variables
-        m.y = pe.Var(range(2), domain=pe.Binary) # binary variables
+        domains = [pe.NonNegativeReals] * 2 + [pe.Binary] * 2
+        m.x = pe.Var(range(4), domain=lambda m, i: pe.NonNegativeReals if i < 2 else pe.Binary)
         # objective function C^T x + 1/2 x^T Q x + d^T y
         obj = sum(c[i] * m.x[i] for i in range(2)) \
             + 0.5 * sum(Q[i, j] * m.x[i] * m.x[j] for i in range(2) for j in range(2)) \
-            + sum(d[i] * m.y[i] for i in range(2))
+            + sum(d[i] * m.x[i+2] for i in range(2))
         m.obj = pe.Objective(sense=pe.minimize, expr=obj)
         # constraints
         m.cons = pe.ConstraintList()
         for i in range(7):
             # LHS: Ax + Ey
-            lhs = sum(A[i, j] * m.x[j] for j in range(2)) + sum(E[i, j] * m.y[j] for j in range(2))
+            lhs = sum(A[i, j] * m.x[j] for j in range(2)) \
+                + sum(E[i, j] * m.x[j+2] for j in range(2))
             # RHS: b + FP
             rhs = b[i] + F[i,0] * m.p[0] + F[i,1] * m.p[1]
             # Ax + Ey <= b + FP
@@ -72,7 +73,7 @@ class quadratic(abcParamSolver):
         # set attributes
         self.model = m
         self.params ={"p":m.p}
-        self.vars = {"x":m.x, "y":m.y}
+        self.vars = {"x":m.x}
         self.cons = m.cons
 
 if __name__ == "__main__":
