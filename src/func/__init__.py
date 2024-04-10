@@ -1,1 +1,1 @@
-from src.func.rnd import roundModel, roundGumbelModel
+from src.func.rnd import roundModel, roundGumbelModel, roundThresholdModel
