@@ -12,14 +12,14 @@ class roundModel(nn.Module):
     """
     Learnable model to round integer variables
     """
-    def __init__(self, layers, param_keys, var_keys,
+    def __init__(self, layers, param_keys, var_keys, output_keys=[],
                  int_ind=defaultdict(list), bin_ind=defaultdict(list),
                  continuous_update=False, tolerance=1e-3, name=None):
         super(roundModel, self).__init__()
         # data keys
         self.param_keys, self.var_keys = param_keys, var_keys
         self.input_keys = self.param_keys + self.var_keys
-        self.output_keys = self.var_keys
+        self.output_keys = output_keys if output_keys else self.var_keys
         # index of integer and binary variables
         self.int_ind = int_ind
         self.bin_ind = bin_ind
@@ -52,12 +52,12 @@ class roundModel(nn.Module):
 
     def _processRounding(self, h, data):
         output_data = {}
-        for key in self.var_keys:
+        for inkey, outkey in zip(self.var_keys, self.output_keys):
             # get rounding
-            x_rnd = self._roundVars(h, data, key)
-            output_data[key] = x_rnd
+            x_rnd = self._roundVars(h, data, inkey)
+            output_data[outkey] = x_rnd
             # cut off used h
-            h = h[:,data[key].shape[1]+1:]
+            h = h[:,data[inkey].shape[1]+1:]
         return output_data
 
     def _roundVars(self, h, data, key):
@@ -111,11 +111,11 @@ class roundGumbelModel(roundModel):
     """
     Learnable model to round integer variables with Gumbel-Softmax trick
     """
-    def __init__(self, layers,param_keys, var_keys,
+    def __init__(self, layers,param_keys, var_keys, output_keys=[],
                  int_ind=defaultdict(list), bin_ind=defaultdict(list),
                  continuous_update=False, temperature=1.0, tolerance=1e-3, name=None):
         super(roundGumbelModel, self).__init__(layers, param_keys, var_keys,
-                                               int_ind, bin_ind,
+                                               output_keys, int_ind, bin_ind,
                                                continuous_update, tolerance, name)
         # random temperature
         self.temperature = temperature
@@ -127,11 +127,12 @@ class roundThresholdModel(roundModel):
     """
     Learnable model to round integer variables with variable threshold
     """
-    def __init__(self, layers, param_keys, var_keys,
+    def __init__(self, layers, param_keys, var_keys,output_keys=[],
                  int_ind=defaultdict(list), bin_ind=defaultdict(list),
                  continuous_update=False, slope=10, name=None):
         super(roundThresholdModel, self).__init__(layers, param_keys, var_keys,
-                                                  int_ind, bin_ind, continuous_update,
+                                                  output_keys, int_ind, bin_ind,
+                                                  continuous_update,
                                                   tolerance=None, name=name)
         # slope
         self.slope= slope
@@ -211,18 +212,18 @@ if __name__ == "__main__":
     # define rounding model
     from src.func.layer import netFC
     layers_rnd = netFC(input_dim=6, hidden_dims=[20]*3, output_dim=4)
-    #round_func = roundModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"],
-    #                        int_ind={"x":[2,3]}, continuous_update=False, name="round")
-    round_func = roundGumbelModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"],
-                                  int_ind={"x":[2,3]}, continuous_update=False, name="round")
-    #round_func = roundThresholdModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"],
+    round_func = roundModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"], output_keys=["x_rnd"],
+                            int_ind={"x":[2,3]}, continuous_update=False, name="round")
+    #round_func = roundGumbelModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"], output_keys=["x_rnd"],
+    #                              int_ind={"x":[2,3]}, continuous_update=False, name="round")
+    #round_func = roundThresholdModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"], output_keys=["x_rnd"],
     #                                 int_ind={"x":[2,3]}, continuous_update=False, name="round")
 
 
     # build neuromancer problem
     from src.problem import nmQuadratic
     components = [smap, round_func]
-    problem = nmQuadratic(vars=["x"], params=["p"], components=components, penalty_weight=100)
+    problem = nmQuadratic(vars=["x_rnd"], params=["p"], components=components, penalty_weight=100)
 
     # training
     lr = 0.001    # step size for gradient descent
