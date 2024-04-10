@@ -23,7 +23,7 @@ def msSolveTest(model, tee=False):
     return solvals, objval
 
 
-def nmSolveTest(problem, datapoint, model):
+def nmSolveTest(var_keys, problem, datapoint, model):
     """
     Test function for neuroMANCER
     """
@@ -31,12 +31,12 @@ def nmSolveTest(problem, datapoint, model):
     problem.eval()
     tick = time.time()
     output = problem(datapoint)
-    key_name = datapoint["name"] + "_" + list(problem.vars.keys())[0]
-    x = output[key_name]
     tock = time.time()
     # get values
-    for ind in model.vars["x"]:
-        model.vars["x"][ind].value = x[0, ind].item()
+    for k1, k2 in zip(model.vars, var_keys):
+        k2 = datapoint["name"] + "_" + k2
+        for i in model.vars[k1]:
+            model.vars[k1][i].value = output[k2][0, i].item()
     solvals, objval = model.getVal()
     # results
     print("Binary Variables:", model.binInd)

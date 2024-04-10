@@ -8,85 +8,91 @@ https://www.sciencedirect.com/science/article/pii/S1570794601801577
 import numpy as np
 import neuromancer as nm
 
-from src.problem.neuromancer import abcNMProblem
+def quadratic(var_keys, param_keys, penalty_weight):
+    # define the coefficients for the quadratic problem
+    c = [0.0200,
+         0.0300]
+    Q = [[0.0196, 0.0063],
+         [0.0063, 0.0199]]
+    d = [-0.3000,
+         -0.3100]
+    b = [0.417425,
+         3.582575,
+         0.413225,
+         0.467075,
+         1.090200,
+         2.909800,
+         1.000000]
+    A = [[ 1.0000,  0.0000],
+         [-1.0000,  0.0000],
+         [-0.0609,  0.0000],
+         [-0.0064,  0.0000],
+         [ 0.0000,  1.0000],
+         [ 0.0000, -1.0000],
+         [ 0.0000,  0.0000]]
+    E = [[-1.0000,  0.0000],
+         [-1.0000,  0.0000],
+         [ 0.0000, -0.5000],
+         [ 0.0000, -0.7000],
+         [-0.6000,  0.0000],
+         [-0.5000,  0.0000],
+         [ 1.0000,  1.0000]]
+    F = [[ 3.16515,  3.7546],
+         [-3.16515, -3.7546],
+         [ 0.17355, -0.2717],
+         [ 0.06585,  0.4714],
+         [ 1.81960, -3.2841],
+         [-1.81960,  3.2841],
+         [ 0.00000,  0.0000]]
+    # mutable parameters
+    params = {}
+    for p in param_keys:
+        params[p] = nm.constraint.variable(p)
+    # decision variables
+    vars = {}
+    for v in var_keys:
+        vars[v] = nm.constraint.variable(v)
+    obj = [getObj(vars, c, Q, d)]
+    constrs = getConstrs(vars, params, penalty_weight, b, A, E, F)
+    return obj, constrs
 
-class quadratic(abcNMProblem):
-    def __init__(self, vars, params, components, penalty_weight):
-        # define the coefficients for the quadratic problem
-        self.c = [0.0200,
-                  0.0300]
-        self.Q = [[0.0196, 0.0063],
-                  [0.0063, 0.0199]]
-        self.d = [-0.3000,
-                  -0.3100]
-        self.b = [0.417425,
-                  3.582575,
-                  0.413225,
-                  0.467075,
-                  1.090200,
-                  2.909800,
-                  1.000000]
-        self.A = [[ 1.0000,  0.0000],
-                  [-1.0000,  0.0000],
-                  [-0.0609,  0.0000],
-                  [-0.0064,  0.0000],
-                  [ 0.0000,  1.0000],
-                  [ 0.0000, -1.0000],
-                  [ 0.0000,  0.0000]]
-        self.E = [[-1.0000,  0.0000],
-                  [-1.0000,  0.0000],
-                  [ 0.0000, -0.5000],
-                  [ 0.0000, -0.7000],
-                  [-0.6000,  0.0000],
-                  [-0.5000,  0.0000],
-                  [ 1.0000,  1.0000]]
-        self.F = [[ 3.16515,  3.7546],
-                  [-3.16515, -3.7546],
-                  [ 0.17355, -0.2717],
-                  [ 0.06585,  0.4714],
-                  [ 1.81960, -3.2841],
-                  [-1.81960,  3.2841],
-                  [ 0.00000,  0.0000]]
-        # init
-        super().__init__(vars=vars, params=params,
-                         components=components, penalty_weight=penalty_weight)
 
-    def getObj(self, vars, params):
-        """
-        Get neuroMANCER objective component
-        """
-        # get decision variables
-        x, = vars.values()
-        # objective function C^T x + 1/2 x^T Q x + d^T y
-        f = sum(self.c[j] * x[:, j] for j in range(2)) \
-          + 0.5 * sum(self.Q[i][j] * x[:, i] * x[:, j] for i in range(2) for j in range(2)) \
-          + sum(self.d[j] * x[:, j+2] for j in range(2))
-        obj = f.minimize(weight=1.0, name="obj")
-        return obj
+def getObj(vars, c, Q, d):
+    """
+    Get neuroMANCER objective component
+    """
+    # get decision variables
+    x, = vars.values()
+    # objective function C^T x + 1/2 x^T Q x + d^T y
+    f = sum(c[j] * x[:, j] for j in range(2)) \
+      + 0.5 * sum(Q[i][j] * x[:, i] * x[:, j] for i in range(2) for j in range(2)) \
+      + sum(d[j] * x[:, j+2] for j in range(2))
+    obj = f.minimize(weight=1.0, name="obj")
+    return obj
 
-    def getConstrs(self, vars, params, penalty_weight):
-        """
-        Get neuroMANCER constraint component
-        """
-        # get decision variables
-        x, = vars.values()
-        # get mutable parameters
-        p, = params.values()
-        # constraints
-        constraints = []
-        for i in range(7):
-            lhs = sum(self.A[i][j] * x[:, j] for j in range(2)) \
-                + sum(self.E[i][j] * x[:, j+2] for j in range(2))
-            rhs = self.b[i] + self.F[i][0] * p[:, 0] + self.F[i][1] * p[:, 1]
-            con = penalty_weight * (lhs <= rhs)
-            con.name = "c{}".format(i)
-            constraints.append(con)
-        # nonnegative
-        for i in range(4):
-            con = penalty_weight * (x[:, i] >= 0)
-            con.name = "xl{}".format(i)
-            constraints.append(con)
-        return constraints
+def getConstrs(vars, params, penalty_weight, b, A, E, F):
+    """
+    Get neuroMANCER constraint component
+    """
+    # get decision variables
+    x, = vars.values()
+    # get mutable parameters
+    p, = params.values()
+    # constraints
+    constraints = []
+    for i in range(7):
+        lhs = sum(A[i][j] * x[:, j] for j in range(2)) \
+            + sum(E[i][j] * x[:, j+2] for j in range(2))
+        rhs = b[i] + F[i][0] * p[:, 0] + F[i][1] * p[:, 1]
+        con = penalty_weight * (lhs <= rhs)
+        con.name = "c{}".format(i)
+        constraints.append(con)
+    # nonnegative
+    for i in range(4):
+        con = penalty_weight * (x[:, i] >= 0)
+        con.name = "xl{}".format(i)
+        constraints.append(con)
+    return constraints
 
 if __name__ == "__main__":
 
@@ -118,14 +124,19 @@ if __name__ == "__main__":
     loader_dev   = DataLoader(data_dev, batch_size=32, num_workers=0,
                               collate_fn=data_dev.collate_fn, shuffle=True)
 
+    # get objective function & constraints
+    obj, constrs = quadratic(["x"], ["p"], penalty_weight=100)
+
     # define neural architecture for the solution map smap(p) -> x
     import neuromancer as nm
     func = nm.modules.blocks.MLP(insize=2, outsize=4, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[10]*4)
     components = [nm.system.Node(func, ["p"], ["x"], name="smap")]
+
     # build neuromancer problem
-    problem = quadratic(vars=["x"], params=["p"], components=components, penalty_weight=100)
+    loss = nm.loss.PenaltyLoss(obj, constrs)
+    problem = nm.problem.Problem(components, loss)
 
     # training
     lr = 0.001    # step size for gradient descent
@@ -157,4 +168,4 @@ if __name__ == "__main__":
     print("neuroMANCER:")
     datapoint = {"p": torch.tensor([[0.6, 0.8]], dtype=torch.float32),
                  "name":"test"}
-    nmSolveTest(problem, datapoint, model)
+    nmSolveTest(["x"], problem, datapoint, model)

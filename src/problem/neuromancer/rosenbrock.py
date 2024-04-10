@@ -5,54 +5,62 @@ Parametric Mixed Integer Rosenbrock Problem
 import numpy as np
 import neuromancer as nm
 
-from src.problem.neuromancer import abcNMProblem
+def rosenbrock(var_keys, param_keys, penalty_weight, num_vars):
+    # mutable parameters
+    params = {}
+    for p in param_keys:
+        params[p] = nm.constraint.variable(p)
+    # decision variables
+    vars = {}
+    for v in var_keys:
+        vars[v] = nm.constraint.variable(v)
+    obj = [getObj(vars, params, num_vars)]
+    constrs = getConstrs(vars, params, num_vars)
+    return obj, constrs
 
-class rosenbrock(abcNMProblem):
-    def __init__(self, num_vars, vars, params, components, penalty_weight):
-        # init
-        self.num_vars = num_vars
-        super().__init__(vars=vars, params=params, components=components, penalty_weight=penalty_weight)
 
-    def getObj(self, vars, params):
-        """
-        Get neuroMANCER objective component
-        """
-        # get decision variables
-        x, = vars.values()
-        # get mutable parameters
-        p, a = params.values()
-        # objective function sum (1 - x_i)^2 + a (x_i+1 - x_i^2)^2
-        f = sum((1 - x[:, i]) ** 2 + a[:, i] * (x[:, i + 1] - x[:, i] ** 2) ** 2
-                 for i in range(self.num_vars-1))
-        obj = f.minimize(weight=1.0, name="obj")
-        return obj
+def getObj(vars, params, num_vars):
+    """
+    Get neuroMANCER objective component
+    """
+    # get decision variables
+    x, = vars.values()
+    # get mutable parameters
+    p, a = params.values()
+    # objective function sum (1 - x_i)^2 + a (x_i+1 - x_i^2)^2
+    f = sum((1 - x[:, i]) ** 2 + a[:, i] * (x[:, i + 1] - x[:, i] ** 2) ** 2
+             for i in range(num_vars-1))
+    obj = f.minimize(weight=1.0, name="obj")
+    return obj
 
-    def getConstrs(self, vars, params, penalty_weight):
-        """
-        Get neuroMANCER constraint component
-        """
-        # get decision variables
-        x, = vars.values()
-        # get mutable parameters
-        p, a = params.values()
-        # constraints
-        constraints = []
-        # constraints 0:
-        g = sum((-1) ** i * x[:, i] for i in range(self.num_vars))
-        con = penalty_weight * (g >= 0)
-        con.name = "c0"
-        constraints.append(con)
-        # constraints 1:
-        g = sum(x[:, i] ** 2 for i in range(self.num_vars))
-        con = penalty_weight * (g >= p[:, 0] / 2)
-        con.name = "c1"
-        constraints.append(con)
-        # constraints 2:
-        g = sum(x[:, i] ** 2 for i in range(self.num_vars))
-        con = penalty_weight * (g <= p[:, 0])
-        con.name = "c2"
-        constraints.append(con)
-        return constraints
+
+def getConstrs(vars, params, penalty_weight):
+    """
+    Get neuroMANCER constraint component
+    """
+    # get decision variables
+    x, = vars.values()
+    # get mutable parameters
+    p, a = params.values()
+    # constraints
+    constraints = []
+    # constraints 0:
+    g = sum((-1) ** i * x[:, i] for i in range(num_vars))
+    con = penalty_weight * (g >= 0)
+    con.name = "c0"
+    constraints.append(con)
+    # constraints 1:
+    g = sum(x[:, i] ** 2 for i in range(num_vars))
+    con = penalty_weight * (g >= p[:, 0] / 2)
+    con.name = "c1"
+    constraints.append(con)
+    # constraints 2:
+    g = sum(x[:, i] ** 2 for i in range(num_vars))
+    con = penalty_weight * (g <= p[:, 0])
+    con.name = "c2"
+    constraints.append(con)
+    return constraints
+
 
 if __name__ == "__main__":
 
@@ -87,15 +95,19 @@ if __name__ == "__main__":
     loader_dev   = DataLoader(data_dev, batch_size=32, num_workers=0,
                               collate_fn=data_dev.collate_fn, shuffle=True)
 
+    # get objective function & constraints
+    obj, constrs = rosenbrock(["x"], ["p", "a"], penalty_weight=100, num_vars=num_vars)
+
     # define neural architecture for the solution map smap(p, a) -> x
     import neuromancer as nm
     func = nm.modules.blocks.MLP(insize=num_vars, outsize=num_vars, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[10]*4)
     components = [nm.system.Node(func, ["p", "a"], ["x"], name="smap")]
-    # build neuromancer problem
-    problem = rosenbrock(num_vars=num_vars, vars=["x"], params=["p", "a"],
-                         components=components, penalty_weight=100)
+
+    # build neuromancer problems
+    loss = nm.loss.PenaltyLoss(obj, constrs)
+    problem = nm.problem.Problem(components, loss)
 
     # training
     lr = 0.001    # step size for gradient descent
@@ -128,4 +140,4 @@ if __name__ == "__main__":
     datapoint = {"p": torch.tensor([[1.2]], dtype=torch.float32),
                  "a": torch.tensor([list(np.random.uniform(0.2, 1.2, num_vars-1))], dtype=torch.float32),
                  "name":"test"}
-    nmSolveTest(problem, datapoint, model)
+    nmSolveTest(["x"], problem, datapoint, model)

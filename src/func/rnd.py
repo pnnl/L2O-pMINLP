@@ -202,6 +202,10 @@ if __name__ == "__main__":
     loader_dev   = DataLoader(data_dev, batch_size=32, num_workers=0,
                               collate_fn=data_dev.collate_fn, shuffle=True)
 
+    # get objective function & constraints
+    from src.problem import nmQuadratic
+    obj, constrs = nmQuadratic(["x"], ["p"], penalty_weight=100)
+
     # define neural architecture for the solution map
     import neuromancer as nm
     func = nm.modules.blocks.MLP(insize=2, outsize=4, bias=True,
@@ -221,9 +225,9 @@ if __name__ == "__main__":
 
 
     # build neuromancer problem
-    from src.problem import nmQuadratic
     components = [smap, round_func]
-    problem = nmQuadratic(vars=["x_rnd"], params=["p"], components=components, penalty_weight=100)
+    loss = nm.loss.PenaltyLoss(obj, constrs)
+    problem = nm.problem.Problem(components, loss)
 
     # training
     lr = 0.001    # step size for gradient descent
@@ -255,4 +259,4 @@ if __name__ == "__main__":
     print("neuroMANCER:")
     datapoint = {"p": torch.tensor([[0.6, 0.8]], dtype=torch.float32),
                  "name":"test"}
-    nmSolveTest(problem, datapoint, model)
+    nmSolveTest(["x_rnd"], problem, datapoint, model)
