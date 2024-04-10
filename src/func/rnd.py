@@ -52,12 +52,12 @@ class roundModel(nn.Module):
 
     def _processRounding(self, h, data):
         output_data = {}
-        for inkey, outkey in zip(self.var_keys, self.output_keys):
+        for k_in, k_out in zip(self.var_keys, self.output_keys):
             # get rounding
-            x_rnd = self._roundVars(h, data, inkey)
-            output_data[outkey] = x_rnd
+            x_rnd = self._roundVars(h, data, k_in)
+            output_data[k_out] = x_rnd
             # cut off used h
-            h = h[:,data[inkey].shape[1]+1:]
+            h = h[:,data[k_in].shape[1]+1:]
         return output_data
 
     def _roundVars(self, h, data, key):
