@@ -7,6 +7,106 @@ from torch import nn
 from neuromancer.modules.solvers import GradientProjection as gradProj
 from neuromancer.gradients import gradient
 
+class solPredGradProj(nn.Module):
+    """
+    re-predict solution then project onto feasible region
+    """
+    def __init__(self, constraints, layers, param_keys, var_keys, output_keys=[],
+                 num_steps=10, step_size=0.1, decay=0.1, residual=True, name=None):
+        super(solPredGradProj, self).__init__()
+        # data keys
+        self.param_keys, self.var_keys = param_keys, var_keys
+        self.input_keys = self.param_keys + self.var_keys
+        self.output_keys = output_keys if output_keys else [self.var_key]
+        # flag to only predict residual of solution
+        self.residual = residual
+        # list of neuromancer constraints
+        self.constraints = constraints
+        # projection
+        self.num_steps = num_steps
+        self.step_size = step_size
+        self.decay = decay
+        self.gradProj = gradProj(constraints=self.constraints, input_keys=self.var_keys,
+                                 output_keys=self.output_keys, num_steps=self.num_steps,
+                                 step_size=self.step_size, decay=self.decay)
+        # sequence
+        self.layers = layers
+        # name
+        self.name = name
+
+    def forward(self, data):
+        # get vars & params
+        p, x = self._extractData(data)
+        # get grad of violation
+        energy, grads = self._calViolation(data)
+        # concatenate all features: params + sol + grads
+        f = torch.cat(p + x + grads, dim=-1)
+        # forward
+        h = self.layers(f)
+        data = self._updateSolutions(data, h)
+        # proj
+        data = self.gradProj(data)
+        return data
+
+    def _extractData(self, data):
+        """
+        Extract parameters and variables from the input data.
+        """
+        p = [data[k] for k in self.param_keys]
+        x = [data[k] for k in self.var_keys]
+        return p, x
+
+    def _calViolation(self, data):
+        """
+        Calculate the violation magnitude for constraints.
+        """
+        violations = []
+        # get violation magnitude
+        for constr in self.constraints:
+            output = constr(data)
+            violation = output[constr.output_keys[2]]
+            violations.append(violation.reshape(violation.shape[0], -1))
+        # calculate average
+        energy = torch.mean(torch.abs(torch.cat(violations, dim=-1)), dim=1)
+        # get grads
+        grads = []
+        for k in self.var_keys:
+            step = gradient(energy, data[k]).detach()
+            grads.append(step)
+        return energy, grads
+
+    def _updateSolutions(self, data, h):
+        """
+        Update solutions based on the model output and optionally
+        only consider the residual of the solution.
+        """
+        for k_in, k_out in zip(self.var_keys, self.output_keys):
+            # new solution
+            if self.residual:
+                # update the solution by adding the residual
+                data[k_out] = data[k_in] + h[:,:data[k_in].shape[1]]
+            else:
+                # update the solution by replacing the value
+                data[k_out] = data[k_in].clone()
+            # cut off used out
+            h = h[:,data[k_in].shape[1]:]
+        return data
+
+    def freeze(self):
+        """
+        Freezes the parameters of the callable in this node
+        """
+        for param in self.layers.parameters():
+            param.requires_grad = False
+
+    def unfreeze(self):
+        """
+        Unfreezes the parameters of the callable in this node
+        """
+        for param in self.layers.parameters():
+            param.requires_grad = True
+
+
 if __name__ == "__main__":
 
     import numpy as np
@@ -63,8 +163,12 @@ if __name__ == "__main__":
     num_steps = 10
     step_size = 0.1
     decay = 0.1
-    proj = gradProj(constraints=constrs_rnd, input_keys=["x_rnd"], output_keys=["x_bar"],
-                    num_steps=num_steps, step_size=step_size, decay=decay)
+    #proj = gradProj(constraints=constrs_rnd, input_keys=["x_rnd"], output_keys=["x_bar"],
+    #                num_steps=num_steps, step_size=step_size, decay=decay)
+    layers_proj = netFC(input_dim=10, hidden_dims=[20]*3, output_dim=4)
+    proj = solPredGradProj(layers=layers_proj, constraints=constrs_rnd, param_keys=["p"],
+                           var_keys=["x_rnd"], output_keys=["x_bar"], num_steps=num_steps,
+                           step_size=step_size, decay=decay)
 
     # build neuromancer problem
     components = [smap, round_func, proj]
