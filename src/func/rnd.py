@@ -216,10 +216,10 @@ if __name__ == "__main__":
     # define rounding model
     from src.func.layer import netFC
     layers_rnd = netFC(input_dim=6, hidden_dims=[20]*3, output_dim=4)
-    round_func = roundModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"], output_keys=["x_rnd"],
-                            int_ind={"x":[2,3]}, continuous_update=False, name="round")
-    #round_func = roundGumbelModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"], output_keys=["x_rnd"],
-    #                              int_ind={"x":[2,3]}, continuous_update=False, name="round")
+    #round_func = roundModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"], output_keys=["x_rnd"],
+    #                        int_ind={"x":[2,3]}, continuous_update=False, name="round")
+    round_func = roundGumbelModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"], output_keys=["x_rnd"],
+                                  bin_ind={"x":[2,3]}, continuous_update=False, name="round")
     #round_func = roundThresholdModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"], output_keys=["x_rnd"],
     #                                 int_ind={"x":[2,3]}, continuous_update=False, name="round")
 
