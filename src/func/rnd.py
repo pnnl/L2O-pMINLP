@@ -172,7 +172,6 @@ class roundThresholdModel(roundModel):
         return x_rnd
 
 
-
 if __name__ == "__main__":
 
     import numpy as np
@@ -214,10 +213,10 @@ if __name__ == "__main__":
     layers_rnd = netFC(input_dim=6, hidden_dims=[20]*3, output_dim=4)
     #round_func = roundModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"],
     #                        int_ind={"x":[2,3]}, continuous_update=False, name="round")
-    #round_func = roundGumbelModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"],
-    #                              int_ind={"x":[2,3]}, continuous_update=False, name="round")
-    round_func = roundThresholdModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"],
-                                     int_ind={"x":[2,3]}, continuous_update=False, name="round")
+    round_func = roundGumbelModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"],
+                                  int_ind={"x":[2,3]}, continuous_update=False, name="round")
+    #round_func = roundThresholdModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"],
+    #                                 int_ind={"x":[2,3]}, continuous_update=False, name="round")
 
 
     # build neuromancer problem
