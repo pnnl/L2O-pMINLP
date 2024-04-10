@@ -65,9 +65,9 @@ class roundModel(nn.Module):
         int_ind = self.int_ind[key]
         bin_ind = self.bin_ind[key]
         ###################### integer ######################
-        # floor
+        # floor(x)
         x_flr = self.floor(data[key][:,int_ind])
-        # binary 0 for floor, 1 for ceil
+        # bin(h): binary 0 for floor, 1 for ceil
         bnr = self.bin(h[:,int_ind])
         # mask if already integer
         bnr = self._intMask(bnr, data[key][:, int_ind])
@@ -76,10 +76,10 @@ class roundModel(nn.Module):
             x_rnd = data[key] + h
         else:
             x_rnd = data[key].clone()
-        # update rounding for integer variables
+        # update rounding for integer variables int(x) = floor(x) + bin(h)
         x_rnd[:, int_ind] = x_flr + bnr
         ###################### binary ######################
-        # update rounding for binary variables
+        # update rounding for binary variables: bin(x) = bin(h)
         x_rnd[:, bin_ind] = self.bin(h[:, bin_ind])
         return x_rnd
 
