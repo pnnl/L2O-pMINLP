@@ -147,6 +147,7 @@ class roundThresholdModel(roundModel):
         ###################### integer ######################
         # floor(x)
         x_flr = self.floor(data[key][:,int_ind])
+        # extract fractional part
         x_frc = data[key][:,int_ind] - x_flr
         # get threshold
         v = threshold[:,int_ind]
