@@ -6,7 +6,7 @@ from collections import defaultdict
 import torch
 from torch import nn
 
-from src.func.ste import diffFloor, diffBinarize, diffGumbelBinarize
+from src.func.ste import diffFloor, diffBinarize, diffGumbelBinarize, thresholdBinarize
 
 class roundModel(nn.Module):
     """
@@ -123,6 +123,55 @@ class roundGumbelModel(roundModel):
         self.bin = diffGumbelBinarize(temperature=self.temperature)
 
 
+class roundThresholdModel(roundModel):
+    """
+    Learnable model to round integer variables with variable threshold
+    """
+    def __init__(self, layers, param_keys, var_keys,
+                 int_ind=defaultdict(list), bin_ind=defaultdict(list),
+                 continuous_update=False, slope=10, name=None):
+        super(roundThresholdModel, self).__init__(layers, param_keys, var_keys,
+                                                  int_ind, bin_ind, continuous_update,
+                                                  tolerance=None, name=name)
+        # slope
+        self.slope= slope
+        # binarize
+        self.bin = thresholdBinarize(slope=self.slope)
+
+    def _roundVars(self, h, data, key):
+        # get index
+        int_ind = self.int_ind[key]
+        bin_ind = self.bin_ind[key]
+        # get threshold from sigmoid
+        threshold = torch.sigmoid(h)
+        ###################### integer ######################
+        # floor(x)
+        x_flr = self.floor(data[key][:,int_ind])
+        x_frc = data[key][:,int_ind] - x_flr
+        # get threshold
+        v = threshold[:,int_ind]
+        # bin(x, v): binary 0 for floor, 1 for ceil
+        bnr = self.bin(x_frc, v)
+        # update continuous variables or not
+        if self.continuous_update:
+            x_rnd = data[key] + h
+        else:
+            x_rnd = data[key].clone()
+        # update rounding for integer variables int(x) = floor(x) + bin(h)
+        x_rnd[:, int_ind] = x_flr + bnr
+        ###################### binary ######################
+        # get fractional variables
+        x = data[key][:,bin_ind]
+        # get threshold
+        v = threshold[:, bin_ind]
+        # bin(x,v): binary 0 for 0, 1 for c1
+        bnr = self.bin(x, v)
+        # update rounding for binary variables int(x) = bin(x, v)
+        x_rnd[:, bin_ind] = bnr
+        return x_rnd
+
+
+
 if __name__ == "__main__":
 
     import numpy as np
@@ -164,8 +213,11 @@ if __name__ == "__main__":
     layers_rnd = netFC(input_dim=6, hidden_dims=[20]*3, output_dim=4)
     #round_func = roundModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"],
     #                        int_ind={"x":[2,3]}, name="round")
-    round_func = roundGumbelModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"],
-                                  int_ind={"x":[2,3]}, name="round")
+    #round_func = roundGumbelModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"],
+    #                              int_ind={"x":[2,3]}, name="round")
+    round_func = roundThresholdModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"],
+                                     int_ind={"x":[2,3]}, name="round")
+
 
     # build neuromancer problem
     from src.problem import nmQuadratic
