@@ -163,7 +163,7 @@ class roundThresholdModel(roundModel):
         # get fractional variables
         x = data[key][:,bin_ind]
         # get threshold
-        v = threshold[:, bin_ind]
+        v = threshold[:,bin_ind]
         # bin(x,v): binary 0 for 0, 1 for c1
         bnr = self.bin(x, v)
         # update rounding for binary variables int(x) = bin(x, v)
