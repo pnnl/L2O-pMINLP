@@ -9,7 +9,9 @@ from neuromancer.gradients import gradient
 
 class solPredGradProj(nn.Module):
     """
-    re-predict solution then project onto feasible region
+    A module to re-predict solutions and then project them onto a feasible region.
+    This is done by first re-predicting the solution considering constraints,
+    followed by a projection step.
     """
     def __init__(self, constraints, layers, param_keys, var_keys, output_keys=[],
                  num_steps=10, step_size=0.1, decay=0.1, residual=True, name=None):
@@ -26,7 +28,7 @@ class solPredGradProj(nn.Module):
         self.num_steps = num_steps
         self.step_size = step_size
         self.decay = decay
-        self.gradProj = gradProj(constraints=self.constraints, input_keys=self.var_keys,
+        self.gradProj = gradProj(constraints=self.constraints, input_keys=self.output_keys,
                                  output_keys=self.output_keys, num_steps=self.num_steps,
                                  step_size=self.step_size, decay=self.decay)
         # sequence
@@ -35,15 +37,19 @@ class solPredGradProj(nn.Module):
         self.name = name
 
     def forward(self, data):
-        # get vars & params
-        p, x = self._extractData(data)
+        # init output data
+        for k_in, k_out in zip(self.var_keys, self.output_keys):
+            data[k_out] = data[k_in]
         # get grad of violation
         energy, grads = self._calViolation(data)
+        # get vars & params
+        p, x = self._extractData(data)
         # concatenate all features: params + sol + grads
         f = torch.cat(p + x + grads, dim=-1)
-        # forward
-        h = self.layers(f)
-        data = self._updateSolutions(data, h)
+        # change solution value
+        if self.layers is not None:
+            h = self.layers(f)
+            data = self._updateSolutions(data, h)
         # proj
         data = self.gradProj(data)
         return data
@@ -166,7 +172,7 @@ if __name__ == "__main__":
     #proj = gradProj(constraints=constrs_rnd, input_keys=["x_rnd"], output_keys=["x_bar"],
     #                num_steps=num_steps, step_size=step_size, decay=decay)
     layers_proj = netFC(input_dim=10, hidden_dims=[20]*3, output_dim=4)
-    proj = solPredGradProj(layers=layers_proj, constraints=constrs_rnd, param_keys=["p"],
+    proj = solPredGradProj(layers=layers_proj, constraints=constrs_bar, param_keys=["p"],
                            var_keys=["x_rnd"], output_keys=["x_bar"], num_steps=num_steps,
                            step_size=step_size, decay=decay)
 
@@ -205,6 +211,9 @@ if __name__ == "__main__":
     print("neuroMANCER:")
     datapoint = {"p": torch.tensor([[0.6, 0.8]], dtype=torch.float32),
                  "name":"test"}
+    print("Init Solution:")
     nmSolveTest(["x"], problem, datapoint, model)
+    print("Rounding:")
     nmSolveTest(["x_rnd"], problem, datapoint, model)
+    print("Projection:")
     nmSolveTest(["x_bar"], problem, datapoint, model)
