@@ -13,7 +13,7 @@ class solPredGradProj(nn.Module):
     This is done by first re-predicting the solution considering constraints,
     followed by a projection step.
     """
-    def __init__(self, constraints, layers, param_keys, var_keys, output_keys=[],
+    def __init__(self, constraints, param_keys, var_keys, output_keys=[], layers=None, 
                  num_steps=10, step_size=0.1, decay=0.1, residual=True, name=None):
         super(solPredGradProj, self).__init__()
         # data keys
