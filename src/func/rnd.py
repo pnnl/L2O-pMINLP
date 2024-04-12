@@ -14,7 +14,7 @@ class roundModel(nn.Module):
     """
     def __init__(self, layers, param_keys, var_keys, output_keys=[],
                  int_ind=defaultdict(list), bin_ind=defaultdict(list),
-                 continuous_update=False, tolerance=1e-3, name=None):
+                 continuous_update=False, tolerance=1e-3, name="Rounding"):
         super(roundModel, self).__init__()
         # data keys
         self.param_keys, self.var_keys = param_keys, var_keys
@@ -113,7 +113,7 @@ class roundGumbelModel(roundModel):
     """
     def __init__(self, layers, param_keys, var_keys, output_keys=[],
                  int_ind=defaultdict(list), bin_ind=defaultdict(list),
-                 continuous_update=False, temperature=1.0, tolerance=1e-3, name=None):
+                 continuous_update=False, temperature=1.0, tolerance=1e-3, name="Rounding"):
         super(roundGumbelModel, self).__init__(layers, param_keys, var_keys,
                                                output_keys, int_ind, bin_ind,
                                                continuous_update, tolerance, name)
@@ -129,7 +129,7 @@ class roundThresholdModel(roundModel):
     """
     def __init__(self, layers, param_keys, var_keys,output_keys=[],
                  int_ind=defaultdict(list), bin_ind=defaultdict(list),
-                 continuous_update=False, slope=10, name=None):
+                 continuous_update=False, slope=10, name="Rounding"):
         super(roundThresholdModel, self).__init__(layers, param_keys, var_keys,
                                                   output_keys, int_ind, bin_ind,
                                                   continuous_update,
