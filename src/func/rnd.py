@@ -111,7 +111,7 @@ class roundGumbelModel(roundModel):
     """
     Learnable model to round integer variables with Gumbel-Softmax trick
     """
-    def __init__(self, layers,param_keys, var_keys, output_keys=[],
+    def __init__(self, layers, param_keys, var_keys, output_keys=[],
                  int_ind=defaultdict(list), bin_ind=defaultdict(list),
                  continuous_update=False, temperature=1.0, tolerance=1e-3, name=None):
         super(roundGumbelModel, self).__init__(layers, param_keys, var_keys,
