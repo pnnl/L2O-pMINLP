@@ -78,7 +78,7 @@ class quadratic(abcParamSolver):
 
 if __name__ == "__main__":
 
-    from src.utlis import msSolveTest
+    from src.utlis import ms_test_solve
 
     # set params
     p = 0.6, 0.8
@@ -89,23 +89,23 @@ if __name__ == "__main__":
     # solve the MIQP
     print("======================================================")
     print("Solve MINLP problem:")
-    model.setParamValue(params)
-    msSolveTest(model)
+    model.set_param_val(params)
+    ms_test_solve(model)
 
     # solve the penalty
     print()
     print("======================================================")
     print("Solve penalty problem:")
     model_pen = model.penalty(100)
-    model_pen.setParamValue(params)
+    model_pen.set_param_val(params)
     # scip
-    msSolveTest(model_pen)
+    ms_test_solve(model_pen)
 
     # solve the relaxation
     print()
     print("======================================================")
     print("Solve relaxed problem:")
     model_rel = model.relax()
-    model_rel.setParamValue(params)
+    model_rel.set_param_val(params)
     # scip
-    msSolveTest(model_rel)
+    ms_test_solve(model_rel)

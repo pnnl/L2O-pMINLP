@@ -14,12 +14,12 @@ def rosenbrock(var_keys, param_keys, penalty_weight, num_vars):
     vars = {}
     for v in var_keys:
         vars[v] = nm.constraint.variable(v)
-    obj = [getObj(vars, params, num_vars)]
-    constrs = getConstrs(vars, params, num_vars)
+    obj = [get_obj(vars, params, num_vars)]
+    constrs = get_constrs(vars, params, num_vars)
     return obj, constrs
 
 
-def getObj(vars, params, num_vars):
+def get_obj(vars, params, num_vars):
     """
     Get neuroMANCER objective component
     """
@@ -34,7 +34,7 @@ def getObj(vars, params, num_vars):
     return obj
 
 
-def getConstrs(vars, params, penalty_weight):
+def get_constrs(vars, params, penalty_weight):
     """
     Get neuroMANCER constraint component
     """
@@ -84,8 +84,8 @@ if __name__ == "__main__":
     a_samples = torch.FloatTensor(num_data, num_vars-1).uniform_(a_low, a_high)
     data = {"p":p_samples, "a":a_samples}
     # data split
-    from src.utlis import dataSplit
-    data_train, data_test, data_dev = dataSplit(data, test_size=test_size, val_size=val_size)
+    from src.utlis import data_split
+    data_train, data_test, data_dev = data_split(data, test_size=test_size, val_size=val_size)
     # torch dataloaders
     from torch.utils.data import DataLoader
     loader_train = DataLoader(data_train, batch_size=32, num_workers=0,
@@ -135,9 +135,9 @@ if __name__ == "__main__":
     model = rosenbrock(num_vars=num_vars)
 
     # test neuroMANCER
-    from src.utlis import nmSolveTest
+    from src.utlis import nm_test_solve
     print("neuroMANCER:")
     datapoint = {"p": torch.tensor([[1.2]], dtype=torch.float32),
                  "a": torch.tensor([list(np.random.uniform(0.2, 1.2, num_vars-1))], dtype=torch.float32),
                  "name":"test"}
-    nmSolveTest(["x"], problem, datapoint, model)
+    nm_test_solve(["x"], problem, datapoint, model)

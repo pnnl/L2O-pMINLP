@@ -22,7 +22,7 @@ class abcParamSolver(ABC):
         self.cons = None # pyomo constraints
 
     @property
-    def intInd(self):
+    def int_ind(self):
         """
         Identify indices of integer variables
         """
@@ -35,7 +35,7 @@ class abcParamSolver(ABC):
         return int_ind
 
     @property
-    def binInd(self):
+    def bin_ind(self):
         """
         Identify indices of binary variables
         """
@@ -55,10 +55,10 @@ class abcParamSolver(ABC):
         # solve the model
         self.res = self.opt.solve(self.model, tee=tee, keepfiles=keepfiles)
         # get variable values and objective value
-        xval, objval = self.getVal()
+        xval, objval = self.get_val()
         return xval, objval
 
-    def setParamValue(self, param_dict):
+    def set_param_val(self, param_dict):
         """
         Set values for mutable parameters in the model
         """
@@ -73,7 +73,7 @@ class abcParamSolver(ABC):
             else:
                 param[0].set_value(val)
 
-    def getVal(self):
+    def get_val(self):
         """
         Retrieve the values of decision variables and the objective value
         """
@@ -86,13 +86,13 @@ class abcParamSolver(ABC):
         objval = pe.value(self.model.obj)
         return solvals, objval
 
-    def checkViolation(self):
+    def check_violation(self):
         """
         Check for any constraint violations in the model
         """
         return any(self._constraint_violation(constr) != 0 for constr in self.model.cons.values())
 
-    def calViolation(self):
+    def cal_violation(self):
         """
         Calculate the magnitude of violations for each constraint
         """

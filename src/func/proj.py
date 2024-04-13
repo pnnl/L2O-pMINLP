@@ -41,7 +41,7 @@ class solPredGradProj(nn.Module):
         for k_in, k_out in zip(self.var_keys, self.output_keys):
             data[k_out] = data[k_in]
         # get grad of violation
-        energy, grads = self._calViolation(data)
+        energy, grads = self._cal_violation(data)
         # get vars & params
         p, x = self._extractData(data)
         # concatenate all features: params + sol + grads
@@ -49,7 +49,7 @@ class solPredGradProj(nn.Module):
         # change solution value
         if self.layers is not None:
             h = self.layers(f)
-            data = self._updateSolutions(data, h)
+            data = self._update_solutions(data, h)
         # proj
         data = self.gradProj(data)
         return data
@@ -62,7 +62,7 @@ class solPredGradProj(nn.Module):
         x = [data[k] for k in self.var_keys]
         return p, x
 
-    def _calViolation(self, data):
+    def _cal_violation(self, data):
         """
         Calculate the violation magnitude for constraints.
         """
@@ -81,7 +81,7 @@ class solPredGradProj(nn.Module):
             grads.append(step)
         return energy, grads
 
-    def _updateSolutions(self, data, h):
+    def _update_solutions(self, data, h):
         """
         Update solutions based on the model output and optionally
         only consider the residual of the solution.
@@ -131,8 +131,8 @@ if __name__ == "__main__":
     p_samples = torch.FloatTensor(num_data, 2).uniform_(p_low, p_high)
     data = {"p":p_samples}
     # data split
-    from src.utlis import dataSplit
-    data_train, data_test, data_dev = dataSplit(data, test_size=test_size, val_size=val_size)
+    from src.utlis import data_split
+    data_train, data_test, data_dev = data_split(data, test_size=test_size, val_size=val_size)
     # torch dataloaders
     from torch.utils.data import DataLoader
     loader_train = DataLoader(data_train, batch_size=32, num_workers=0,
@@ -207,13 +207,13 @@ if __name__ == "__main__":
     model = quadratic()
 
     # test neuroMANCER
-    from src.utlis import nmSolveTest
+    from src.utlis import nm_test_solve
     print("neuroMANCER:")
     datapoint = {"p": torch.tensor([[0.6, 0.8]], dtype=torch.float32),
                  "name":"test"}
     print("Init Solution:")
-    nmSolveTest(["x"], problem, datapoint, model)
+    nm_test_solve(["x"], problem, datapoint, model)
     print("Rounding:")
-    nmSolveTest(["x_rnd"], problem, datapoint, model)
+    nm_test_solve(["x_rnd"], problem, datapoint, model)
     print("Projection:")
-    nmSolveTest(["x_bar"], problem, datapoint, model)
+    nm_test_solve(["x_bar"], problem, datapoint, model)

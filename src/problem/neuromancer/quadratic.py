@@ -52,12 +52,12 @@ def quadratic(var_keys, param_keys, penalty_weight):
     vars = {}
     for v in var_keys:
         vars[v] = nm.constraint.variable(v)
-    obj = [getObj(vars, c, Q, d)]
-    constrs = getConstrs(vars, params, penalty_weight, b, A, E, F)
+    obj = [get_obj(vars, c, Q, d)]
+    constrs = get_constrs(vars, params, penalty_weight, b, A, E, F)
     return obj, constrs
 
 
-def getObj(vars, c, Q, d):
+def get_obj(vars, c, Q, d):
     """
     Get neuroMANCER objective component
     """
@@ -70,7 +70,7 @@ def getObj(vars, c, Q, d):
     obj = f.minimize(weight=1.0, name="obj")
     return obj
 
-def getConstrs(vars, params, penalty_weight, b, A, E, F):
+def get_constrs(vars, params, penalty_weight, b, A, E, F):
     """
     Get neuroMANCER constraint component
     """
@@ -113,8 +113,8 @@ if __name__ == "__main__":
     p_samples = torch.FloatTensor(num_data, 2).uniform_(p_low, p_high)
     data = {"p":p_samples}
     # data split
-    from src.utlis import dataSplit
-    data_train, data_test, data_dev = dataSplit(data, test_size=test_size, val_size=val_size)
+    from src.utlis import data_split
+    data_train, data_test, data_dev = data_split(data, test_size=test_size, val_size=val_size)
     # torch dataloaders
     from torch.utils.data import DataLoader
     loader_train = DataLoader(data_train, batch_size=32, num_workers=0,
@@ -164,8 +164,8 @@ if __name__ == "__main__":
     model = quadratic()
 
     # test neuroMANCER
-    from src.utlis import nmSolveTest
+    from src.utlis import nm_test_solve
     print("neuroMANCER:")
     datapoint = {"p": torch.tensor([[0.6, 0.8]], dtype=torch.float32),
                  "name":"test"}
-    nmSolveTest(["x"], problem, datapoint, model)
+    nm_test_solve(["x"], problem, datapoint, model)

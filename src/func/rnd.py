@@ -36,31 +36,31 @@ class roundModel(nn.Module):
 
     def forward(self, data):
         # get vars & params
-        p, x = self._extractData(data)
+        p, x = self._extract_data(data)
         # concatenate all features: params + sol
         f = torch.cat(p+x, dim=-1)
         # forward
         h = self.layers(f)
         # rounding
-        output_data = self._processRounding(h, data)
+        output_data = self._process_rounding(h, data)
         return output_data
 
-    def _extractData(self, data):
+    def _extract_data(self, data):
         p = [data[k] for k in self.param_keys]
         x = [data[k] for k in self.var_keys]
         return p, x
 
-    def _processRounding(self, h, data):
+    def _process_rounding(self, h, data):
         output_data = {}
         for k_in, k_out in zip(self.var_keys, self.output_keys):
             # get rounding
-            x_rnd = self._roundVars(h, data, k_in)
+            x_rnd = self._round_vars(h, data, k_in)
             output_data[k_out] = x_rnd
             # cut off used h
             h = h[:,data[k_in].shape[1]+1:]
         return output_data
 
-    def _roundVars(self, h, data, key):
+    def _round_vars(self, h, data, key):
         # get index
         int_ind = self.int_ind[key]
         bin_ind = self.bin_ind[key]
@@ -70,7 +70,7 @@ class roundModel(nn.Module):
         # bin(h): binary 0 for floor, 1 for ceil
         bnr = self.bin(h[:,int_ind])
         # mask if already integer
-        bnr = self._intMask(bnr, data[key][:, int_ind])
+        bnr = self._int_mask(bnr, data[key][:, int_ind])
         # update continuous variables or not
         if self.continuous_update:
             x_rnd = data[key] + h
@@ -83,7 +83,7 @@ class roundModel(nn.Module):
         x_rnd[:, bin_ind] = self.bin(h[:, bin_ind])
         return x_rnd
 
-    def _intMask(self, bnr, x):
+    def _int_mask(self, bnr, x):
         # difference
         diff_fl = x - torch.floor(x)
         diff_cl = torch.ceil(x) - x
@@ -139,7 +139,7 @@ class roundThresholdModel(roundModel):
         # binarize
         self.bin = thresholdBinarize(slope=self.slope)
 
-    def _roundVars(self, h, data, key):
+    def _round_vars(self, h, data, key):
         # get index
         int_ind = self.int_ind[key]
         bin_ind = self.bin_ind[key]
@@ -191,8 +191,8 @@ if __name__ == "__main__":
     p_samples = torch.FloatTensor(num_data, 2).uniform_(p_low, p_high)
     data = {"p":p_samples}
     # data split
-    from src.utlis import dataSplit
-    data_train, data_test, data_dev = dataSplit(data, test_size=test_size, val_size=val_size)
+    from src.utlis import data_split
+    data_train, data_test, data_dev = data_split(data, test_size=test_size, val_size=val_size)
     # torch dataloaders
     from torch.utils.data import DataLoader
     loader_train = DataLoader(data_train, batch_size=32, num_workers=0,
@@ -255,8 +255,8 @@ if __name__ == "__main__":
     model = quadratic()
 
     # test neuroMANCER
-    from src.utlis import nmSolveTest
+    from src.utlis import nm_test_solve
     print("neuroMANCER:")
     datapoint = {"p": torch.tensor([[0.6, 0.8]], dtype=torch.float32),
                  "name":"test"}
-    nmSolveTest(["x_rnd"], problem, datapoint, model)
+    nm_test_solve(["x_rnd"], problem, datapoint, model)

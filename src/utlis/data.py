@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from neuromancer.dataset import DictDataset
 
 
-def dataSplit(datadict, test_size=0, val_size=0, random_state=42):
+def data_split(datadict, test_size=0, val_size=0, random_state=42):
     """
     Split data into training, validation, and test sets based on provided sizes
     """
