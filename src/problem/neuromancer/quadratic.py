@@ -166,8 +166,10 @@ if __name__ == "__main__":
     model = quadratic()
 
     # test neuroMANCER
+    p = 0.6, 0.8
     from src.utlis import nm_test_solve
     print("neuroMANCER:")
-    datapoint = {"p": torch.tensor([[0.6, 0.8]], dtype=torch.float32),
+    datapoint = {"p": torch.tensor([[*p]], dtype=torch.float32),
                  "name":"test"}
+    model.set_param_val({"p":p})
     nm_test_solve(["x"], problem, datapoint, model)

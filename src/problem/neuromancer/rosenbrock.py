@@ -138,8 +138,10 @@ if __name__ == "__main__":
 
     # test neuroMANCER
     from src.utlis import nm_test_solve
+    p, a = 1.2, list(np.random.uniform(0.2, 1.2, num_vars-1))
     print("neuroMANCER:")
-    datapoint = {"p": torch.tensor([[1.2]], dtype=torch.float32),
-                 "a": torch.tensor([list(np.random.uniform(0.2, 1.2, num_vars-1))], dtype=torch.float32),
+    datapoint = {"p": torch.tensor([[p]], dtype=torch.float32),
+                 "a": torch.tensor([a], dtype=torch.float32),
                  "name":"test"}
+    model.set_param_val({"p":p, "a":a})
     nm_test_solve(["x"], problem, datapoint, model)
