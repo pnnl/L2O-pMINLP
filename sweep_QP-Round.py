@@ -49,14 +49,14 @@ def train(method_config):
         # load best model dict
         problem.load_state_dict(best_model)
         # eval
-        df = eval(p_test, problem)
+        df = eval(loader_test.dataset, problem)
         wandb.log({"Mean Objective Value": df["Obj Val"].mean(),
                    "Mean Constraint Violation": df["Constraints Viol"].mean()})
 
 
 def build_problem(config, method_config):
     # hyperparameters
-    penalty_weight = 100 #config.penalty_weight       # weight of constraint violation penealty
+    penalty_weight = 100 #config.penalty_weight  # weight of constraint violation penealty
     hlayers_sol = config.hidden_layers_sol       # number of hidden layers for solution mapping
     hsize_sol = config.hidden_size_sol           # width of hidden layers for solution mapping
     hlayers_rnd = config.hidden_layers_rnd       # number of hidden layers for solution mapping
@@ -114,7 +114,7 @@ def eval(dataset, problem):
     # init
     sols, objvals, conviols, elapseds = [], [], [], []
     # iterate through test dataset
-    for p in tqdm(dataset):
+    for p in tqdm(dataset.datadict["p"]):
         datapoints = {"p": torch.tensor(np.array([p]), dtype=torch.float32), "name": "test"}
         # inference
         tick = time.time()
@@ -215,11 +215,8 @@ if __name__ == "__main__":
     loader_train, loader_test, loader_dev = load_data(num_data, test_size, val_size)
 
     # init
-    if method_config.method == "standard":
-        sweep_id = wandb.sweep(sweep_config, project="QP-round-standard")
-    if method_config.method == "gumbel":
-        sweep_id = wandb.sweep(sweep_config, project="QP-round-gumbel")
-    if method_config.method == "threshold":
-        sweep_id = wandb.sweep(sweep_config, project="QP-round-threshold")
+    project_name = "QP-round-" + method_config.method
+    # init
+    sweep_id = wandb.sweep(sweep_config, project=project_name)
     # launch agent
     wandb.agent(sweep_id, function=lambda: train(method_config), count=50)
