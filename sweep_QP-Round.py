@@ -255,10 +255,10 @@ if __name__ == "__main__":
                 "values": ["SGD", "Adam", "AdamW"]
             },
             "learning_rate": {
-                "distribution": "q_log_uniform",
+                "distribution": "q_log_uniform_values",
                 "q": 1e-6,
-                "min": -6,  # 10^-6
-                "max": -2   # 10^-2
+                "min": 1e-6,  # 10^-6
+                "max": 1e-1   # 10^-1
             },
             "batch_size": {
                 "values": [16, 32, 64]
