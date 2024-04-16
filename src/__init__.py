@@ -1,2 +1,2 @@
 from src import problem
-from src.func import rnd
+from src import func
