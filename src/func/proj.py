@@ -200,6 +200,8 @@ if __name__ == "__main__":
         warmup=warmup)
     # train solution map
     best_model = trainer.train()
+    # load best model dict
+    problem.load_state_dict(best_model)
     print()
 
     # init mathmatic model
