@@ -41,15 +41,25 @@ def train(method_config):
         config = wandb.config
         print(config)
         # get nm problem
-        problem = build_problem(config, method_config)
+        problem_rel, problem_rnd = build_problem(config, method_config)
+        # 2-stage training
+        if method_config.train == "2s":
+            # get nm trainer
+            trainer = get_trainer(config, problem_rel)
+            # training
+            best_model = trainer.train()
+            # load best model dict
+            problem_rel.load_state_dict(best_model)
+            # free model parameters
+            problem_rel.freeze()
         # get nm trainer
-        trainer = get_trainer(config, problem)
+        trainer = get_trainer(config, problem_rnd)
         # training
         best_model = trainer.train()
         # load best model dict
-        problem.load_state_dict(best_model)
+        problem_rnd.load_state_dict(best_model)
         # eval
-        df = eval(loader_test.dataset, problem)
+        df = eval(loader_test.dataset, problem_rnd)
         wandb.log({"Mean Objective Value": df["Obj Val"].mean(),
                    "Mean Constraint Violation": df["Constraints Viol"].mean()})
 
@@ -63,7 +73,8 @@ def build_problem(config, method_config):
     hsize_rnd = config.hidden_size_rnd           # width of hidden layers for solution mapping
     continuous_update = config.continuous_update # update continuous variable during rounding step or not
     # get objective function & constraints
-    obj, constrs = nmQuadratic(["x_rnd"], ["p"], penalty_weight=penalty_weight)
+    obj_rel, constrs_rel = nmQuadratic(["x"], ["p"], penalty_weight=penalty_weight)
+    obj_rnd, constrs_rnd = nmQuadratic(["x_rnd"], ["p"], penalty_weight=penalty_weight)
     # define neural architecture for the solution map
     func = nm.modules.blocks.MLP(insize=2, outsize=4, bias=True,
                                  linear_map=nm.slim.maps["linear"],
@@ -75,16 +86,20 @@ def build_problem(config, method_config):
         "gumbel": roundGumbelModel,
         "threshold": roundThresholdModel
     }
-    rnd_class = round_methods[method_config.method]
+    rnd_class = round_methods[method_config.round]
     # define rounding model
     layers_rnd = netFC(input_dim=6, hidden_dims=[hsize_rnd]*hlayers_rnd, output_dim=4)
     rnd = rnd_class(layers=layers_rnd, param_keys=["p"], var_keys=["x"], output_keys=["x_rnd"],
                     int_ind={"x":[2,3]}, continuous_update=continuous_update, name="round")
-    # build neuromancer problem
+    # build neuromancer problem for relaxation
+    components = [smap]
+    loss = nm.loss.PenaltyLoss(obj_rel, constrs_rel)
+    problem_rel = nm.problem.Problem(components, loss)
+    # build neuromancer problem for rounding
     components = [smap, rnd]
-    loss = nm.loss.PenaltyLoss(obj, constrs)
-    problem = nm.problem.Problem(components, loss)
-    return problem
+    loss = nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
+    problem_rnd = nm.problem.Problem(components, loss)
+    return problem_rel, problem_rnd
 
 
 def get_trainer(config, problem):
@@ -159,11 +174,16 @@ if __name__ == "__main__":
 
     # init parser
     parser = argparse.ArgumentParser()
-    parser.add_argument("--method",
+    parser.add_argument("--round",
                         type=str,
                         default="standard",
                         choices=["standard", "gumbel", "threshold"],
                         help="method for rounding")
+    parser.add_argument("--train",
+                        type=str,
+                        default="e2e",
+                        choices=["e2e", "2s"],
+                        help="training pattern")
     # get configuration
     method_config = parser.parse_args()
 
@@ -215,7 +235,7 @@ if __name__ == "__main__":
     loader_train, loader_test, loader_dev = load_data(num_data, test_size, val_size)
 
     # init
-    project_name = "QP-round-" + method_config.method
+    project_name = "QP-round-" + method_config.round + "-" + method_config.train
     # init
     sweep_id = wandb.sweep(sweep_config, project=project_name)
     # launch agent
