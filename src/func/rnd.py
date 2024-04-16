@@ -204,7 +204,7 @@ if __name__ == "__main__":
 
     # get objective function & constraints
     from src.problem import nmQuadratic
-    obj, constrs = nmQuadratic(["x"], ["p"], penalty_weight=100)
+    obj, constrs = nmQuadratic(["x_rnd"], ["p"], penalty_weight=100)
 
     # define neural architecture for the solution map
     import neuromancer as nm
