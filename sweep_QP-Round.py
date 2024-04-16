@@ -77,8 +77,12 @@ def train(method_config):
         problem_rnd.load_state_dict(best_model)
         # evaluate model
         df = eval(loader_test.dataset, problem_rnd)
-        wandb.log({"Mean Objective Value": df["Obj Val"].mean(),
-                   "Mean Constraint Violation": df["Constraints Viol"].mean()})
+        mean_obj_val = df["Obj Val"].mean()
+        mean_constr_viol = df["Constraints Viol"].mean()
+        mean_merit = mean_obj_val + 100 * mean_constr_viol
+        wandb.log({"Mean Objective Value": mean_obj_val,
+                   "Mean Constraint Violation": mean_constr_viol,
+                   "Mean Merit": mean_merit})
 
 
 def build_problem(config, method_config):
@@ -237,9 +241,9 @@ if __name__ == "__main__":
     # configuration for sweep (hyperparameter tuning)
     sweep_config = {
         "name": "QP-round",
-        "method": "random",
+        "method": "bayes",
         "metric": {
-          "name": "Mean Objective Value",
+          "name": "Mean Merit",
           "goal": "minimize"
         },
         "parameters": {
@@ -251,8 +255,9 @@ if __name__ == "__main__":
                 "values": ["SGD", "Adam"]
             },
             "learning_rate": {
-                "min": 1e-5,
-                "max": 1e-2
+                "distribution": "log_uniform",
+                "min": -5,  # 10^-5
+                "max": -2   # 10^-2
             },
             "batch_size": {
                 "values": [16, 32, 64]
