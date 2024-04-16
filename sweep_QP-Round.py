@@ -99,9 +99,8 @@ def build_problem(config, method_config):
     # hyperparameters
     penalty_weight = 10 #config.penalty_weight   # weight of constraint violation penealty
     hlayers_sol = config.hidden_layers_sol       # number of hidden layers for solution mapping
-    hsize_sol = config.hidden_size_sol           # width of hidden layers for solution mapping
     hlayers_rnd = config.hidden_layers_rnd       # number of hidden layers for solution mapping
-    hsize_rnd = config.hidden_size_rnd           # width of hidden layers for solution mapping
+    hsize = config.hidden_size                   # width of hidden layers for solution mapping
     continuous_update = config.continuous_update # update continuous variable during rounding step or not
     # define quadratic objective functions and constraints for both problem types
     obj_rel, constrs_rel = nmQuadratic(["x"], ["p"], penalty_weight=penalty_weight)
@@ -109,7 +108,7 @@ def build_problem(config, method_config):
     # build neural architecture for the solution map
     func = nm.modules.blocks.MLP(insize=2, outsize=4, bias=True,
                                  linear_map=nm.slim.maps["linear"],
-                                 nonlin=nn.ReLU, hsizes=[hsize_sol]*hlayers_sol)
+                                 nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
     smap = nm.system.Node(func, ["p"], ["x"], name="smap")
     # select round method from method configuration
     round_methods = {
@@ -119,7 +118,7 @@ def build_problem(config, method_config):
     }
     rnd_class = round_methods[method_config.round]
     # define rounding model
-    layers_rnd = netFC(input_dim=6, hidden_dims=[hsize_rnd]*hlayers_rnd, output_dim=4)
+    layers_rnd = netFC(input_dim=6, hidden_dims=[hsize]*hlayers_rnd, output_dim=4)
     rnd = rnd_class(layers=layers_rnd, param_keys=["p"], var_keys=["x"], output_keys=["x_rnd"],
                     int_ind={"x":[2,3]}, continuous_update=continuous_update, name="round")
     # build neuromancer problem for relaxation
@@ -259,21 +258,18 @@ if __name__ == "__main__":
                 "distribution": "q_log_uniform",
                 "q": 1e-6,
                 "min": -6,  # 10^-6
-                "max": -2   # 10^-1
+                "max": -2   # 10^-2
             },
             "batch_size": {
                 "values": [16, 32, 64]
             },
             "hidden_layers_sol": {
-                "values": [1, 2, 3]
-            },
-            "hidden_size_sol": {
-                "values": [4, 8, 16, 32]
+                "values": [2, 3, 4]
             },
             "hidden_layers_rnd": {
                 "values": [1, 2, 3]
             },
-            "hidden_size_rnd": {
+            "hidden_size": {
                 "values": [4, 8, 16, 32]
             },
             "continuous_update": {
