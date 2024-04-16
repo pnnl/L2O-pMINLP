@@ -144,8 +144,8 @@ if __name__ == "__main__":
 
     # get objective function & constraints
     from src.problem import nmQuadratic
-    obj_bar, constrs_bar = nmQuadratic(["x_bar"], ["p"], penalty_weight=100)
-    obj_rnd, constrs_rnd = nmQuadratic(["x_rnd"], ["p"], penalty_weight=100)
+    obj_bar, constrs_bar = nmQuadratic(["x_bar"], ["p"], penalty_weight=10)
+    obj_rnd, constrs_rnd = nmQuadratic(["x_rnd"], ["p"], penalty_weight=10)
 
     # define neural architecture for the solution map
     import neuromancer as nm
@@ -183,9 +183,9 @@ if __name__ == "__main__":
 
     # training
     lr = 0.001    # step size for gradient descent
-    epochs = 20   # number of training epochs
-    warmup = 50   # number of epochs to wait before enacting early stopping policy
-    patience = 50 # number of epochs with no improvement in eval metric to allow before early stopping
+    epochs = 200  # number of training epochs
+    warmup = 20   # number of epochs to wait before enacting early stopping policy
+    patience = 20 # number of epochs with no improvement in eval metric to allow before early stopping
     # set adamW as optimizer
     optimizer = torch.optim.AdamW(problem.parameters(), lr=lr)
     # define trainer
@@ -210,11 +210,13 @@ if __name__ == "__main__":
 
     # test neuroMANCER
     p = 0.6, 0.8
-    from src.utlis import nm_test_solve
-    print("neuroMANCER:")
     datapoint = {"p": torch.tensor([[*p]], dtype=torch.float32),
                  "name":"test"}
     model.set_param_val({"p":p})
+    from src.utlis import nm_test_solve, ms_test_solve
+    print("SCIP:")
+    ms_test_solve(model)
+    print("neuroMANCER:")
     print("Init Solution:")
     nm_test_solve(["x"], problem, datapoint, model)
     print("Rounding:")

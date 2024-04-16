@@ -79,7 +79,7 @@ def train(method_config):
         df = eval(loader_test.dataset, problem_rnd)
         mean_obj_val = df["Obj Val"].mean()
         mean_constr_viol = df["Constraints Viol"].mean()
-        mean_merit = mean_obj_val + 100 * mean_constr_viol
+        mean_merit = mean_obj_val + 10 * mean_constr_viol
         wandb.log({"Mean Objective Value": mean_obj_val,
                    "Mean Constraint Violation": mean_constr_viol,
                    "Mean Merit": mean_merit})
@@ -97,7 +97,7 @@ def build_problem(config, method_config):
         tuple: Two neuromancer.problem.Problem instances for relaxation and rounding.
     """
     # hyperparameters
-    penalty_weight = 100 #config.penalty_weight  # weight of constraint violation penealty
+    penalty_weight = 10 #config.penalty_weight   # weight of constraint violation penealty
     hlayers_sol = config.hidden_layers_sol       # number of hidden layers for solution mapping
     hsize_sol = config.hidden_size_sol           # width of hidden layers for solution mapping
     hlayers_rnd = config.hidden_layers_rnd       # number of hidden layers for solution mapping

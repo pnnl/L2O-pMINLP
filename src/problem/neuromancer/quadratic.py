@@ -125,7 +125,7 @@ if __name__ == "__main__":
                               collate_fn=data_dev.collate_fn, shuffle=True)
 
     # get objective function & constraints
-    obj, constrs = quadratic(["x"], ["p"], penalty_weight=100)
+    obj, constrs = quadratic(["x"], ["p"], penalty_weight=10)
 
     # define neural architecture for the solution map smap(p) -> x
     import neuromancer as nm
@@ -141,8 +141,8 @@ if __name__ == "__main__":
     # training
     lr = 0.001    # step size for gradient descent
     epochs = 20   # number of training epochs
-    warmup = 50   # number of epochs to wait before enacting early stopping policy
-    patience = 50 # number of epochs with no improvement in eval metric to allow before early stopping
+    warmup = 20   # number of epochs to wait before enacting early stopping policy
+    patience = 20 # number of epochs with no improvement in eval metric to allow before early stopping
     # set adamW as optimizer
     optimizer = torch.optim.AdamW(problem.parameters(), lr=lr)
     # define trainer
