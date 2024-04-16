@@ -152,10 +152,11 @@ def get_trainer(config, problem):
     warmup = 20                     # number of epochs to wait before enacting early stopping policy
     patience = 20                   # number of epochs with no improvement in eval metric to allow before early stopping
     # set optimizer
-    if optim_type == "SGD":
-        optimizer = torch.optim.SGD(problem.parameters(), lr=lr)
-    if optim_type == "Adam":
-        optimizer = torch.optim.Adam(problem.parameters(), lr=lr)
+    optimizers = {"SGD": torch.optim.SGD,
+                  "Adam": torch.optim.Adam,
+                  "AdamW": torch.optim.AdamW
+                  }
+    optimizer = optimizers[optim_type](problem.parameters(), lr=lr)
     # create a trainer for the problem
     trainer = nm.trainer.Trainer(problem,
                                  loader_train, loader_dev, loader_test,
@@ -252,12 +253,13 @@ if __name__ == "__main__":
             #    "max": 500
             #},
             "optimizer": {
-                "values": ["SGD", "Adam"]
+                "values": ["SGD", "Adam", "AdamW"]
             },
             "learning_rate": {
-                "distribution": "log_uniform",
-                "min": -5,  # 10^-5
-                "max": -2   # 10^-2
+                "distribution": "q_log_uniform",
+                "q": 1e-6,
+                "min": -6,  # 10^-6
+                "max": -2   # 10^-1
             },
             "batch_size": {
                 "values": [16, 32, 64]
@@ -289,4 +291,4 @@ if __name__ == "__main__":
     # set up project and sweep
     project_name = "QP-round-" + method_config.round + "-" + method_config.train
     sweep_id = wandb.sweep(sweep_config, project=project_name)
-    wandb.agent(sweep_id, function=lambda: train(method_config), count=50)
+    wandb.agent(sweep_id, function=lambda: train(method_config), count=100)
