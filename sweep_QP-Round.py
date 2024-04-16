@@ -15,6 +15,17 @@ from src.func.layer import netFC
 from src.func import roundModel, roundGumbelModel, roundThresholdModel
 
 def load_data(num_data, test_size, val_size):
+    """
+    Generate random data for training, testing, and validation.
+
+    Args:
+        num_data (int): Total number of data points.
+        test_size (int): Size of the test dataset.
+        val_size (int): Size of the validation dataset.
+
+    Returns:
+        tuple: Three DataLoader instances for training, testing, and validation datasets.
+    """
     train_size = num_data - test_size - val_size
     # parameters as input data
     p_low, p_high = 0.0, 1.0
@@ -36,17 +47,23 @@ def load_data(num_data, test_size, val_size):
 
 
 def train(method_config):
+    """
+    Train models using the specified training method configuration.
+
+    Args:
+        method_config (object): Configuration containing details of method.
+    """
     with wandb.init(resume=True, entity="botang") as run:
-        # get config
+        # get config from wandb
         config = wandb.config
         print(config)
-        # get nm problem
+        # build problems for relaxation and rounding phases
         problem_rel, problem_rnd = build_problem(config, method_config)
-        # 2-stage training
+        # 2-stage training, if specified
         if method_config.train == "2s":
             # get nm trainer
             trainer = get_trainer(config, problem_rel)
-            # training
+            # training for the relaxation problem
             best_model = trainer.train()
             # load best model dict
             problem_rel.load_state_dict(best_model)
@@ -54,17 +71,27 @@ def train(method_config):
             problem_rel.freeze()
         # get nm trainer
         trainer = get_trainer(config, problem_rnd)
-        # training
+        # training for the rounding problem
         best_model = trainer.train()
         # load best model dict
         problem_rnd.load_state_dict(best_model)
-        # eval
+        # evaluate model
         df = eval(loader_test.dataset, problem_rnd)
         wandb.log({"Mean Objective Value": df["Obj Val"].mean(),
                    "Mean Constraint Violation": df["Constraints Viol"].mean()})
 
 
 def build_problem(config, method_config):
+    """
+    Build optimization problems using Neuromancer for both relaxation and rounding.
+
+    Args:
+        config (object): Configuration from wandb.
+        method_config (object): Configuration containing details of method.
+
+    Returns:
+        tuple: Two neuromancer.problem.Problem instances for relaxation and rounding.
+    """
     # hyperparameters
     penalty_weight = 100 #config.penalty_weight  # weight of constraint violation penealty
     hlayers_sol = config.hidden_layers_sol       # number of hidden layers for solution mapping
@@ -72,15 +99,15 @@ def build_problem(config, method_config):
     hlayers_rnd = config.hidden_layers_rnd       # number of hidden layers for solution mapping
     hsize_rnd = config.hidden_size_rnd           # width of hidden layers for solution mapping
     continuous_update = config.continuous_update # update continuous variable during rounding step or not
-    # get objective function & constraints
+    # define quadratic objective functions and constraints for both problem types
     obj_rel, constrs_rel = nmQuadratic(["x"], ["p"], penalty_weight=penalty_weight)
     obj_rnd, constrs_rnd = nmQuadratic(["x_rnd"], ["p"], penalty_weight=penalty_weight)
-    # define neural architecture for the solution map
+    # build neural architecture for the solution map
     func = nm.modules.blocks.MLP(insize=2, outsize=4, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[hsize_sol]*hlayers_sol)
     smap = nm.system.Node(func, ["p"], ["x"], name="smap")
-    # round method
+    # select round method from method configuration
     round_methods = {
         "standard": roundModel,
         "gumbel": roundGumbelModel,
@@ -103,6 +130,16 @@ def build_problem(config, method_config):
 
 
 def get_trainer(config, problem):
+    """
+    Configure a trainer for a neuromancer problem.
+
+    Args:
+        config (object): Configuration from wandb.
+        problem (nm.problem.Problem): Problem instance to train.
+
+    Returns:
+        nm.trainer.Trainer: Configured trainer.
+    """
     # hyperparameters
     optim_type = config.optimizer    # type of optimizer
     lr = config.learning_rate       # step size for gradient descent
@@ -115,7 +152,7 @@ def get_trainer(config, problem):
         optimizer = torch.optim.SGD(problem.parameters(), lr=lr)
     if optim_type == "Adam":
         optimizer = torch.optim.Adam(problem.parameters(), lr=lr)
-    # define trainer
+    # create a trainer for the problem
     trainer = nm.trainer.Trainer(problem,
                                  loader_train, loader_dev, loader_test,
                                  optimizer, epochs=epochs,
@@ -124,7 +161,17 @@ def get_trainer(config, problem):
 
 
 def eval(dataset, problem):
-    # exact model
+    """
+    Evaluate a trained model on a dataset.
+
+    Args:
+        dataset (neuromancer.dataset.DictDataset): Dataset for evaluation.
+        problem (nm.problem.Problem): Trained problem model.
+
+    Returns:
+        pd.DataFrame: Results including solution, objective value, constraints violation, and elapsed time.
+    """
+    # exact mathmatical programming solver
     model = msQuadratic()
     # init
     sols, objvals, conviols, elapseds = [], [], [], []
@@ -166,13 +213,13 @@ if __name__ == "__main__":
     import logging
     logging.getLogger("pyomo.core").setLevel(logging.ERROR)
 
-    # set random seed
+    # set random seeds for reproducibility
     random.seed(42)
     np.random.seed(42)
     torch.manual_seed(42)
     torch.cuda.manual_seed(42)
 
-    # init parser
+    # argument parsing for command line options
     parser = argparse.ArgumentParser()
     parser.add_argument("--round",
                         type=str,
@@ -187,7 +234,7 @@ if __name__ == "__main__":
     # get configuration
     method_config = parser.parse_args()
 
-    # sweep config
+    # configuration for sweep (hyperparameter tuning)
     sweep_config = {
         "name": "QP-round",
         "method": "random",
@@ -228,15 +275,13 @@ if __name__ == "__main__":
         }
     }
 
-    # dataset
+    # load dataset
     num_data = 5000   # number of data
     test_size = 1000  # number of test size
     val_size = 1000   # number of validation size
     loader_train, loader_test, loader_dev = load_data(num_data, test_size, val_size)
 
-    # init
+    # set up project and sweep
     project_name = "QP-round-" + method_config.round + "-" + method_config.train
-    # init
     sweep_id = wandb.sweep(sweep_config, project=project_name)
-    # launch agent
     wandb.agent(sweep_id, function=lambda: train(method_config), count=50)
