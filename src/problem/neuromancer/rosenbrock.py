@@ -73,7 +73,7 @@ if __name__ == "__main__":
     val_size = 1000   # number of validation size
 
     # data sample from uniform distribution
-    p_low, p_high = 3.0, 8.0
+    p_low, p_high = 1.0, 8.0
     a_low, a_high = 0.5, 4.5
     p_samples = torch.FloatTensor(num_data, 1).uniform_(p_low, p_high)
     a_samples = torch.FloatTensor(num_data, num_blocks).uniform_(a_low, a_high)

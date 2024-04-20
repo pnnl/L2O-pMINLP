@@ -29,7 +29,7 @@ def load_data(num_blocks, num_data, test_size, val_size):
     """
     train_size = num_data - test_size - val_size
     # parameters as input data
-    p_low, p_high = 3.0, 8.0
+    p_low, p_high = 1.0, 8.0
     a_low, a_high = 0.5, 4.5
     p_train = np.random.uniform(p_low, p_high, (train_size, 1)).astype(np.float32)
     p_test  = np.random.uniform(p_low, p_high, (test_size, 1)).astype(np.float32)
