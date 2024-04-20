@@ -71,7 +71,7 @@ class abcParamSolver(ABC):
                     param[i].set_value(v)
             # set single value
             else:
-                param[0].set_value(val)
+                param.set_value(val)
 
     def get_val(self):
         """
