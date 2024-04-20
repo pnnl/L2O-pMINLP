@@ -5,7 +5,7 @@ Parametric Mixed Integer Rosenbrock Problem
 import numpy as np
 import neuromancer as nm
 
-def rosenbrock(var_keys, param_keys, penalty_weight, num_vars):
+def rosenbrock(var_keys, param_keys, num_blocks, penalty_weight):
     # mutable parameters
     params = {}
     for p in param_keys:
@@ -14,12 +14,12 @@ def rosenbrock(var_keys, param_keys, penalty_weight, num_vars):
     vars = {}
     for v in var_keys:
         vars[v] = nm.constraint.variable(v)
-    obj = [get_obj(vars, params, num_vars)]
-    constrs = get_constrs(vars, params, num_vars)
+    obj = [get_obj(vars, params, num_blocks)]
+    constrs = get_constrs(vars, params, num_blocks, penalty_weight)
     return obj, constrs
 
 
-def get_obj(vars, params, num_vars):
+def get_obj(vars, params, num_blocks):
     """
     Get neuroMANCER objective component
     """
@@ -27,14 +27,14 @@ def get_obj(vars, params, num_vars):
     x, = vars.values()
     # get mutable parameters
     p, a = params.values()
-    # objective function sum (1 - x_i)^2 + a (x_i+1 - x_i^2)^2
-    f = sum((1 - x[:, i]) ** 2 + a[:, i] * (x[:, i + 1] - x[:, i] ** 2) ** 2
-             for i in range(num_vars-1))
+    # objective function sum (a_i - x_2i)^2 + 100 (x_2i+1 - x_2i^2)^2
+    f = sum((a[:, i] - x[:, 2*i]) ** 2 + 100 * (x[:, 2*i+1] - x[:, 2*i] ** 2) ** 2
+             for i in range(num_blocks))
     obj = f.minimize(weight=1.0, name="obj")
     return obj
 
 
-def get_constrs(vars, params, penalty_weight):
+def get_constrs(vars, params, num_blocks, penalty_weight):
     """
     Get neuroMANCER constraint component
     """
@@ -44,20 +44,15 @@ def get_constrs(vars, params, penalty_weight):
     p, a = params.values()
     # constraints
     constraints = []
-    # constraints 0:
-    g = sum((-1) ** i * x[:, i] for i in range(num_vars))
-    con = penalty_weight * (g >= 0)
-    con.name = "c0"
-    constraints.append(con)
-    # constraints 1:
-    g = sum(x[:, i] ** 2 for i in range(num_vars))
+    # inner ball:
+    g = sum(x[:, 2*i] ** 2 for i in range(num_blocks))
     con = penalty_weight * (g >= p[:, 0] / 2)
-    con.name = "c1"
+    con.name = "c_inner"
     constraints.append(con)
-    # constraints 2:
-    g = sum(x[:, i] ** 2 for i in range(num_vars))
+    # outer ball:
+    g = sum(x[:, 2*i] ** 2 for i in range(num_blocks))
     con = penalty_weight * (g <= p[:, 0])
-    con.name = "c2"
+    con.name = "c_outer"
     constraints.append(con)
     return constraints
 
@@ -72,16 +67,16 @@ if __name__ == "__main__":
     torch.manual_seed(42)
 
     # init
-    num_vars = 10     # number of decision variables
+    num_blocks = 5    # number of expression blocks
     num_data = 5000   # number of data
     test_size = 1000  # number of test size
     val_size = 1000   # number of validation size
 
     # data sample from uniform distribution
-    p_low, p_high = 0.5, 6.0
-    a_low, a_high = 0.2, 1.2
+    p_low, p_high = 0.0, 8.0
+    a_low, a_high = 0.5, 4.5
     p_samples = torch.FloatTensor(num_data, 1).uniform_(p_low, p_high)
-    a_samples = torch.FloatTensor(num_data, num_vars-1).uniform_(a_low, a_high)
+    a_samples = torch.FloatTensor(num_data, num_blocks).uniform_(a_low, a_high)
     data = {"p":p_samples, "a":a_samples}
     # data split
     from src.utlis import data_split
@@ -96,11 +91,11 @@ if __name__ == "__main__":
                               collate_fn=data_dev.collate_fn, shuffle=True)
 
     # get objective function & constraints
-    obj, constrs = rosenbrock(["x"], ["p", "a"], penalty_weight=100, num_vars=num_vars)
+    obj, constrs = rosenbrock(["x"], ["p", "a"], num_blocks=num_blocks, penalty_weight=100)
 
     # define neural architecture for the solution map smap(p, a) -> x
     import neuromancer as nm
-    func = nm.modules.blocks.MLP(insize=num_vars, outsize=num_vars, bias=True,
+    func = nm.modules.blocks.MLP(insize=num_blocks+1, outsize=2*num_blocks, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[10]*4)
     components = [nm.system.Node(func, ["p", "a"], ["x"], name="smap")]
@@ -134,14 +129,14 @@ if __name__ == "__main__":
 
     # init mathmatic model
     from src.problem.math_solver.rosenbrock import rosenbrock
-    model = rosenbrock(num_vars=num_vars)
+    model = rosenbrock(num_blocks=num_blocks)
 
     # test neuroMANCER
     from src.utlis import nm_test_solve
-    p, a = 1.2, list(np.random.uniform(0.2, 1.2, num_vars-1))
-    print("neuroMANCER:")
+    p, a = 3.2, list(np.random.uniform(a_low, a_high, num_blocks))
     datapoint = {"p": torch.tensor([[p]], dtype=torch.float32),
                  "a": torch.tensor([a], dtype=torch.float32),
                  "name":"test"}
     model.set_param_val({"p":p, "a":a})
+    print("neuroMANCER:")
     nm_test_solve(["x"], problem, datapoint, model)
