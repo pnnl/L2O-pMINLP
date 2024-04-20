@@ -46,12 +46,12 @@ def get_constrs(vars, params, num_blocks, penalty_weight):
     constraints = []
     # inner ball:
     g = sum(x[:, 2*i] ** 2 for i in range(num_blocks))
-    con = penalty_weight * (g >= p[:, 0] / 2)
+    con = penalty_weight * (g >= num_blocks * p[:, 0] / 2)
     con.name = "c_inner"
     constraints.append(con)
     # outer ball:
     g = sum(x[:, 2*i] ** 2 for i in range(num_blocks))
-    con = penalty_weight * (g <= p[:, 0])
+    con = penalty_weight * (g <= num_blocks * p[:, 0])
     con.name = "c_outer"
     constraints.append(con)
     return constraints
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     val_size = 1000   # number of validation size
 
     # data sample from uniform distribution
-    p_low, p_high = 0.0, 8.0
+    p_low, p_high = 0.0, 0.8
     a_low, a_high = 0.5, 4.5
     p_samples = torch.FloatTensor(num_data, 1).uniform_(p_low, p_high)
     a_samples = torch.FloatTensor(num_data, num_blocks).uniform_(a_low, a_high)
@@ -133,7 +133,7 @@ if __name__ == "__main__":
 
     # test neuroMANCER
     from src.utlis import nm_test_solve
-    p, a = 3.2, list(np.random.uniform(a_low, a_high, num_blocks))
+    p, a = 0.32, list(np.random.uniform(a_low, a_high, num_blocks))
     datapoint = {"p": torch.tensor([[p]], dtype=torch.float32),
                  "a": torch.tensor([a], dtype=torch.float32),
                  "name":"test"}
