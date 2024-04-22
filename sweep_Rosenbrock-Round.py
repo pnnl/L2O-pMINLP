@@ -290,9 +290,6 @@ if __name__ == "__main__":
             },
             "hidden_size": {
                 "values": [16, 32, 64, 128]
-            },
-            "continuous_update": {
-                "values": [False, True]
             }
         }
     }
