@@ -30,6 +30,19 @@ $$
 
 where $\boldsymbol{\Xi}$ represents the sampled dataset and $\boldsymbol{\xi}^i$ denotes the $i$-th sample. The vector $\mathbf{x}^i_R$ represents the continuous variables, and $\mathbf{x}^i_Z$ represents the integer variables, both of which are involved in minimizing the objective function $f(\cdot)$ while satisfying a set of inequality and equality constraints $\mathbf{g}(\cdot) \leq 0$ and $\mathbf{h}(\cdot) = 0$. The mapping $\boldsymbol{\pi}_{\boldsymbol{\Theta}}(\boldsymbol{\xi}^i)$, given by a deep neural network parametrized by $\Theta$, represents the solution to the optimization problem.
 
+## Requirements
+
+To run this project, you will need the following libraries and software installed:
+
+- **Python**: The project is developed using Python. Ensure you have Python 3.9 or later installed.
+- **Scikit-Learn**: Useful for performing various machine learning tasks such as preprocessing and model evaluation. 
+- **PyTorch**: Used for building and training neural network models. You can install it via pip or conda.
+- **NumPy**: Essential for numerical operations.
+- **Pandas**: Useful for data manipulation and analysis.
+- **Pyomo**: A Python library for optimization modeling.
+- **SCIP**: A powerful solver for mathematical programming (if applicable). Note that SCIP might need a separate installation process.
+- **Neuromancer**: This project uses the Neuromancer library for differentiable programming.
+
 ## Code Structure
 
 ```
