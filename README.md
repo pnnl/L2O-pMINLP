@@ -20,7 +20,7 @@ $$
   s.t. \quad & \mathbf{g} (\mathbf{x}^i, \mathbf{y}^i, \boldsymbol{\xi}^i) \leq \mathbf{0} \quad \forall i \\
   & \mathbf{x}^i \in \mathbb{R}^{n_R} \quad \forall i \\
   & \mathbf{y}^i \in \mathbb{Z}^{n_I} \quad \forall i \\
-  & [\mathbf{x}^i, \mathbf{y}^i] = \boldsymbol{\pi}_{\boldsymbol{\Theta}} （\boldsymbol{\xi}^i）\quad \forall i \\
+  & [\mathbf{x}^i, \mathbf{y}^i] = \boldsymbol{\pi}_{\boldsymbol{\Theta}} (\boldsymbol{\xi}^i) \quad \forall i \\
   & \boldsymbol{\xi}^i \in \boldsymbol{\Xi} \subset \mathbb{R}^s \quad \forall i
 \end{aligned}
 $$
