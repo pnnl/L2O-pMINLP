@@ -30,4 +30,30 @@ $$
 
 where $\boldsymbol{\Xi}$ represents the sampled dataset and $\boldsymbol{\xi}^i$ denotes the $i$-th sample. The vector $\mathbf{x}^i_R$ represents the continuous variables, and $\mathbf{x}^i_Z$ represents the integer variables, both of which are involved in minimizing the objective function $f(\cdot)$ while satisfying a set of inequality and equality constraints $\mathbf{g}(\cdot) \leq 0$ and $\mathbf{h}(\cdot) = 0$. The mapping $\boldsymbol{\pi}_{\boldsymbol{\Theta}}(\boldsymbol{\xi}^i)$, given by a deep neural network parametrized by $\Theta$, represents the solution to the optimization problem.
 
+## Code Structure
 
+```
+├── archive                        # for older files and documents
+├── img                            # Image resources for the project
+├── src                            # Main source code directory
+│   ├── __init__.py                # Initializes the src package
+│   ├── func                       # Directory for function modules
+│   ├── problem                    # Module for the benchmark problems
+│       ├── __init__.py            # Initializes the problem submodule
+│       ├── math_solver            # Predefined SCIP solvers for mathematical programming
+│           ├── __init__.py        # Initializes the mathematical solver submodule
+│           ├── abc_solver.py      # Abstract base class for mathematical solver implementations
+│           ├── quadratic.py       # SCIP model for non-convex MIQP
+│           └── rosenbrock.py      # SCIP model for high-dimensional integer Rosenbrock
+│       └── neuromancer            # Predefined NeuroMANCER solution maps
+│           ├── __init__.py        # Initializes the NeuroMANCER map submodule
+│           ├── quadratic.py       # NeuroMANCER map for non-convex MIQP
+│           └── rosenbrock.py      # NeuroMANCER map for high-dimensional integer Rosenbrock
+│   └── utlis                      # Utility tools such as data processing and result test
+│       ├── __init__.py            # Initializes the utility submodule
+│       └── data.py                # Data processing file
+│       └── solve_test.py          # Test functions to solve the optimization problem
+├── sweep_QP-Round.py              # Script for hyperparameter tuning for non-convex MIQP
+├── sweep_Rosenbrock-Round.py      # Script for hyperparameter tuning for high-dimensional integer Rosenbrock
+└── README.md                  # README file for the project
+```
