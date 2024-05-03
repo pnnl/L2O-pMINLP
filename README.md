@@ -33,11 +33,16 @@ where $\boldsymbol{\Xi}$ represents the sampled dataset and $\boldsymbol{\xi}^i$
 ## Code Structure
 
 ```
-├── archive                        # for older files and documents
+├── archive                        # Archive for older files and documents
 ├── img                            # Image resources for the project
 ├── src                            # Main source code directory
 │   ├── __init__.py                # Initializes the src package
 │   ├── func                       # Directory for function modules
+│       ├── __init__.py            # Initializes the function submodule
+│       ├── layer.py               # Pre-defined neural network layers
+│       ├── ste.py                 # Straight-through estimators for non-differentiable operations
+│       ├── rnd.py                 # Differentiable and learnable rounding
+│       └── proj.py                # Differentiable and learnable projection
 │   ├── problem                    # Module for the benchmark problems
 │       ├── __init__.py            # Initializes the problem submodule
 │       ├── math_solver            # Predefined SCIP solvers for mathematical programming
