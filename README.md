@@ -53,7 +53,7 @@ where $\boldsymbol{\Xi}$ represents the sampled dataset and $\boldsymbol{\xi}^i$
 │       └── neuromancer            # Predefined NeuroMANCER solution maps
 │           ├── __init__.py        # Initializes the NeuroMANCER map submodule
 │           ├── quadratic.py       # NeuroMANCER map for MIQP
-│           └── rosenbrock.py      # NeuroMANCER map for high-dimensional integer Rosenbrock
+│           └── rosenbrock.py      # NeuroMANCER map for MIRosenbrock
 │   └── utlis                      # Utility tools such as data processing and result test
 │       ├── __init__.py            # Initializes the utility submodule
 │       └── data.py                # Data processing file
