@@ -35,12 +35,12 @@ where $\boldsymbol{\Xi}$ represents the sampled dataset and $\boldsymbol{\xi}^i$
 To run this project, you will need the following libraries and software installed:
 
 - **Python**: The project is developed using Python. Ensure you have Python 3.9 or later installed.
-- **Scikit-Learn**: Useful for performing various machine learning tasks such as preprocessing and model evaluation. 
-- **PyTorch**: Used for building and training neural network models. You can install it via pip or conda.
+- **Scikit-Learn**: Useful for performing various machine learning tasks. 
+- **PyTorch**: Used for building and training neural network models.
 - **NumPy**: Essential for numerical operations.
 - **Pandas**: Useful for data manipulation and analysis.
 - **Pyomo**: A Python library for optimization modeling.
-- **SCIP**: A powerful solver for mathematical programming (if applicable). Note that SCIP might need a separate installation process.
+- **SCIP**: A powerful solver for mathematical programming, which might need a separate installation process.
 - **Neuromancer**: This project uses the Neuromancer library for differentiable programming.
 
 ## Code Structure
