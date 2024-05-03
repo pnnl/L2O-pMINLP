@@ -41,23 +41,23 @@ where $\boldsymbol{\Xi}$ represents the sampled dataset and $\boldsymbol{\xi}^i$
 │       ├── __init__.py            # Initializes the function submodule
 │       ├── layer.py               # Pre-defined neural network layers
 │       ├── ste.py                 # Straight-through estimators for non-differentiable operations
-│       ├── rnd.py                 # Differentiable and learnable rounding
-│       └── proj.py                # Differentiable and learnable projection
-│   ├── problem                    # Module for the benchmark problems
+│       ├── rnd.py                 # Modules for differentiable and learnable rounding
+│       └── proj.py                # Modules for differentiable and learnable projection
+│   ├── problem                    # Modules for the benchmark of constrained optimization
 │       ├── __init__.py            # Initializes the problem submodule
-│       ├── math_solver            # Predefined SCIP solvers for mathematical programming
+│       ├── math_solver            # Collection of Predefined SCIP solvers
 │           ├── __init__.py        # Initializes the mathematical solver submodule
 │           ├── abc_solver.py      # Abstract base class for solver implementations
 │           ├── quadratic.py       # SCIP model for MIQP
 │           └── rosenbrock.py      # SCIP model for MIRosenbrock
-│       └── neuromancer            # Predefined NeuroMANCER solution maps
+│       └── neuromancer            # Collection of Predefined NeuroMANCER maps
 │           ├── __init__.py        # Initializes the NeuroMANCER map submodule
 │           ├── quadratic.py       # NeuroMANCER map for MIQP
 │           └── rosenbrock.py      # NeuroMANCER map for MIRosenbrock
 │   └── utlis                      # Utility tools such as data processing and result test
 │       ├── __init__.py            # Initializes the utility submodule
 │       └── data.py                # Data processing file
-│       └── solve_test.py          # Test functions to solve the optimization problem
+│       └── solve_test.py          # Testing functions to evaluate optimization solution
 ├── sweep_QP-Round.py              # Script for hyperparameter tuning for MIQP
 ├── sweep_Rosenbrock-Round.py      # Script for hyperparameter tuning for MIRosenbrock
 └── README.md                      # README file for the project
