@@ -43,17 +43,17 @@ where $\boldsymbol{\Xi}$ represents the sampled dataset and $\boldsymbol{\xi}^i$
 │       ├── math_solver            # Predefined SCIP solvers for mathematical programming
 │           ├── __init__.py        # Initializes the mathematical solver submodule
 │           ├── abc_solver.py      # Abstract base class for solver implementations
-│           ├── quadratic.py       # SCIP model for non-convex MIQP
+│           ├── quadratic.py       # SCIP model for MIQP
 │           └── rosenbrock.py      # SCIP model for MIRosenbrock
 │       └── neuromancer            # Predefined NeuroMANCER solution maps
 │           ├── __init__.py        # Initializes the NeuroMANCER map submodule
-│           ├── quadratic.py       # NeuroMANCER map for non-convex MIQP
+│           ├── quadratic.py       # NeuroMANCER map for MIQP
 │           └── rosenbrock.py      # NeuroMANCER map for high-dimensional integer Rosenbrock
 │   └── utlis                      # Utility tools such as data processing and result test
 │       ├── __init__.py            # Initializes the utility submodule
 │       └── data.py                # Data processing file
 │       └── solve_test.py          # Test functions to solve the optimization problem
-├── sweep_QP-Round.py              # Script for hyperparameter tuning for non-convex MIQP
+├── sweep_QP-Round.py              # Script for hyperparameter tuning for MIQP
 ├── sweep_Rosenbrock-Round.py      # Script for hyperparameter tuning for MIRosenbrock
 └── README.md                      # README file for the project
 ```
