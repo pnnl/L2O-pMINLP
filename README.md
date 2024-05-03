@@ -55,5 +55,5 @@ where $\boldsymbol{\Xi}$ represents the sampled dataset and $\boldsymbol{\xi}^i$
 │       └── solve_test.py          # Test functions to solve the optimization problem
 ├── sweep_QP-Round.py              # Script for hyperparameter tuning for non-convex MIQP
 ├── sweep_Rosenbrock-Round.py      # Script for hyperparameter tuning for high-dimensional integer Rosenbrock
-└── README.md                  # README file for the project
+└── README.md                      # README file for the project
 ```
