@@ -8,4 +8,23 @@ While inherently heuristic and not guaranteed to find the optimal or even a feas
 
 - **Efficient Solution Acquisition**: The entire solution process relies entirely on neural networks without the need for mathematical programming solvers.
 
-- **Integer Solution Guarantee**: Integrates learnable rounding directly into the network architecture, ensuring that solutions adhere strictly to integer constraints. 
+- **Integer Solution Guarantee**: Integrates learnable rounding directly into the network architecture, ensuring that solutions adhere strictly to integer constraints.
+
+## Problem Definition
+
+A generic formulation of a multiparametric mix-integer nonlinear program (pMINLP) is given in the form:
+
+$$
+\begin{aligned}
+  \underset{\boldsymbol{\Theta}}{\min} \quad & \frac{1}{m} \sum_{i=1}^m  f(\mathbf{x}^i, \mathbf{y}^i, \boldsymbol{\xi}^i) \\
+  s.t. \quad & \mathbf{g} (\mathbf{x}^i, \mathbf{y}^i, \boldsymbol{\xi}^i) \leq \mathbf{0} \quad \forall i \\
+  & \mathbf{x}^i \in \mathbb{R}^{n_R} \quad \forall i \\
+  & \mathbf{y}^i \in \mathbb{Z}^{n_I} \quad \forall i \\
+  & [\mathbf{x}^i \mathbf{y}^i] = \boldsymbol{\pi}_{\boldsymbol{\Theta}} （\boldsymbol{\xi}^i）\quad \forall i \\
+  & \boldsymbol{\xi}^i \in \boldsymbol{\Xi} in \subset \mathbb{R}^s
+\end{aligned}
+$$
+
+where $\boldsymbol{\Xi}$ represents the sampled dataset and $\boldsymbol{\xi}^i$ denotes the $i$-th sample. The vector $\mathbf{x}^i \in \mathbb{R}^{n_R}$ represents the continuous variables, and $\mathbf{y}^i \in \mathbb{Z}^{n_I}$ represents the integer variables, both of which are involved in minimizing the objective function $f(\cdot)$ while satisfying a set of inequality constraints $\mathbf{g}(\cdot) \leq 0$. The mapping $\boldsymbol{\pi}_{\boldsymbol{\Theta}}(\boldsymbol{\xi}^i)$, given by a deep neural network parametrized by $\Theta$, represents the solution to the optimization problem.
+
+
