@@ -19,7 +19,8 @@ A generic formulation of a multiparametric mix-integer nonlinear program (pMINLP
 $$
 \begin{aligned}
   \underset{\boldsymbol{\Theta}}{\min} \quad & \frac{1}{m} \sum_{i=1}^m f(\mathbf{x}^i_R, \mathbf{x}^i_Z, \boldsymbol{\xi}^i) \\ 
-  s.t. \quad & \mathbf{g} (\mathbf{x}^i_R, \mathbf{x}^i_Z, \boldsymbol{\xi}^i) \leq \mathbf{0} \quad \forall i \\ 
+  \text{s.t.} \quad 
+  & \mathbf{g} (\mathbf{x}^i_R, \mathbf{x}^i_Z, \boldsymbol{\xi}^i) \leq \mathbf{0} \quad \forall i \\ 
   & \mathbf{h} (\mathbf{x}^i_R, \mathbf{x}^i_Z, \boldsymbol{\xi}^i) = \mathbf{0} \quad \forall i \\ 
   & \mathbf{x}^i_R \in \mathbb{R}^{n_r} \quad \forall i \\ 
   & \mathbf{x}^i_Z \in \mathbb{Z}^{n_i} \quad \forall i \\ 
@@ -75,3 +76,21 @@ To run this project, you will need the following libraries and software installe
 ├── sweep_Rosenbrock-Round.py      # Script for hyperparameter tuning for MIRosenbrock
 └── README.md                      # README file for the project
 ```
+
+## Parametric MINLP Benchmark
+
+### MIQP
+
+A parametric MIQP model with both continuous variables $\mathbf{x}$ and binary variables $\mathbf{y}$ can be structured as follows:
+
+$$
+\begin{aligned}
+  \underset{\boldsymbol{\mathbf{x}, \mathbf{y}}}{\min} \quad & \mathbf{c}^\top \mathbf{x} + \frac{1}{2} \mathbf{x}^\top \mathbf{Q} \mathbf{x} + \mathbf{d}^{\intercal} \mathbf{y} \\
+  \text{s.t.} \quad 
+  & \mathbf{A} \mathbf{x} + \mathbf{E} \mathbf{y} \leq \mathbf{b} + \mathbf{F} \mathbf{\theta} \\
+  & \mathbf{x} \geq \mathbf{0} \\
+  & \mathbf{y} \in \{0, 1\}
+\end{aligned}
+$$
+
+In this formulation, the objective function is a quadratic function of $\mathbf{x}$ plus linear in both $\mathbf{x}$ and $\mathbf{y}$. The constraints involve linear combinations of these variables, while the right-hand sides are modulated by the parameter $\mathbf{\theta}$.
