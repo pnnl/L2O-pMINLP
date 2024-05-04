@@ -101,6 +101,20 @@ The `diffGumbelBinarize`, as implemented, utilizes the Gumbel-Softmax distributi
 
 This algorithm introduces a dynamic, learnable threshold that determines the specific rounding behavior for each integer variable.
 
+### Projection
+
+#### Projected Gradient
+
+![Framework](img/proj.png)
+
+This algorithm is designed to refine solutions to ensure they adhere to the defined constraints by repeatedly projecting onto a feasible region.
+
+#### Solution Map with Projected Gradient
+
+![Framework](img/solproj.png)
+
+Extending the concept of projected gradients, this algorithm incorporates a solution mapping phase that predicts residuals used to adjust the solution before projection.
+
 ## Parametric MINLP Benchmark
 
 ### MIQP
