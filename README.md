@@ -142,7 +142,7 @@ $$
 
 $$
 \[
-\bm{E} = \begin{bmatrix}
+\mathbf{E} = \begin{bmatrix}
     -1 & 0 \\
     -1 & 0 \\
     0 & -0.5 \\
@@ -156,7 +156,7 @@ $$
 
 $$
 \[
-\bm{F} = \begin{bmatrix}
+\mathbf{F} = \begin{bmatrix}
     3.16515 & 3.7546 \\
     -3.16515 & -3.7546 \\
     0.17355 & -0.2717 \\
