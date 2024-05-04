@@ -22,8 +22,8 @@ $$
   \text{s.t.} \quad 
   & \mathbf{g} (\mathbf{x}^i_R, \mathbf{x}^i_Z, \boldsymbol{\xi}^i) \leq \mathbf{0} \quad \forall i \\ 
   & \mathbf{h} (\mathbf{x}^i_R, \mathbf{x}^i_Z, \boldsymbol{\xi}^i) = \mathbf{0} \quad \forall i \\ 
-  & \mathbf{x}^i_R \in \mathbb{R}^{n_r} \quad \forall i \\ 
-  & \mathbf{x}^i_Z \in \mathbb{Z}^{n_i} \quad \forall i \\ 
+  & \mathbf{x}^i_R \in \mathbb{R}^{n_R} \quad \forall i \\ 
+  & \mathbf{x}^i_Z \in \mathbb{Z}^{n_Z} \quad \forall i \\ 
   & [\mathbf{x}^i_R, \mathbf{x}^i_Z] = \boldsymbol{\pi}_{\boldsymbol{\Theta}} (\boldsymbol{\xi}^i) \quad \forall i \\ 
   & \boldsymbol{\xi}^i \in \boldsymbol{\Xi} \subset \mathbb{R}^s \quad \forall i 
 \end{aligned}
