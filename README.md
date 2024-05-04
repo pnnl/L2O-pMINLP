@@ -98,7 +98,6 @@ In this formulation, the objective function is a quadratic function of $\mathbf{
 The fixed parameters of an example from [A multiparametric programming approach for mixed-integer quadratic engineering problems](https://www.sciencedirect.com/science/article/abs/pii/S0098135401007979), are defined as follows:
 
 $$
-\[ 
 \mathbf{c} = \begin{bmatrix}
     0.02 \\
     0.03
@@ -113,11 +112,9 @@ $$
     -0.30 \\
     -0.31
 \end{bmatrix}
-\]
 $$
 
 $$
-\[
 \mathbf{b} = \begin{bmatrix}
     0.417425 \\
     3.582575 \\
@@ -137,11 +134,9 @@ $$
     0 & -1 \\
     0 & 0
 \end{bmatrix};
-\]
 $$
 
 $$
-\[
 \mathbf{E} = \begin{bmatrix}
     -1 & 0 \\
     -1 & 0 \\
@@ -151,11 +146,9 @@ $$
     -0.5 & 0 \\
     1 & 1
 \end{bmatrix};
-\]
 $$
 
 $$
-\[
 \mathbf{F} = \begin{bmatrix}
     3.16515 & 3.7546 \\
     -3.16515 & -3.7546 \\
@@ -165,7 +158,6 @@ $$
     -1.81960 & 3.2841 \\
     0 & 0
 \end{bmatrix}
-\]
 $$
 
 The parametric variable $\mathbf{\theta}$ follows a uniform distribution between $0$ and $1$.
