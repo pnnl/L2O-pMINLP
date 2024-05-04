@@ -223,3 +223,37 @@ if __name__ == "__main__":
     nm_test_solve(["x_rnd"], problem, datapoint, model)
     print("Projection:")
     nm_test_solve(["x_bar"], problem, datapoint, model)
+
+# get objective function & constraints
+from src.problem import nmQuadratic
+obj_bar, constrs_bar = nmQuadratic(["x_bar"], ["p"], penalty_weight=10)
+obj_rnd, constrs_rnd = nmQuadratic(["x_rnd"], ["p"], penalty_weight=10)
+
+# define neural architecture for the solution map
+import neuromancer as nm
+func = nm.modules.blocks.MLP(insize=2, outsize=4, bias=True,
+                             linear_map=nm.slim.maps["linear"],
+                             nonlin=nn.ReLU, hsizes=[10]*4)
+smap = nm.system.Node(func, ["p"], ["x"], name="smap")
+
+# define rounding model
+from src.func.layer import netFC
+layers_rnd = netFC(input_dim=6, hidden_dims=[20]*3, output_dim=4)
+from src.func.rnd import roundModel, roundGumbelModel, roundThresholdModel
+round_func = roundGumbelModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"], output_keys=["x_rnd"],
+                              bin_ind={"x":[2,3]}, continuous_update=False, name="round")
+
+
+# define projection layer
+num_steps = 10
+step_size = 0.1
+decay = 0.1
+layers_proj = netFC(input_dim=10, hidden_dims=[20]*3, output_dim=4)
+proj = solPredGradProj(layers=layers_proj, constraints=constrs_bar, param_keys=["p"],
+                       var_keys=["x_rnd"], output_keys=["x_bar"], num_steps=num_steps,
+                       step_size=step_size, decay=decay)
+
+# build neuromancer problem
+components = [smap, round_func, proj]
+loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar)
+problem = nm.problem.Problem(components, loss, grad_inference=True)
