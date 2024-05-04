@@ -208,7 +208,7 @@ The parametric, high-dimension, Integer, and constrained Rosenbrock problem impl
 
 $$
 \begin{aligned}
-  \underset{\boldsymbol{\mathbf{x}}}{\min} \quad & \sum_{i=1}^b [{(a - x_{2i})}^2 + 100 {(x_{2i+1} - {x_{2i}}^2)}^2] \\
+  \underset{\boldsymbol{\mathbf{x}}}{\min} \quad & \sum_{i=1}^b [{(a - x_{2i})}^2 + 100 {(x_{2i+1} - x_{2i}^2)}^2] \\
   \text{s.t.} \quad 
   & \sum_{i=1}^b x_{2i}^2 \leq b p \\
   & \sum_{i=1}^b x_{2i}^2 \geq \frac{b p}{2} \\
