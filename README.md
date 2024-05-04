@@ -103,6 +103,8 @@ This algorithm introduces a dynamic, learnable threshold that determines the spe
 
 ### Projection
 
+These algorithms aim to reduce constraint violation. The projection is applied iteratively for a predefined number of steps $K$, adjusting the solution in each iteration using a step size $\alpha$.
+
 #### Projected Gradient
 
 ![Framework](img/proj.png)
