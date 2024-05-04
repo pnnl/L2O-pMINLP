@@ -160,4 +160,22 @@ $$
 \end{bmatrix}
 $$
 
-The parametric variable $\mathbf{\theta}$ follows a uniform distribution between $0$ and $1$.
+The variable parameter $\mathbf{\theta}$ follows a uniform distribution between $0$ and $1$.
+
+### MIRosenbrock
+
+The parametric, high-dimension, Integer, and constrained Rosenbrock problem implemented in this project serves as a rigorous testbed for evaluating the efficacy of our differentiable programming framework:
+
+$$
+\begin{aligned}
+  \underset{\boldsymbol{\mathbf{x}}}{\min} \quad & \sum_{i=1}^b [{(a - x_{2i})}^2 + 100 {(x_{2i+1} - {x_{2i}}^2)}^2] \\
+  \text{s.t.} \quad 
+  & \sum_{i=1}^b x_{2i}^2 \leq p \\
+  & \sum_{i=1}^b x_{2i}^2 \geq \frac{p}{2} \\
+  & \mathbf{x} \in \mathbb{Z}^{2b} \\
+\end{aligned}
+$$
+
+The scalar parameter $p$ is uniformly distributed between $1$ and $8$, while the vector parameter $\mathbf{a}$, with length $b$, uniformly ranges from  $0.5$ and $4.5$.
+
+
