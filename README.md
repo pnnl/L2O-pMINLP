@@ -94,3 +94,78 @@ $$
 $$
 
 In this formulation, the objective function is a quadratic function of $\mathbf{x}$ plus linear in both $\mathbf{x}$ and $\mathbf{y}$. The constraints involve linear combinations of these variables, while the right-hand sides are modulated by the parameter $\mathbf{\theta}$.
+
+The fixed parameters of an example from [A multiparametric programming approach for mixed-integer quadratic engineering problems](https://www.sciencedirect.com/science/article/abs/pii/S0098135401007979), are defined as follows:
+
+$$
+\[ 
+\mathbf{c} = \begin{bmatrix}
+    0.02 \\
+    0.03
+\end{bmatrix},
+\quad
+\mathbf{Q} = \begin{bmatrix}
+    0.0196 & 0.0063 \\
+    0.0063 & 0.0199
+\end{bmatrix},
+\quad
+\mathbf{d} = \begin{bmatrix}
+    -0.30 \\
+    -0.31
+\end{bmatrix}
+\]
+$$
+
+$$
+\[
+\mathbf{b} = \begin{bmatrix}
+    0.417425 \\
+    3.582575 \\
+    0.413225 \\
+    0.467075 \\
+    1.090200 \\
+    2.909800 \\
+    1.000000
+\end{bmatrix},
+\quad
+\mathbf{A} = \begin{bmatrix}
+    1 & 0 \\
+    -1 & 0 \\
+    -0.0609 & 0 \\
+    -0.0064 & 0 \\
+    0 & 1 \\
+    0 & -1 \\
+    0 & 0
+\end{bmatrix};
+\]
+$$
+
+$$
+\[
+\bm{E} = \begin{bmatrix}
+    -1 & 0 \\
+    -1 & 0 \\
+    0 & -0.5 \\
+    0 & -0.7 \\
+    -0.6 & 0 \\
+    -0.5 & 0 \\
+    1 & 1
+\end{bmatrix};
+\]
+$$
+
+$$
+\[
+\bm{F} = \begin{bmatrix}
+    3.16515 & 3.7546 \\
+    -3.16515 & -3.7546 \\
+    0.17355 & -0.2717 \\
+    0.06585 & 0.4714 \\
+    1.81960 & -3.2841 \\
+    -1.81960 & 3.2841 \\
+    0 & 0
+\end{bmatrix}
+\]
+$$
+
+The parametric variable $\mathbf{\theta}$ follows a uniform distribution between $0$ and $1$.
