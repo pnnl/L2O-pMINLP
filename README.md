@@ -93,6 +93,8 @@ During the training of neural networks, non-differentiable operations such as bi
 
 This algorithm is specifically designed to adaptively decide the rounding direction—whether to round up (ceiling) or down (floor)—for each variable based on the contextual data it processes.
 
+The `diffGumbelBinarize`, as implemented, utilizes the Gumbel-Softmax distribution to introduce two Gumbel noises into the logits of 0 and 1 during the training. This approach simulates the randomness associated with rounding decisions, and by adjusting the `temperature` parameter, it controls the sharpness of the binarization, effectively balancing exploration and exploitation in the rounding process.
+
 #### Rounding with Learnable Threshold
 
 ![Framework](img/threshold.png)
