@@ -170,8 +170,8 @@ $$
 \begin{aligned}
   \underset{\boldsymbol{\mathbf{x}}}{\min} \quad & \sum_{i=1}^b [{(a - x_{2i})}^2 + 100 {(x_{2i+1} - {x_{2i}}^2)}^2] \\
   \text{s.t.} \quad 
-  & \sum_{i=1}^b x_{2i}^2 \leq bp \\
-  & \sum_{i=1}^b x_{2i}^2 \geq \frac{bp}{2} \\
+  & \sum_{i=1}^b x_{2i}^2 \leq b p \\
+  & \sum_{i=1}^b x_{2i}^2 \geq \frac{b p}{2} \\
   & \mathbf{x} \in \mathbb{Z}^{2b} \\
 \end{aligned}
 $$
