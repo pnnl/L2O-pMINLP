@@ -1,0 +1,16 @@
+def naive_round(xval, model):
+    """
+    A method to just round
+    """
+    # get solution value
+    for k, vals in xval.items():
+        # assign initial solution
+        for i in vals:
+            # round integer variables
+            if model.vars[k][i].is_integer():
+                model.vars[k][i].value = round(vals[i])
+            # assign cotinuous variables
+            else:
+                model.vars[k][i].value = vals[i]
+    xval, objval = model.get_val()
+    return xval, objval
