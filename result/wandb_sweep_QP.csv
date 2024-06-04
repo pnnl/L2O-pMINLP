@@ -1,6 +1,6 @@
 Problem,Model,Training,continuous_update,batch_size,hidden_layers_sol,hidden_layers_rnd,hidden_size,learning_rate,optimizer,Mean Objective Value,Mean Constraint Violation,Mean Merit
 MIQP,Exact,,,,,,,,,-0.301369,0.287015,2.568781
-,,,,,,,,,,,,
+MIQP,Heuristic ,,,,,,,,,-0.302556,0.338047,3.077914
 MIQP,Standard,E2E,TRUE,32,3,3,16,0.003908,AdamW,-0.251687264,0.079853256,0.546845299
 MIQP,Standard,E2E,TRUE,32,2,3,8,0.023502,AdamW,-0.215121088,0.083898206,0.623860976
 MIQP,Standard,E2E,TRUE,16,2,3,8,0.004734,Adam,-0.250287224,0.097524203,0.724954809
