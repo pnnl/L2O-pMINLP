@@ -67,8 +67,8 @@ if __name__ == "__main__":
     torch.manual_seed(42)
 
     # init
-    steepness = 20    # steepness factor
-    num_blocks = 5    # number of expression blocks
+    steepness = 30    # steepness factor
+    num_blocks = 3    # number of expression blocks
     num_data = 5000   # number of data
     test_size = 1000  # number of test size
     val_size = 1000   # number of validation size
@@ -92,8 +92,8 @@ if __name__ == "__main__":
                               collate_fn=data_dev.collate_fn, shuffle=True)
 
     # get objective function & constraints
-    obj, constrs = rosenbrock(["x"], ["p", "a"], steepness,
-                              num_blocks, penalty_weight=100)
+    obj, constrs = rosenbrock(["x"], ["p", "a"], steepness=steepness,
+                              num_blocks=num_blocks, penalty_weight=100)
 
     # define neural architecture for the solution map smap(p, a) -> x
     import neuromancer as nm

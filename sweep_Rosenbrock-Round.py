@@ -258,7 +258,7 @@ if __name__ == "__main__":
                         help="number of blocks")
     parser.add_argument("--steepness",
                         type=int,
-                        default=20,
+                        default=30,
                         help="steepness factor")
     # get configuration
     method_config = parser.parse_args()
@@ -295,7 +295,7 @@ if __name__ == "__main__":
                 "values": [2, 3, 4]
             },
             "hidden_size": {
-                "values": [16, 32, 64, 128]
+                "values": [4, 8, 16, 32, 64]
             },
             "continuous_update": {
                 "values": [False, True]

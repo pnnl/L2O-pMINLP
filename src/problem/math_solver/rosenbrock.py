@@ -35,14 +35,14 @@ if __name__ == "__main__":
 
     from src.utlis import ms_test_solve
 
-    steepness = 20    # steepness factor
-    num_blocks = 5    # number of expression blocks
+    steepness = 30    # steepness factor
+    num_blocks = 3    # number of expression blocks
 
     # params
-    p, a = 3.2, (2.4, 1.8)
+    p, a = 3.2, (2.4, 1.8, 2.0)
     params = {"p":p, "a":a}
     # init model
-    model = rosenbrock(steepness=100, num_blocks=2)
+    model = rosenbrock(steepness=steepness, num_blocks=num_blocks)
 
     # solve the MIQP
     print("======================================================")
