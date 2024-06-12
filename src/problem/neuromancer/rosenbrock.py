@@ -5,7 +5,7 @@ Parametric Mixed Integer Rosenbrock Problem
 import numpy as np
 import neuromancer as nm
 
-def rosenbrock(var_keys, param_keys, num_blocks, penalty_weight):
+def rosenbrock(var_keys, param_keys, steepness, num_blocks, penalty_weight=100):
     # mutable parameters
     params = {}
     for p in param_keys:
@@ -14,12 +14,12 @@ def rosenbrock(var_keys, param_keys, num_blocks, penalty_weight):
     vars = {}
     for v in var_keys:
         vars[v] = nm.constraint.variable(v)
-    obj = [get_obj(vars, params, num_blocks)]
+    obj = [get_obj(vars, params, steepness, num_blocks)]
     constrs = get_constrs(vars, params, num_blocks, penalty_weight)
     return obj, constrs
 
 
-def get_obj(vars, params, num_blocks):
+def get_obj(vars, params, steepness, num_blocks):
     """
     Get neuroMANCER objective component
     """
@@ -27,8 +27,8 @@ def get_obj(vars, params, num_blocks):
     x, = vars.values()
     # get mutable parameters
     p, a = params.values()
-    # objective function sum (a_i - x_2i)^2 + 100 (x_2i+1 - x_2i^2)^2
-    f = sum((a[:, i] - x[:, 2*i]) ** 2 + 100 * (x[:, 2*i+1] - x[:, 2*i] ** 2) ** 2
+    # objective function sum (a_i - x_2i)^2 + b * (x_2i+1 - x_2i^2)^2
+    f = sum((a[:, i] - x[:, 2*i]) ** 2 + steepness * (x[:, 2*i+1] - x[:, 2*i] ** 2) ** 2
              for i in range(num_blocks))
     obj = f.minimize(weight=1.0, name="obj")
     return obj
@@ -67,6 +67,7 @@ if __name__ == "__main__":
     torch.manual_seed(42)
 
     # init
+    steepness = 20    # steepness factor
     num_blocks = 5    # number of expression blocks
     num_data = 5000   # number of data
     test_size = 1000  # number of test size
@@ -91,7 +92,8 @@ if __name__ == "__main__":
                               collate_fn=data_dev.collate_fn, shuffle=True)
 
     # get objective function & constraints
-    obj, constrs = rosenbrock(["x"], ["p", "a"], num_blocks=num_blocks, penalty_weight=100)
+    obj, constrs = rosenbrock(["x"], ["p", "a"], steepness,
+                              num_blocks, penalty_weight=100)
 
     # define neural architecture for the solution map smap(p, a) -> x
     import neuromancer as nm
@@ -129,7 +131,7 @@ if __name__ == "__main__":
 
     # init mathmatic model
     from src.problem.math_solver.rosenbrock import rosenbrock
-    model = rosenbrock(num_blocks=num_blocks)
+    model = rosenbrock(steepness=steepness, num_blocks=num_blocks)
 
     # test neuroMANCER
     from src.utlis import nm_test_solve

@@ -103,6 +103,8 @@ def build_problem(config, method_config):
     """
     # number of blocks
     num_blocks = method_config.blocks
+    # steepness parameters
+    steepness = method_config.steepness
     # hyperparameters
     penalty_weight = 100 #config.penalty_weight  # weight of constraint violation penealty
     hlayers_sol = config.hidden_layers_sol       # number of hidden layers for solution mapping
@@ -110,9 +112,9 @@ def build_problem(config, method_config):
     hsize = config.hidden_size                   # width of hidden layers for solution mapping
     continuous_update = config.continuous_update # update continuous variable during rounding step or not
     # define quadratic objective functions and constraints for both problem types
-    obj_rel, constrs_rel = nmRosenbrock(["x"], ["p", "a"], num_blocks,
+    obj_rel, constrs_rel = nmRosenbrock(["x"], ["p", "a"], steepness, num_blocks,
                                         penalty_weight=penalty_weight)
-    obj_rnd, constrs_rnd = nmRosenbrock(["x_rnd"], ["p", "a"], num_blocks,
+    obj_rnd, constrs_rnd = nmRosenbrock(["x_rnd"], ["p", "a"], steepness, num_blocks,
                                         penalty_weight=penalty_weight)
     # build neural architecture for the solution map
     func = nm.modules.blocks.MLP(insize=num_blocks+1, outsize=2*num_blocks,
@@ -252,14 +254,18 @@ if __name__ == "__main__":
                         help="training pattern")
     parser.add_argument("--blocks",
                         type=int,
-                        default=5,
+                        default=3,
                         help="number of blocks")
+    parser.add_argument("--steepness",
+                        type=int,
+                        default=20,
+                        help="steepness factor")
     # get configuration
     method_config = parser.parse_args()
 
     # configuration for sweep (hyperparameter tuning)
     sweep_config = {
-        "name": "Rosenbrock-round",
+        "name": "Rosenbrock-easy-round",
         "method": "bayes",
         "metric": {
           "name": "Mean Merit",
@@ -290,6 +296,9 @@ if __name__ == "__main__":
             },
             "hidden_size": {
                 "values": [16, 32, 64, 128]
+            },
+            "continuous_update": {
+                "values": [False, True]
             }
         }
     }
@@ -302,7 +311,7 @@ if __name__ == "__main__":
     loader_train, loader_test, loader_dev = load_data(num_blocks, num_data, test_size, val_size)
 
     # set up project and sweep
-    project_name = "Rosenbrock-round-{}-".format(method_config.blocks)
+    project_name = "Rosenbrock-easy-round-{}-".format(method_config.blocks)
     project_name += method_config.round + "-" + method_config.train
     sweep_id = wandb.sweep(sweep_config, project=project_name)
     wandb.agent(sweep_id, function=lambda: train(method_config), count=100)

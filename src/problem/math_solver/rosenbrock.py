@@ -7,7 +7,7 @@ from pyomo import environ as pe
 from src.problem.math_solver import abcParamSolver
 
 class rosenbrock(abcParamSolver):
-    def __init__(self, num_blocks):
+    def __init__(self, steepness, num_blocks):
         super().__init__()
         # create model
         m = pe.ConcreteModel()
@@ -18,7 +18,7 @@ class rosenbrock(abcParamSolver):
         m.x = pe.Var(pe.RangeSet(0, num_blocks*2-1), domain=pe.Integers)
         # objective
         obj = sum((m.a[i] - m.x[2*i]) ** 2 + \
-                   100 * (m.x[2*i+1] - m.x[2*i] ** 2) ** 2 for i in range(num_blocks))
+                   steepness * (m.x[2*i+1] - m.x[2*i] ** 2) ** 2 for i in range(num_blocks))
         m.obj = pe.Objective(sense=pe.minimize, expr=obj)
         # constraints
         m.cons = pe.ConstraintList()
@@ -35,11 +35,14 @@ if __name__ == "__main__":
 
     from src.utlis import ms_test_solve
 
+    steepness = 20    # steepness factor
+    num_blocks = 5    # number of expression blocks
+
     # params
     p, a = 3.2, (2.4, 1.8)
     params = {"p":p, "a":a}
     # init model
-    model = rosenbrock(num_blocks=2)
+    model = rosenbrock(steepness=100, num_blocks=2)
 
     # solve the MIQP
     print("======================================================")

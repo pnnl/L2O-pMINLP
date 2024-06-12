@@ -18,14 +18,14 @@ A generic formulation of a multiparametric mix-integer nonlinear program (pMINLP
 
 $$
 \begin{aligned}
-  \underset{\boldsymbol{\Theta}}{\min} \quad & \frac{1}{m} \sum_{i=1}^m f(\mathbf{x}^i_R, \mathbf{x}^i_Z, \boldsymbol{\xi}^i) \\ 
-  \text{s.t.} \quad 
-  & \mathbf{g} (\mathbf{x}^i_R, \mathbf{x}^i_Z, \boldsymbol{\xi}^i) \leq \mathbf{0} \quad \forall i \\ 
-  & \mathbf{h} (\mathbf{x}^i_R, \mathbf{x}^i_Z, \boldsymbol{\xi}^i) = \mathbf{0} \quad \forall i \\ 
-  & \mathbf{x}^i_R \in \mathbb{R}^{n_R} \quad \forall i \\ 
-  & \mathbf{x}^i_Z \in \mathbb{Z}^{n_Z} \quad \forall i \\ 
-  & [\mathbf{x}^i_R, \mathbf{x}^i_Z] = \boldsymbol{\pi}_{\boldsymbol{\Theta}} (\boldsymbol{\xi}^i) \quad \forall i \\ 
-  & \boldsymbol{\xi}^i \in \boldsymbol{\Xi} \subset \mathbb{R}^s \quad \forall i 
+  \underset{\boldsymbol{\Theta}}{\min} \quad & \frac{1}{m} \sum_{i=1}^m f(\mathbf{x}^i_R, \mathbf{x}^i_Z, \boldsymbol{\xi}^i) \\
+  \text{s.t.} \quad
+  & \mathbf{g} (\mathbf{x}^i_R, \mathbf{x}^i_Z, \boldsymbol{\xi}^i) \leq \mathbf{0} \quad \forall i \\
+  & \mathbf{h} (\mathbf{x}^i_R, \mathbf{x}^i_Z, \boldsymbol{\xi}^i) = \mathbf{0} \quad \forall i \\
+  & \mathbf{x}^i_R \in \mathbb{R}^{n_R} \quad \forall i \\
+  & \mathbf{x}^i_Z \in \mathbb{Z}^{n_Z} \quad \forall i \\
+  & [\mathbf{x}^i_R, \mathbf{x}^i_Z] = \boldsymbol{\pi}_{\boldsymbol{\Theta}} (\boldsymbol{\xi}^i) \quad \forall i \\
+  & \boldsymbol{\xi}^i \in \boldsymbol{\Xi} \subset \mathbb{R}^s \quad \forall i
 \end{aligned}
 $$
 
@@ -36,7 +36,7 @@ where $\boldsymbol{\Xi}$ represents the sampled dataset and $\boldsymbol{\xi}^i$
 To run this project, you will need the following libraries and software installed:
 
 - **Python**: The project is developed using Python. Ensure you have Python 3.9 or later installed.
-- **Scikit-Learn**: Useful for performing various machine learning tasks. 
+- **Scikit-Learn**: Useful for performing various machine learning tasks.
 - **PyTorch**: Used for building and training neural network models.
 - **NumPy**: Essential for numerical operations.
 - **Pandas**: Useful for data manipulation and analysis.
@@ -126,7 +126,7 @@ A parametric MIQP model with both continuous variables $\mathbf{x}$ and binary v
 $$
 \begin{aligned}
   \underset{\boldsymbol{\mathbf{x}, \mathbf{y}}}{\min} \quad & \mathbf{c}^\top \mathbf{x} + \frac{1}{2} \mathbf{x}^\top \mathbf{Q} \mathbf{x} + \mathbf{d}^\top \mathbf{y} \\
-  \text{s.t.} \quad 
+  \text{s.t.} \quad
   & \mathbf{A} \mathbf{x} + \mathbf{E} \mathbf{y} \leq \mathbf{b} + \mathbf{F} \mathbf{\theta} \\
   & \mathbf{x} \geq \mathbf{0} \\
   & \mathbf{y} \in \{0, 1\}
@@ -204,12 +204,12 @@ The variable parameter $\mathbf{\theta}$ follows a uniform distribution between 
 
 ### MIRosenbrock
 
-The parametric, high-dimension, Integer, and constrained Rosenbrock problem implemented in this project serves as a rigorous testbed for evaluating the efficacy of our differentiable programming framework:
+The parametric, high-dimension, Integer, and constrained Rosenbrock problem implemented in this project serves as a rigorous testbed for evaluating the efficacy of our differentiable programming framework, in which $s$ controls the steepness of the function:
 
 $$
 \begin{aligned}
-  \underset{\boldsymbol{\mathbf{x}}}{\min} \quad & \sum_{i=1}^b [{(a - x_{2i})}^2 + 100 {(x_{2i+1} - x_{2i}^2)}^2] \\
-  \text{s.t.} \quad 
+  \underset{\boldsymbol{\mathbf{x}}}{\min} \quad & \sum_{i=1}^b [{(a - x_{2i})}^2 + s {(x_{2i+1} - x_{2i}^2)}^2] \\
+  \text{s.t.} \quad
   & \sum_{i=1}^b x_{2i}^2 \leq b p \\
   & \sum_{i=1}^b x_{2i}^2 \geq \frac{b p}{2} \\
   & \mathbf{x} \in \mathbb{Z}^{2b} \\
