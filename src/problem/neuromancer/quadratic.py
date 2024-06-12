@@ -8,7 +8,7 @@ https://www.sciencedirect.com/science/article/pii/S1570794601801577
 import numpy as np
 import neuromancer as nm
 
-def quadratic(var_keys, param_keys, penalty_weight):
+def quadratic(var_keys, param_keys, penalty_weight=10):
     # define the coefficients for the quadratic problem
     c = [0.0200,
          0.0300]
