@@ -58,6 +58,10 @@ def train(method_config):
     Args:
         method_config (object): Configuration containing details of method.
     """
+    # number of blocks
+    num_blocks = method_config.blocks
+    # steepness parameters
+    steepness = method_config.steepness
     with wandb.init(resume=True, entity="botang") as run:
         # get config from wandb
         config = wandb.config
@@ -81,7 +85,7 @@ def train(method_config):
         # load best model dict
         problem_rnd.load_state_dict(best_model)
         # evaluate model
-        df = eval(loader_test.dataset, problem_rnd, num_blocks)
+        df = eval(loader_test.dataset, problem_rnd, steepness, num_blocks)
         mean_obj_val = df["Obj Val"].mean()
         mean_constr_viol = df["Constraints Viol"].mean()
         mean_merit = mean_obj_val + 100 * mean_constr_viol
@@ -178,7 +182,7 @@ def get_trainer(config, problem):
     return trainer
 
 
-def eval(dataset, problem, num_blocks):
+def eval(dataset, problem, steepness, num_blocks):
     """
     Evaluate a trained model on a dataset.
 
@@ -191,7 +195,7 @@ def eval(dataset, problem, num_blocks):
         pd.DataFrame: Results including solution, objective value, constraints violation, and elapsed time.
     """
     # exact mathmatical programming solver
-    model = msRosenbrock(num_blocks)
+    model = msRosenbrock(steepness, num_blocks)
     # init
     sols, objvals, conviols, elapseds = [], [], [], []
     # iterate through test dataset
