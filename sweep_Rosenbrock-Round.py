@@ -256,16 +256,23 @@ if __name__ == "__main__":
                         default="e2e",
                         choices=["e2e", "2s"],
                         help="training pattern")
-    parser.add_argument("--blocks",
-                        type=int,
-                        default=3,
-                        help="number of blocks")
-    parser.add_argument("--steepness",
-                        type=int,
-                        default=30,
-                        help="steepness factor")
+    parser.add_argument("--difficulty",
+                        type=str,
+                        default="easy",
+                        choices=["easy", "medium", "hard"],
+                        help="difficulty level of the problem")
     # get configuration
     method_config = parser.parse_args()
+    # set problem parameters based on the difficulty level
+    if method_config.difficulty == "easy":
+        method_config.blocks = 3   # number of blocks
+        method_config.steepness = 30   # function steepness
+    elif method_config.difficulty == "medium":
+        method_config.blocks = 5   # number of blocks
+        method_config.steepness = 30   # function steepness
+    elif method_config.difficulty == "hard":
+        method_config.blocks = 5   # number of blocks
+        method_config.steepness = 100  # function steepness
 
     # configuration for sweep (hyperparameter tuning)
     sweep_config = {
@@ -315,7 +322,8 @@ if __name__ == "__main__":
     loader_train, loader_test, loader_dev = load_data(num_blocks, num_data, test_size, val_size)
 
     # set up project and sweep
-    project_name = "Rosenbrock-easy-round-{}-".format(method_config.blocks)
-    project_name += method_config.round + "-" + method_config.train
+    project_name = "Rosenbrock-{}-{}-{}".format(method_config.difficulty,
+                                                method_config.round,
+                                                method_config.train)
     sweep_id = wandb.sweep(sweep_config, project=project_name)
     wandb.agent(sweep_id, function=lambda: train(method_config), count=100)
