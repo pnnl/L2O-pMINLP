@@ -265,14 +265,14 @@ if __name__ == "__main__":
     method_config = parser.parse_args()
     # set problem parameters based on the difficulty level
     if method_config.difficulty == "easy":
-        method_config.blocks = 3   # number of blocks
-        method_config.steepness = 30   # function steepness
+        method_config.blocks = 3        # number of blocks
+        method_config.steepness = 30    # function steepness
     elif method_config.difficulty == "medium":
-        method_config.blocks = 5   # number of blocks
-        method_config.steepness = 30   # function steepness
+        method_config.blocks = 3        # number of blocks
+        method_config.steepness = 100   # function steepness
     elif method_config.difficulty == "hard":
-        method_config.blocks = 5   # number of blocks
-        method_config.steepness = 100  # function steepness
+        method_config.blocks = 5        # number of blocks
+        method_config.steepness = 100   # function steepness
 
     # configuration for sweep (hyperparameter tuning)
     sweep_config = {
