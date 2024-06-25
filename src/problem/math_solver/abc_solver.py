@@ -80,10 +80,14 @@ class abcParamSolver(ABC):
         # init dict for var value
         solvals = {}
         # get variable values as dict
-        for key, vars in self.vars.items():
-            solvals[key] = {i:vars[i].value for i in vars}
-        # get the objective value
-        objval = pe.value(self.model.obj)
+        try:
+            for key, vars in self.vars.items():
+                solvals[key] = {i:vars[i].value for i in vars}
+            # get the objective value
+            objval = pe.value(self.model.obj)
+        except:
+            # no value
+            solvals, objval = None, None
         return solvals, objval
 
     def check_violation(self):
@@ -168,3 +172,13 @@ class abcParamSolver(ABC):
                 # - slack <=
                 model.cons.add(model.cons[c].body - model.slack[c] <= model.cons[c].upper)
         return model_pen
+
+    def first_solution_heuristic(self):
+        """
+        Create a model that terminates after finding the first feasible solution
+        """
+        # clone pyomo model
+        model_heur = self.clone()
+        # set solution limit
+        model_heur.opt.options["limits/solutions"] = 1
+        return model_heur
