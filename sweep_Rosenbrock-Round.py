@@ -115,7 +115,7 @@ def build_problem(config, method_config):
     hlayers_rnd = config.hidden_layers_rnd       # number of hidden layers for solution mapping
     hsize = config.hidden_size                   # width of hidden layers for solution mapping
     continuous_update = config.continuous_update # update continuous variable during rounding step or not
-    # define quadratic objective functions and constraints for both problem types
+    # define Rosenbrock objective functions and constraints for both problem types
     obj_rel, constrs_rel = nmRosenbrock(["x"], ["p", "a"], steepness, num_blocks,
                                         penalty_weight=penalty_weight)
     obj_rnd, constrs_rnd = nmRosenbrock(["x_rnd"], ["p", "a"], steepness, num_blocks,
