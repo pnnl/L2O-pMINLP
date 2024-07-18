@@ -208,11 +208,11 @@ The parametric, high-dimension, Integer, and constrained Rosenbrock problem impl
 
 $$
 \begin{aligned}
-  \underset{\boldsymbol{\mathbf{x}}}{\min} \quad & \sum_{i=1}^b [{(a - x_{2i})}^2 + s {(x_{2i+1} - x_{2i}^2)}^2] \\
+  \underset{\boldsymbol{\mathbf{x}}}{\min} \quad & \sum_{i=1}^b [{(a - x_i)}^2 + s {(y_i - x_i^2)}^2] \\
   \text{s.t.} \quad
-  & \sum_{i=1}^b x_{2i}^2 \leq b p \\
-  & \sum_{i=1}^b x_{2i}^2 \geq \frac{b p}{2} \\
-  & \mathbf{x} \in \mathbb{Z}^{2b} \\
+  & \sum_{i=1}^b y_i \leq b p \\
+  & \sum_{i=1}^b y_i \geq \frac{b p}{2} \\
+  & \mathbf{x} \in \mathbb{Z}^{b}, \mathbf{y} \in \mathbb{Z}^{b} \\
 \end{aligned}
 $$
 
