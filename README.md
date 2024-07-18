@@ -212,7 +212,7 @@ $$
   \text{s.t.} \quad
   & \sum_{i=1}^b y_i \leq b p \\
   & \sum_{i=1}^b y_i \geq \frac{b p}{2} \\
-  & \mathbf{x} \in \mathbb{Z}^{b}, \mathbf{y} \in \mathbb{Z}^{b} \\
+  & \mathbf{x} \in \mathbb{R}^{b}, \mathbf{y} \in \mathbb{Z}^{b} \\
 \end{aligned}
 $$
 
