@@ -210,8 +210,8 @@ $$
 \begin{aligned}
   \underset{\boldsymbol{\mathbf{x}}}{\min} \quad & \sum_{i=1}^b [{(a - x_i)}^2 + s {(y_i - x_i^2)}^2] \\
   \text{s.t.} \quad
-  & \sum_{i=1}^b y_i \leq b p \\
   & \sum_{i=1}^b y_i \geq \frac{b p}{2} \\
+  & \sum_{i=1}^b x_i^2 \leq b p \\
   & \mathbf{x} \in \mathbb{R}^{b}, \mathbf{y} \in \mathbb{Z}^{b} \\
 \end{aligned}
 $$
