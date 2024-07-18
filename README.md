@@ -83,7 +83,7 @@ To run this project, you will need the following libraries and software installe
 
 These algorithms provide mechanisms for rounding within a differentiable programming framework, addressing the challenge of non-differentiable operations inherent in discrete optimization. They are crucial in scenarios where solutions must adhere to integer output with constraints.
 
-The algorithm starts with a relaxed solution $\mathbf{x}^i_R, \mathbf{x}^i_Z$ which may come from a mathematical solver or a NeuroMANCER map, providing a baseline for further refinement. Correction layers then adjust this relaxed solution via rounding the integer variables $\mathbf{x}^i_R$ and updating continuous variables $\mathbf{x}^i_Z$ to minimize the Langrage penalty function.
+The algorithm starts with a relaxed solution $\mathbf{x}^i_R, \mathbf{x}^i_Z$ which may come from a mathematical solver or a NeuroMANCER map, providing a baseline for further refinement. Correction layers then adjust this relaxed solution via rounding the integer variables $\mathbf{x}^i_Z$ and updating continuous variables $\mathbf{x}^i_R$ to minimize the Langrage penalty function.
 
 During the training of neural networks, non-differentiable operations such as binarization, flooring, and indicator functions pose significant challenges for gradient-based optimization methods because these functions lost gradients. To avoid these issues, the straight-through estimator (STE) is employed. This approach allows the gradient of a rounded result to pass through unaltered from its input, effectively enabling optimization of functions that involve non-differentiable transformations.
 
@@ -208,11 +208,11 @@ The parametric, high-dimension, Integer, and constrained Rosenbrock problem impl
 
 $$
 \begin{aligned}
-  \underset{\boldsymbol{\mathbf{x}}}{\min} \quad & \sum_{i=1}^b [{(a - x_{2i})}^2 + s {(x_{2i+1} - x_{2i}^2)}^2] \\
+  \underset{\boldsymbol{\mathbf{x}}}{\min} \quad & \sum_{i=1}^b [{(a - x_i)}^2 + s {(y_i - x_i^2)}^2] \\
   \text{s.t.} \quad
-  & \sum_{i=1}^b x_{2i}^2 \leq b p \\
-  & \sum_{i=1}^b x_{2i}^2 \geq \frac{b p}{2} \\
-  & \mathbf{x} \in \mathbb{Z}^{2b} \\
+  & \sum_{i=1}^b y_i \geq \frac{b p}{2} \\
+  & \sum_{i=1}^b x_i^2 \leq b p \\
+  & \mathbf{x} \in \mathbb{R}^{b}, \mathbf{y} \in \mathbb{Z}^{b} \\
 \end{aligned}
 $$
 
