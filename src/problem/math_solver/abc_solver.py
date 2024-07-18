@@ -12,9 +12,12 @@ from pyomo.core import TransformationFactory
 
 class abcParamSolver(ABC):
     @abstractmethod
-    def __init__(self):
+    def __init__(self, timelimit=None):
         # create a scip solver
         self.opt = po.SolverFactory("scip")
+        # set timelimit
+        if timelimit:
+            self.opt.options["limits/time"] = timelimit
         # init attributes
         self.model = None # pyomo model
         self.params ={} # dict for pyomo mutable parameters

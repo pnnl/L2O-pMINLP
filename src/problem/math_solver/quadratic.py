@@ -11,8 +11,8 @@ from pyomo import environ as pe
 from src.problem.math_solver import abcParamSolver
 
 class quadratic(abcParamSolver):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, timelimit=None):
+        super().__init__(timelimit)
         # define the coefficients for the quadratic problem
         c = np.array([[0.0200],
                       [0.0300]])
