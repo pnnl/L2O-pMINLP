@@ -110,7 +110,7 @@ def build_problem(config, method_config):
     # steepness parameters
     steepness = method_config.steepness
     # hyperparameters
-    penalty_weight = 100 #config.penalty_weight  # weight of constraint violation penealty
+    penalty_weight = config.penalty_weight       # weight of constraint violation penealty
     hlayers_sol = config.hidden_layers_sol       # number of hidden layers for solution mapping
     hlayers_rnd = config.hidden_layers_rnd       # number of hidden layers for solution mapping
     hsize = config.hidden_size                   # width of hidden layers for solution mapping
@@ -137,7 +137,7 @@ def build_problem(config, method_config):
                        hidden_dims=[hsize]*hlayers_rnd,
                        output_dim=2*num_blocks)
     rnd = rnd_class(layers=layers_rnd, param_keys=["p", "a"], var_keys=["x"],
-                    output_keys=["x_rnd"], int_ind={"x":range(2*num_blocks)},
+                    output_keys=["x_rnd"], int_ind={"x":range(1,2*num_blocks,2)},
                     continuous_update=continuous_update, name="round")
     # build neuromancer problem for relaxation
     components = [smap]
@@ -265,14 +265,14 @@ if __name__ == "__main__":
     method_config = parser.parse_args()
     # set problem parameters based on the difficulty level
     if method_config.difficulty == "easy":
-        method_config.blocks = 3        # number of blocks
-        method_config.steepness = 30    # function steepness
+        method_config.blocks = 1        # number of blocks
+        method_config.steepness = 50    # function steepness
     elif method_config.difficulty == "medium":
-        method_config.blocks = 3        # number of blocks
-        method_config.steepness = 100   # function steepness
+        method_config.blocks = 2        # number of blocks
+        method_config.steepness = 50    # function steepness
     elif method_config.difficulty == "hard":
-        method_config.blocks = 5        # number of blocks
-        method_config.steepness = 100   # function steepness
+        method_config.blocks = 3        # number of blocks
+        method_config.steepness = 50    # function steepness
 
     # configuration for sweep (hyperparameter tuning)
     sweep_config = {
@@ -283,10 +283,10 @@ if __name__ == "__main__":
           "goal": "minimize"
         },
         "parameters": {
-            #"penalty_weight":{
-            #    "min": 0,
-            #    "max": 500
-            #},
+            "penalty_weight":{
+                "min": 10,
+                "max": 100
+            },
             "optimizer": {
                 "values": ["SGD", "Adam", "AdamW"]
             },
