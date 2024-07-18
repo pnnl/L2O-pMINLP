@@ -44,12 +44,12 @@ def get_constrs(vars, params, num_blocks, penalty_weight):
     p, a = params.values()
     # constraints
     constraints = []
-    # inner ball:
-    g = sum(x[:, 2*i] ** 2 for i in range(num_blocks))
+    # inner
+    g = sum(x[:, 2*i+1] for i in range(num_blocks))
     con = penalty_weight * (g >= num_blocks * p[:, 0] / 2)
     con.name = "c_inner"
     constraints.append(con)
-    # outer ball:
+    # outer
     g = sum(x[:, 2*i] ** 2 for i in range(num_blocks))
     con = penalty_weight * (g <= num_blocks * p[:, 0])
     con.name = "c_outer"
@@ -135,7 +135,7 @@ if __name__ == "__main__":
 
     # test neuroMANCER
     from src.utlis import nm_test_solve
-    p, a = 3.2, list(np.random.uniform(a_low, a_high, num_blocks))
+    p, a = 3.2, [2.4, 1.8, 2.0]
     datapoint = {"p": torch.tensor([[p]], dtype=torch.float32),
                  "a": torch.tensor([a], dtype=torch.float32),
                  "name":"test"}
