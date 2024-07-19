@@ -129,7 +129,7 @@ $$
   \text{s.t.} \quad
   & \mathbf{A} \mathbf{x} + \mathbf{E} \mathbf{y} \leq \mathbf{b} + \mathbf{F} \mathbf{\theta} \\
   & \mathbf{x} \geq \mathbf{0} \\
-  & \mathbf{y} \in \{0, 1\}
+  & \mathbf{y} \in \{ 0, 1 \}
 \end{aligned}
 $$
 
