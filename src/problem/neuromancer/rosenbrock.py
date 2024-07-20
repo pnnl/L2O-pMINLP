@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     # init
     steepness = 30    # steepness factor
-    num_blocks = 3    # number of expression blocks
+    num_blocks = 2    # number of expression blocks
     num_data = 5000   # number of data
     test_size = 1000  # number of test size
     val_size = 1000   # number of validation size
@@ -135,7 +135,7 @@ if __name__ == "__main__":
 
     # test neuroMANCER
     from src.utlis import nm_test_solve
-    p, a = 3.2, [2.4, 1.8, 2.0]
+    p, a = 3.2, [2.4, 1.8]
     datapoint = {"p": torch.tensor([[p]], dtype=torch.float32),
                  "a": torch.tensor([a], dtype=torch.float32),
                  "name":"test"}

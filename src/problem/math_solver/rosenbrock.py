@@ -38,12 +38,12 @@ if __name__ == "__main__":
 
     from src.utlis import ms_test_solve
 
-    steepness = 30    # steepness factor
-    num_blocks = 3    # number of expression blocks
+    steepness = 50    # steepness factor
+    num_blocks = 2    # number of expression blocks
     timelimit = 60    # time limit
 
     # params
-    p, a = 3.2, (2.4, 1.8, 2.0)
+    p, a = 3.2, (2.4, 1.8)
     params = {"p":p, "a":a}
     # init model
     model = rosenbrock(steepness=steepness, num_blocks=num_blocks, timelimit=timelimit)
@@ -55,10 +55,10 @@ if __name__ == "__main__":
     ms_test_solve(model, tee=False)
 
     # solve the relaxation
-    #print()
-    #print("======================================================")
-    #print("Solve relaxed problem:")
-    #model_rel = model.relax()
-    #model_rel.set_param_val(params)
+    print()
+    print("======================================================")
+    print("Solve relaxed problem:")
+    model_rel = model.relax()
+    model_rel.set_param_val(params)
     # scip
-    #ms_test_solve(model_rel, tee=False)
+    ms_test_solve(model_rel, tee=False)
