@@ -145,7 +145,7 @@ class abcParamSolver(ABC):
         # change solver to ipopt
         #model_rel.opt = po.SolverFactory("ipopt")
         # set number of iterations
-        model_rel.opt.options["limits/solutions"] = 100
+        model_rel.opt.options["limits/totalnodes"] = 100
         # remove timelimit
         model_rel.opt.options["limits/time"] = 1e+20
         return model_rel
