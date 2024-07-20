@@ -142,6 +142,12 @@ class abcParamSolver(ABC):
         model_rel = self.clone()
         # iterate through decision variables
         TransformationFactory("core.relax_integer_vars").apply_to(model_rel.model)
+        # change solver to ipopt
+        #model_rel.opt = po.SolverFactory("ipopt")
+        # set number of iterations
+        model_rel.opt.options["limits/solutions"] = 100
+        # remove timelimit
+        model_rel.opt.options["limits/time"] = 1e+20
         return model_rel
 
     def penalty(self, weight):
@@ -176,12 +182,12 @@ class abcParamSolver(ABC):
                 model.cons.add(model.cons[c].body - model.slack[c] <= model.cons[c].upper)
         return model_pen
 
-    def first_solution_heuristic(self):
+    def first_solution_heuristic(self, nodes_limit=1):
         """
         Create a model that terminates after finding the first feasible solution
         """
         # clone pyomo model
         model_heur = self.clone()
         # set solution limit
-        model_heur.opt.options["limits/solutions"] = 1
+        model_heur.opt.options["limits/solutions"] = nodes_limit
         return model_heur
