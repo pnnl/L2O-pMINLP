@@ -2,25 +2,36 @@ import math
 
 from pyomo import environ as pe
 
-def rens(xval, model, tolerance=1e-5):
+def rens(xval_rel, model, tolerance=1e-5):
     # clone model
     model_rens = model.clone()
     # get solution value
-    for k, vals in xval.items():
+    for k, vals in xval_rel.items():
         # go through vars
         for i in vals:
             # skip continuous
             if model_rens.vars[k][i].domain == pe.Reals:
                 continue
             # fix integer variable in relaxation
-            if abs(xval[k][i] - round(xval[k][i])) <= tolerance:
-                model_rens.vars[k][i].fix(round(xval[k][i]))
+            if abs(xval_rel[k][i] - round(xval_rel[k][i])) <= tolerance:
+                model_rens.vars[k][i].fix(round(xval_rel[k][i]))
             # change to binary bounds
             else:
-                model_rens.vars[k][i].setlb(math.floor(xval[k][i]))
-                model_rens.vars[k][i].setub(math.ceil(xval[k][i]))
+                model_rens.vars[k][i].setlb(math.floor(xval_rel[k][i]))
+                model_rens.vars[k][i].setub(math.ceil(xval_rel[k][i]))
     # solve
     xval, objval = model_rens.solve("scip")
+    # assign solution value
+    for k, vals in xval.items():
+        # assign initial solution
+        for i in vals:
+            # round integer variables
+            if model.vars[k][i].is_integer():
+                model.vars[k][i].value = round(vals[i])
+            # assign cotinuous variables
+            else:
+                model.vars[k][i].value = vals[i]
+    xval, objval = model.get_val()
     return xval, objval
 
 if __name__ == "__main__":

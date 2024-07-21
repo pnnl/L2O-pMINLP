@@ -1,9 +1,9 @@
-def naive_round(xval, model):
+def naive_round(xval_rel, model):
     """
     A method to just round
     """
     # get solution value
-    for k, vals in xval.items():
+    for k, vals in xval_rel.items():
         # assign initial solution
         for i in vals:
             # round integer variables
