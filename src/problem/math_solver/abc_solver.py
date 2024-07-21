@@ -12,12 +12,18 @@ from pyomo.core import TransformationFactory
 
 class abcParamSolver(ABC):
     @abstractmethod
-    def __init__(self, timelimit=None):
+    def __init__(self, solver="scip", timelimit=None):
         # create a scip solver
-        self.opt = po.SolverFactory("scip")
+        self.solver = solver
+        self.opt = po.SolverFactory(solver)
         # set timelimit
         if timelimit:
-            self.opt.options["limits/time"] = timelimit
+            if self.solver == "scip":
+                self.opt.options["limits/time"] = timelimit
+            elif self.solver == "gurobi":
+                self.opt.options["timelimit"] = timelimit
+            else:
+                raise ValueError("Solver '{}' does not support setting a time limit.".fomrat(solver))
         # init attributes
         self.model = None # pyomo model
         self.params ={} # dict for pyomo mutable parameters
@@ -145,7 +151,12 @@ class abcParamSolver(ABC):
         # change solver to ipopt
         #model_rel.opt = po.SolverFactory("ipopt")
         # set number of iterations
-        model_rel.opt.options["limits/totalnodes"] = 100
+        if self.solver == "scip":
+            model_rel.opt.options["limits/totalnodes"] = 100
+        elif self.solver == "gurobi":
+            model_rel.opt.options["NodeLimit"] = 100
+        else:
+            raise ValueError("Solver '{}' does not support setting a total nodes limit.".fomrat(solver))
         return model_rel
 
     def penalty(self, weight):
@@ -187,5 +198,10 @@ class abcParamSolver(ABC):
         # clone pyomo model
         model_heur = self.clone()
         # set solution limit
-        model_heur.opt.options["limits/solutions"] = nodes_limit
+        if self.solver == "scip":
+            model_heur.opt.options["limits/solutions"] = nodes_limit
+        elif self.solver == "gurobi":
+            model_heur.opt.options["SolutionLimit"] = nodes_limit
+        else:
+            raise ValueError("Solver '{}' does not support setting a solution limit.".fomrat(solver))
         return model_heur

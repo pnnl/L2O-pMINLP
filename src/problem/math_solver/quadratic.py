@@ -12,7 +12,7 @@ from src.problem.math_solver import abcParamSolver
 
 class quadratic(abcParamSolver):
     def __init__(self, timelimit=None):
-        super().__init__(timelimit)
+        super().__init__(timelimit=timelimit)
         # define the coefficients for the quadratic problem
         c = np.array([[0.0200],
                       [0.0300]])

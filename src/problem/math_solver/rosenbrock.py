@@ -8,7 +8,7 @@ from src.problem.math_solver import abcParamSolver
 
 class rosenbrock(abcParamSolver):
     def __init__(self, steepness, num_blocks, timelimit=None):
-        super().__init__(timelimit)
+        super().__init__(timelimit=timelimit)
         # create model
         m = pe.ConcreteModel()
         # parameters
