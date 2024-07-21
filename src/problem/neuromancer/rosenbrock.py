@@ -5,7 +5,7 @@ Parametric Mixed Integer Rosenbrock Problem
 import numpy as np
 import neuromancer as nm
 
-def rosenbrock(var_keys, param_keys, steepness, num_blocks, penalty_weight=100):
+def rosenbrock(var_keys, param_keys, steepness, num_blocks, penalty_weight=50):
     # mutable parameters
     params = {}
     for p in param_keys:
