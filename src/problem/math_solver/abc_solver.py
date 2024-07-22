@@ -153,6 +153,7 @@ class abcParamSolver(ABC):
         # set number of iterations
         if self.solver == "scip":
             model_rel.opt.options["limits/totalnodes"] = 100
+            model_rel.opt.options["lp/iterlim"] = 100
         elif self.solver == "gurobi":
             model_rel.opt.options["NodeLimit"] = 100
         else:
