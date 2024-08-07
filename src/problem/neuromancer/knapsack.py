@@ -29,8 +29,9 @@ def get_obj(vars, params):
     # get mutable parameters
     c = params.values()
     # objective function c^T x
-    f = sum(- ci * xi for ci, xi in zip(c, x))
-    obj = f.minimize(weight=1.0, name="obj")
+    f = sum(ci * xi for ci, xi in zip(c, x))
+    # maximize
+    obj = f.minimize(weight=-1.0, name="obj")
     return obj
 
 
