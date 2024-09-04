@@ -3,68 +3,68 @@ Parametric Multi-Dimensional Knapsack
 """
 
 import numpy as np
+import torch
+from torch import nn
 import neuromancer as nm
 
 
-def knapsack(var_keys, param_keys, weights, caps, penalty_weight=100):
-    # mutable parameters
-    params = {}
-    for p in param_keys:
-        params[p] = nm.constraint.variable(p)
-    # decision variables
-    vars = {}
-    for v in var_keys:
-        vars[v] = nm.constraint.variable(v)
-    obj = [get_obj(vars, params)]
-    constrs = get_constrs(vars, weights, caps, penalty_weight)
-    return obj, constrs
-
-
-def get_obj(vars, params):
+class penaltyLoss(nn.Module):
     """
-    Get neuroMANCER objective component
+    Penalty loss function for knapsack problem
     """
-    # get decision variables
-    x, = vars.values()
-    # get mutable parameters
-    c = params.values()
-    # objective function c^T x
-    f = sum(ci * xi for ci, xi in zip(c, x))
-    # maximize
-    obj = f.minimize(weight=-1.0, name="obj")
-    return obj
+    def __init__(self, input_keys, weights, caps, penalty_weight=50, output_key="loss"):
+        super().__init__()
+        self.c_key, self.x_key = input_keys
+        self.output_key = output_key
+        self.weights = torch.from_numpy(weights).to(torch.float32)
+        self.caps = torch.tensor(caps).to(torch.float32)
+        self.penalty_weight = penalty_weight
 
+    def forward(self, input_dict):
+        """
+        forward pass
+        """
+        # objective function
+        obj = self.cal_obj(input_dict)
+        # constraints violation
+        viol = self.cal_constr_viol(input_dict)
+        # penalized loss
+        loss = obj + self.penalty_weight * viol
+        input_dict[self.output_key] = torch.mean(loss)
+        return input_dict
 
-def get_constrs(vars, weights, caps, penalty_weight):
-    """
-    Get neuroMANCER constraint component
-    """
-    # problem size
-    dim, num_var = weights.shape
-    # get decision variables
-    x, = vars.values()
-    # constraints
-    constraints = []
-    for i in range(dim):
-        g = sum(weights[i, j] * x[:, j] for j in range(num_var))
-        con = penalty_weight * (g <= caps[i])
-        con.name = "cap_{}".format(i)
-        constraints.append(con)
-    return constraints
+    def cal_obj(self, input_dict):
+        """
+        calculate objective function
+        """
+        # get values
+        x, c = input_dict[self.x_key], input_dict[self.c_key]
+        # objective function (maximize)
+        f = - torch.einsum("bn,bn->b", c, x)
+        return f
+
+    def cal_constr_viol(self, input_dict):
+        """
+        calculate constraints violation
+        """
+        # get values
+        x = input_dict[self.x_key]
+        # capacity constraints
+        lhs = torch.einsum("bj,ij->bi", x, self.weights)
+        violation = torch.relu(lhs - self.caps).sum(dim=1)
+        # non-negative constraints
+        violation += torch.relu(-x).sum(dim=1)
+        return violation
 
 
 if __name__ == "__main__":
-
-    import torch
-    from torch import nn
 
     # random seed
     np.random.seed(42)
     torch.manual_seed(42)
 
     # init
-    num_var = 32      # number of variables
-    #num_var = 15      # number of variables
+    num_var = 20      # number of variables
     dim = 2           # dimension of constraints
     caps = [20] * dim # capacity
     num_data = 5000   # number of data
@@ -91,20 +91,15 @@ if __name__ == "__main__":
     loader_dev   = DataLoader(data_dev, batch_size=32, num_workers=0,
                               collate_fn=data_dev.collate_fn, shuffle=True)
 
-    # get objective function & constraints
-    obj, constrs = knapsack(["x"], ["c"], weights=weights, caps=caps, penalty_weight=100)
-
-
     # define neural architecture for the solution map smap(c) -> x
     import neuromancer as nm
     func = nm.modules.blocks.MLP(insize=num_var, outsize=num_var, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[64]*2)
-    components = [nm.system.Node(func, ["c"], ["x"], name="smap")]
+    components = nm.system.Node(func, ["c"], ["x"], name="smap")
 
     # build neuromancer problems
-    loss = nm.loss.PenaltyLoss(obj, constrs)
-    problem = nm.problem.Problem(components, loss)
+    loss_fn = penaltyLoss(["c", "x"], weights, caps)
 
     # training
     lr = 0.001    # step size for gradient descent
@@ -112,26 +107,16 @@ if __name__ == "__main__":
     warmup = 40   # number of epochs to wait before enacting early stopping policy
     patience = 40 # number of epochs with no improvement in eval metric to allow before early stopping
     # set adamW as optimizer
-    optimizer = torch.optim.AdamW(problem.parameters(), lr=lr)
-    # define trainer
-    trainer = nm.trainer.Trainer(
-        problem,
-        loader_train,
-        loader_dev,
-        loader_test,
-        optimizer,
-        epochs=epochs,
-        patience=patience,
-        warmup=warmup)
-    # train solution map
-    best_model = trainer.train()
-    # load best model dict
-    problem.load_state_dict(best_model)
+    optimizer = torch.optim.AdamW(components.parameters(), lr=lr)
+    # training
+    from src.problem.neuromancer.trainer import train
+    train(components, loss_fn, loader_train, loader_dev, loader_test, optimizer,
+          epochs=epochs, patience=patience, warmup=warmup)
     print()
 
     # init mathmatic model
-    from src.problem.math_solver.kanpsack import kanpsack
-    model = kanpsack(weights=weights, caps=caps)
+    from src.problem.math_solver.knapsack import knapsack
+    model = knapsack(weights=weights, caps=caps)
 
     # test neuroMANCER
     from src.utlis import nm_test_solve
@@ -140,4 +125,4 @@ if __name__ == "__main__":
                  "name":"test"}
     model.set_param_val({"c":c})
     print("neuroMANCER:")
-    nm_test_solve(["x"], problem, datapoint, model)
+    nm_test_solve("x", components, datapoint, model)

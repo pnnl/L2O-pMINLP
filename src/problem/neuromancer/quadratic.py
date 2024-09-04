@@ -6,6 +6,8 @@ https://www.sciencedirect.com/science/article/pii/S1570794601801577
 """
 
 import numpy as np
+import torch
+from torch import nn
 import neuromancer as nm
 
 def quadratic(var_keys, param_keys, penalty_weight=10):
@@ -94,10 +96,86 @@ def get_constrs(vars, params, penalty_weight, b, A, E, F):
         constraints.append(con)
     return constraints
 
-if __name__ == "__main__":
+class penaltyLoss(nn.Module):
+    """
+    Penalty loss function for quadratic problem
+    """
+    def __init__(self, input_keys, penalty_weight=50, output_key="loss"):
+        super().__init__()
+        self.p_key, self.x_key = input_keys
+        self.output_key = output_key
+        self.penalty_weight = penalty_weight
+        # fixed coefficients
+        self.c = torch.tensor([0.0200, 0.0300])
+        self.Q = torch.tensor([[0.0196, 0.0063],
+                              [0.0063, 0.0199]])
+        self.d = torch.tensor([-0.3000, -0.3100])
+        self.b = torch.tensor([0.417425, 3.582575, 0.413225, 0.467075, 1.090200, 2.909800, 1.000000])
+        self.A = torch.tensor([[ 1.0000,  0.0000],
+                               [-1.0000,  0.0000],
+                               [-0.0609,  0.0000],
+                               [-0.0064,  0.0000],
+                               [ 0.0000,  1.0000],
+                               [ 0.0000, -1.0000],
+                               [ 0.0000,  0.0000]])
+        self.E = torch.tensor([[-1.0000,  0.0000],
+                               [-1.0000,  0.0000],
+                               [ 0.0000, -0.5000],
+                               [ 0.0000, -0.7000],
+                               [-0.6000,  0.0000],
+                               [-0.5000,  0.0000],
+                               [ 1.0000,  1.0000]])
+        self.F = torch.tensor([[ 3.16515,  3.7546],
+                               [-3.16515, -3.7546],
+                               [ 0.17355, -0.2717],
+                               [ 0.06585,  0.4714],
+                               [ 1.81960, -3.2841],
+                               [-1.81960,  3.2841],
+                               [ 0.00000,  0.0000]])
 
-    import torch
-    from torch import nn
+    def forward(self, input_dict):
+        """
+        forward pass
+        """
+        # objective function
+        obj = self.cal_obj(input_dict)
+        # constraints violation
+        viol = self.cal_constr_viol(input_dict)
+        # penalized loss
+        loss = obj + self.penalty_weight * viol
+        input_dict[self.output_key] = torch.mean(loss)
+        return input_dict
+
+    def cal_obj(self, input_dict):
+        """
+        calculate objective function
+        """
+        # get values
+        x = input_dict[self.x_key]
+        # C^T x
+        c_term = torch.einsum("i,bi->b", self.c, x[:, :2])
+        # 1/2 x^T Q x
+        Q_term = torch.einsum("bi,ij,bj->b", x[:, :2], self.Q, x[:, :2]) / 2
+        # d^T y: dot product of d and x[:, 2:]
+        d_term = torch.einsum("i,bi->b", self.d, x[:, 2:])
+        return c_term + Q_term + d_term
+
+    def cal_constr_viol(self, input_dict):
+        """
+        calculate constraints violation
+        """
+        # get values
+        x, p = input_dict[self.x_key], input_dict[self.p_key]
+        # constraints
+        lhs = torch.einsum("ij,bj->bi", self.A, x[:, :2]) + torch.einsum("ij,bj->bi", self.E, x[:, 2:])
+        rhs = self.b + torch.einsum("ij,bj->bi", self.F, p)
+        violation = torch.relu(lhs - rhs).sum(dim=1)
+        # bounds
+        violation += torch.relu(-x).sum(dim=1)
+        return violation
+
+
+if __name__ == "__main__":
 
     # random seed
     np.random.seed(42)
@@ -124,19 +202,15 @@ if __name__ == "__main__":
     loader_dev   = DataLoader(data_dev, batch_size=32, num_workers=0,
                               collate_fn=data_dev.collate_fn, shuffle=True)
 
-    # get objective function & constraints
-    obj, constrs = quadratic(["x"], ["p"], penalty_weight=10)
-
     # define neural architecture for the solution map smap(p) -> x
     import neuromancer as nm
     func = nm.modules.blocks.MLP(insize=2, outsize=4, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[10]*4)
-    components = [nm.system.Node(func, ["p"], ["x"], name="smap")]
+    components = nm.system.Node(func, ["p"], ["x"], name="smap")
 
     # build neuromancer problem
-    loss = nm.loss.PenaltyLoss(obj, constrs)
-    problem = nm.problem.Problem(components, loss)
+    loss_fn = penaltyLoss(["p", "x"])
 
     # training
     lr = 0.001    # step size for gradient descent
@@ -144,21 +218,11 @@ if __name__ == "__main__":
     warmup = 20   # number of epochs to wait before enacting early stopping policy
     patience = 20 # number of epochs with no improvement in eval metric to allow before early stopping
     # set adamW as optimizer
-    optimizer = torch.optim.AdamW(problem.parameters(), lr=lr)
-    # define trainer
-    trainer = nm.trainer.Trainer(
-        problem,
-        loader_train,
-        loader_dev,
-        loader_test,
-        optimizer,
-        epochs=epochs,
-        patience=patience,
-        warmup=warmup)
-    # train solution map
-    best_model = trainer.train()
-    # load best model dict
-    problem.load_state_dict(best_model)
+    optimizer = torch.optim.AdamW(components.parameters(), lr=lr)
+    # training
+    from src.problem.neuromancer.trainer import train
+    train(components, loss_fn, loader_train, loader_dev, loader_test, optimizer,
+          epochs=epochs, patience=patience, warmup=warmup)
     print()
 
     # init mathmatic model
@@ -172,4 +236,4 @@ if __name__ == "__main__":
     datapoint = {"p": torch.tensor([[*p]], dtype=torch.float32),
                  "name":"test"}
     model.set_param_val({"p":p})
-    nm_test_solve(["x"], problem, datapoint, model)
+    nm_test_solve("x", components, datapoint, model)

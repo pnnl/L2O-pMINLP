@@ -1,3 +1,4 @@
-from src.problem.neuromancer.quadratic import quadratic
-from src.problem.neuromancer.rosenbrock import rosenbrock
-from src.problem.neuromancer.knapsack import knapsack
+from src.problem.neuromancer.trainer import train
+from src.problem.neuromancer.quadratic import penaltyLoss as quadratic
+from src.problem.neuromancer.rosenbrock import penaltyLoss as rosenbrock
+from src.problem.neuromancer.knapsack import penaltyLoss as knapsack

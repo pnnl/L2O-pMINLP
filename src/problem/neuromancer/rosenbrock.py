@@ -3,64 +3,67 @@ Parametric Mixed Integer Rosenbrock Problem
 """
 
 import numpy as np
+import torch
+from torch import nn
 import neuromancer as nm
 
-def rosenbrock(var_keys, param_keys, steepness, num_blocks, penalty_weight=50):
-    # mutable parameters
-    params = {}
-    for p in param_keys:
-        params[p] = nm.constraint.variable(p)
-    # decision variables
-    vars = {}
-    for v in var_keys:
-        vars[v] = nm.constraint.variable(v)
-    obj = [get_obj(vars, params, steepness, num_blocks)]
-    constrs = get_constrs(vars, params, num_blocks, penalty_weight)
-    return obj, constrs
-
-
-def get_obj(vars, params, steepness, num_blocks):
+class penaltyLoss(nn.Module):
     """
-    Get neuroMANCER objective component
+    Penalty loss function for Rosenbrock problem
     """
-    # get decision variables
-    x, = vars.values()
-    # get mutable parameters
-    p, a = params.values()
-    # objective function sum (a_i - x_2i)^2 + b * (x_2i+1 - x_2i^2)^2
-    f = sum((a[:, i] - x[:, 2*i]) ** 2 + steepness * (x[:, 2*i+1] - x[:, 2*i] ** 2) ** 2
-             for i in range(num_blocks))
-    obj = f.minimize(weight=1.0, name="obj")
-    return obj
+    def __init__(self, input_keys, steepness, num_blocks, penalty_weight=50, output_key="loss"):
+        super().__init__()
+        self.p_key, self.a_key, self.x_key = input_keys
+        self.output_key = output_key
+        self.steepness = steepness
+        self.num_blocks = num_blocks
+        self.penalty_weight = penalty_weight
 
+    def forward(self, input_dict):
+        """
+        forward pass
+        """
+        # objective function
+        obj = self.cal_obj(input_dict)
+        # constraints violation
+        viol = self.cal_constr_viol(input_dict)
+        # penalized loss
+        loss = obj + self.penalty_weight * viol
+        input_dict[self.output_key] = torch.mean(loss)
+        return input_dict
 
-def get_constrs(vars, params, num_blocks, penalty_weight):
-    """
-    Get neuroMANCER constraint component
-    """
-    # get decision variables
-    x, = vars.values()
-    # get mutable parameters
-    p, a = params.values()
-    # constraints
-    constraints = []
-    # inner
-    g = sum(x[:, 2*i+1] for i in range(num_blocks))
-    con = penalty_weight * (g >= num_blocks * p[:, 0] / 2)
-    con.name = "c_inner"
-    constraints.append(con)
-    # outer
-    g = sum(x[:, 2*i] ** 2 for i in range(num_blocks))
-    con = penalty_weight * (g <= num_blocks * p[:, 0])
-    con.name = "c_outer"
-    constraints.append(con)
-    return constraints
+    def cal_obj(self, input_dict):
+        """
+        calculate objective function
+        """
+        # get values
+        x, a = input_dict[self.x_key], input_dict[self.a_key]
+        # x_2i
+        x1 = x[:, ::2]
+        # x_2i+1
+        x2 = x[:, 1::2]
+        # objective function
+        f = torch.sum((a - x1) ** 2 + self.steepness * (x2 - x1 ** 2) ** 2, dim=1)
+        return f
+
+    def cal_constr_viol(self, input_dict):
+        """
+        calculate constraints violation
+        """
+        # get values
+        x, p = input_dict[self.x_key], input_dict[self.p_key]
+        # inner constraint violation
+        lhs_inner = torch.sum(x[:, 1::2], dim=1)
+        rhs_inner = num_blocks * p[:, 0] / 2
+        inner_violation = torch.relu(rhs_inner - lhs_inner)
+        # outer constraint violation
+        lhs_outer = torch.sum(x[:, ::2] ** 2, dim=1)
+        rhs_outer = num_blocks * p[:, 0]
+        outer_violation = torch.relu(lhs_outer - rhs_outer)
+        return inner_violation + outer_violation
 
 
 if __name__ == "__main__":
-
-    import torch
-    from torch import nn
 
     # random seed
     np.random.seed(42)
@@ -68,7 +71,7 @@ if __name__ == "__main__":
 
     # init
     steepness = 30    # steepness factor
-    num_blocks = 2    # number of expression blocks
+    num_blocks = 5   # number of expression blocks
     num_data = 5000   # number of data
     test_size = 1000  # number of test size
     val_size = 1000   # number of validation size
@@ -91,20 +94,25 @@ if __name__ == "__main__":
     loader_dev   = DataLoader(data_dev, batch_size=32, num_workers=0,
                               collate_fn=data_dev.collate_fn, shuffle=True)
 
-    # get objective function & constraints
-    obj, constrs = rosenbrock(["x"], ["p", "a"], steepness=steepness,
-                              num_blocks=num_blocks, penalty_weight=100)
-
     # define neural architecture for the solution map smap(p, a) -> x
     import neuromancer as nm
     func = nm.modules.blocks.MLP(insize=num_blocks+1, outsize=2*num_blocks, bias=True,
                                  linear_map=nm.slim.maps["linear"],
-                                 nonlin=nn.ReLU, hsizes=[10]*4)
-    components = [nm.system.Node(func, ["p", "a"], ["x"], name="smap")]
+                                 nonlin=nn.ReLU, hsizes=[32]*4)
+    components = nm.system.Node(func, ["p", "a"], ["x"], name="smap")
+
+    #loss = PenaltyLoss(["p", "a", "x"], steepness, num_blocks)
+    #for data_dict in loader_train:
+        # add x to dict
+    #    data_dict.update(components(data_dict))
+        # calculate loss
+    #    print(loss(data_dict))
+    #    break
 
     # build neuromancer problems
-    loss = nm.loss.PenaltyLoss(obj, constrs)
-    problem = nm.problem.Problem(components, loss)
+    #loss = nm.loss.PenaltyLoss(obj, constrs)
+    # problem = nm.problem.Problem([components], loss)
+    loss_fn = penaltyLoss(["p", "a", "x"], steepness, num_blocks)
 
     # training
     lr = 0.001    # step size for gradient descent
@@ -112,21 +120,11 @@ if __name__ == "__main__":
     warmup = 40   # number of epochs to wait before enacting early stopping policy
     patience = 40 # number of epochs with no improvement in eval metric to allow before early stopping
     # set adamW as optimizer
-    optimizer = torch.optim.AdamW(problem.parameters(), lr=lr)
-    # define trainer
-    trainer = nm.trainer.Trainer(
-        problem,
-        loader_train,
-        loader_dev,
-        loader_test,
-        optimizer,
-        epochs=epochs,
-        patience=patience,
-        warmup=warmup)
-    # train solution map
-    best_model = trainer.train()
-    # load best model dict
-    problem.load_state_dict(best_model)
+    optimizer = torch.optim.AdamW(components.parameters(), lr=lr)
+    # training
+    from src.problem.neuromancer.trainer import train
+    train(components, loss_fn, loader_train, loader_dev, loader_test, optimizer,
+          epochs=epochs, patience=patience, warmup=warmup)
     print()
 
     # init mathmatic model
@@ -135,10 +133,10 @@ if __name__ == "__main__":
 
     # test neuroMANCER
     from src.utlis import nm_test_solve
-    p, a = 3.2, [2.4, 1.8]
-    datapoint = {"p": torch.tensor([[p]], dtype=torch.float32),
+    p, a = data_train[0]["p"].tolist(), data_train[0]["a"].tolist()
+    datapoint = {"p": torch.tensor([p], dtype=torch.float32),
                  "a": torch.tensor([a], dtype=torch.float32),
                  "name":"test"}
     model.set_param_val({"p":p, "a":a})
     print("neuroMANCER:")
-    nm_test_solve(["x"], problem, datapoint, model)
+    nm_test_solve("x", components, datapoint, model)
