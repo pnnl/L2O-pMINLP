@@ -202,10 +202,6 @@ if __name__ == "__main__":
     loader_dev   = DataLoader(data_dev, batch_size=32, num_workers=0,
                               collate_fn=data_dev.collate_fn, shuffle=True)
 
-    # get objective function & constraints
-    from src.problem import nmQuadratic
-    obj, constrs = nmQuadratic(["x_rnd"], ["p"], penalty_weight=10)
-
     # define neural architecture for the solution map
     import neuromancer as nm
     func = nm.modules.blocks.MLP(insize=2, outsize=4, bias=True,
@@ -225,9 +221,9 @@ if __name__ == "__main__":
 
 
     # build neuromancer problem
-    components = [smap, round_func]
-    loss = nm.loss.PenaltyLoss(obj, constrs)
-    problem = nm.problem.Problem(components, loss)
+    components = nn.ModuleList([smap, round_func])
+    from src.problem import nmQuadratic
+    loss_fn = nmQuadratic(["p", "x"])
 
     # training
     lr = 0.001    # step size for gradient descent
@@ -235,21 +231,11 @@ if __name__ == "__main__":
     warmup = 20   # number of epochs to wait before enacting early stopping policy
     patience = 20 # number of epochs with no improvement in eval metric to allow before early stopping
     # set adamW as optimizer
-    optimizer = torch.optim.AdamW(problem.parameters(), lr=lr)
-    # define trainer
-    trainer = nm.trainer.Trainer(
-        problem,
-        loader_train,
-        loader_dev,
-        loader_test,
-        optimizer,
-        epochs=epochs,
-        patience=patience,
-        warmup=warmup)
-    # train solution map
-    best_model = trainer.train()
-    # load best model dict
-    problem.load_state_dict(best_model)
+    optimizer = torch.optim.AdamW(components.parameters(), lr=lr)
+    # training
+    from src.problem.neuromancer.trainer import trainer
+    my_trainer = trainer(components, loss_fn, optimizer, patience, warmup)
+    my_trainer.train(loader_train, loader_dev, epochs)
     print()
 
     # init mathmatic model
@@ -265,4 +251,4 @@ if __name__ == "__main__":
     print("SCIP:")
     ms_test_solve(model)
     print("neuroMANCER:")
-    nm_test_solve(["x_rnd"], problem, datapoint, model)
+    nm_test_solve("x_rnd", components, datapoint, model)
