@@ -54,11 +54,11 @@ class penaltyLoss(nn.Module):
         x, p = input_dict[self.x_key], input_dict[self.p_key]
         # inner constraint violation
         lhs_inner = torch.sum(x[:, 1::2], dim=1)
-        rhs_inner = num_blocks * p[:, 0] / 2
+        rhs_inner = self.num_blocks * p[:, 0] / 2
         inner_violation = torch.relu(rhs_inner - lhs_inner)
         # outer constraint violation
         lhs_outer = torch.sum(x[:, ::2] ** 2, dim=1)
-        rhs_outer = num_blocks * p[:, 0]
+        rhs_outer = self.num_blocks * p[:, 0]
         outer_violation = torch.relu(lhs_outer - rhs_outer)
         return inner_violation + outer_violation
 
