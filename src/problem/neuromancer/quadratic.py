@@ -207,22 +207,22 @@ if __name__ == "__main__":
     func = nm.modules.blocks.MLP(insize=2, outsize=4, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[10]*4)
-    components = nm.system.Node(func, ["p"], ["x"], name="smap")
+    components = nn.ModuleList([nm.system.Node(func, ["p"], ["x"], name="smap")])
 
     # build neuromancer problem
     loss_fn = penaltyLoss(["p", "x"])
 
     # training
     lr = 0.001    # step size for gradient descent
-    epochs = 20   # number of training epochs
+    epochs = 200  # number of training epochs
     warmup = 20   # number of epochs to wait before enacting early stopping policy
     patience = 20 # number of epochs with no improvement in eval metric to allow before early stopping
     # set adamW as optimizer
     optimizer = torch.optim.AdamW(components.parameters(), lr=lr)
     # training
-    from src.problem.neuromancer.trainer import train
-    train(components, loss_fn, loader_train, loader_dev, loader_test, optimizer,
-          epochs=epochs, patience=patience, warmup=warmup)
+    from src.problem.neuromancer.trainer import trainer
+    my_trainer = trainer(components, loss_fn, optimizer, patience, warmup)
+    my_trainer.train(loader_train, loader_dev, epochs)
     print()
 
     # init mathmatic model

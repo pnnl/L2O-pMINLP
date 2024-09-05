@@ -3,6 +3,7 @@ Test functions to solve problem
 """
 
 import time
+import torch
 
 def ms_test_solve(model, tee=False):
     """
@@ -30,7 +31,9 @@ def nm_test_solve(var_key, components, datapoint, model):
     # inference
     components.eval()
     tick = time.time()
-    datapoint.update(components(datapoint))
+    with torch.no_grad():
+        for comp in components:
+            datapoint.update(comp(datapoint))
     tock = time.time()
     # get values
     for i in model.vars[var_key]:
