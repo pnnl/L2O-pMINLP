@@ -110,8 +110,8 @@ if __name__ == "__main__":
     optimizer = torch.optim.AdamW(components.parameters(), lr=lr)
     # training
     from src.problem.neuromancer.trainer import trainer
-    my_trainer = trainer(components, loss_fn, optimizer, patience, warmup)
-    my_trainer.train(loader_train, loader_dev, epochs)
+    my_trainer = trainer(components, loss_fn, optimizer, epochs, patience, warmup)
+    my_trainer.train(loader_train, loader_dev)
     print()
 
     # init mathmatic model

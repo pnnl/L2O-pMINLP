@@ -7,13 +7,14 @@ import copy
 import torch
 
 class trainer:
-    def __init__(self, components, loss_fn, optimizer, patience=5, warmup=0, loss_key="loss", device="cpu"):
+    def __init__(self, components, loss_fn, optimizer, epochs=100, patience=5, warmup=0, loss_key="loss", device="cpu"):
         """
         Initialize the Trainer class.
         """
         self.components = components
         self.loss_fn = loss_fn
         self.optimizer = optimizer
+        self.epochs = epochs
         self.patience = patience
         self.warmup = warmup
         self.loss_key = loss_key
@@ -22,7 +23,7 @@ class trainer:
         self.best_loss = float("inf")
         self.best_model_state = None
 
-    def train(self, loader_train, loader_dev, epochs):
+    def train(self, loader_train, loader_dev):
         """
         Perform training with early stopping.
         """
@@ -31,7 +32,7 @@ class trainer:
         with torch.no_grad():
             val_loss = self.best_loss = self.calculate_loss(loader_dev)
         # training loop
-        for epoch in tqdm(range(epochs)):
+        for epoch in tqdm(range(self.epochs)):
             tqdm.write(f"Epoch {epoch}, Validation Loss: {val_loss:.2f}")
             # training phase
             self.components.train()
