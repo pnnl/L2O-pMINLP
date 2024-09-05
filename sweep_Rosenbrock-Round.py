@@ -13,6 +13,7 @@ from neuromancer.dataset import DictDataset
 from src.problem import msRosenbrock, nmRosenbrock
 from src.func.layer import netFC
 from src.func import roundModel, roundGumbelModel, roundThresholdModel
+from src.problem.neuromancer.trainer import trainer
 
 def load_data(num_blocks, num_data, test_size, val_size):
     """
@@ -67,25 +68,21 @@ def train(method_config):
         config = wandb.config
         print(config)
         # build problems for relaxation and rounding phases
-        problem_rel, problem_rnd = build_problem(config, method_config)
+        components, loss_fn = build_problem(config, method_config)
         # 2-stage training, if specified
         if method_config.train == "2s":
             # get nm trainer
-            trainer = get_trainer(config, problem_rel)
+            trainer = get_trainer(config, nn.ModuleList([components[0]]), loss_fn)
             # training for the relaxation problem
-            best_model = trainer.train()
-            # load best model dict
-            problem_rel.load_state_dict(best_model)
+            best_model = trainer.train(loader_train, loader_test)
             # free model parameters
-            problem_rel.freeze()
+            components[0].freeze()
         # get nm trainer
-        trainer = get_trainer(config, problem_rnd)
+        trainer = get_trainer(config, components, loss_fn)
         # training for the rounding problem
-        best_model = trainer.train()
-        # load best model dict
-        problem_rnd.load_state_dict(best_model)
+        best_model = trainer.train(loader_train, loader_test)
         # evaluate model
-        df = eval(loader_test.dataset, problem_rnd, steepness, num_blocks)
+        df = eval(loader_test.dataset, components, steepness, num_blocks)
         mean_obj_val = df["Obj Val"].mean()
         mean_constr_viol = df["Constraints Viol"].mean()
         mean_merit = mean_obj_val + 100 * mean_constr_viol
@@ -115,11 +112,6 @@ def build_problem(config, method_config):
     hlayers_rnd = config.hidden_layers_rnd       # number of hidden layers for solution mapping
     hsize = config.hidden_size                   # width of hidden layers for solution mapping
     continuous_update = config.continuous_update # update continuous variable during rounding step or not
-    # define Rosenbrock objective functions and constraints for both problem types
-    obj_rel, constrs_rel = nmRosenbrock(["x"], ["p", "a"], steepness, num_blocks,
-                                        penalty_weight=penalty_weight)
-    obj_rnd, constrs_rnd = nmRosenbrock(["x_rnd"], ["p", "a"], steepness, num_blocks,
-                                        penalty_weight=penalty_weight)
     # build neural architecture for the solution map
     func = nm.modules.blocks.MLP(insize=num_blocks+1, outsize=2*num_blocks,
                                  bias=True, linear_map=nm.slim.maps["linear"],
@@ -139,18 +131,14 @@ def build_problem(config, method_config):
     rnd = rnd_class(layers=layers_rnd, param_keys=["p", "a"], var_keys=["x"],
                     output_keys=["x_rnd"], int_ind={"x":range(1,2*num_blocks,2)},
                     continuous_update=continuous_update, name="round")
-    # build neuromancer problem for relaxation
-    components = [smap]
-    loss = nm.loss.PenaltyLoss(obj_rel, constrs_rel)
-    problem_rel = nm.problem.Problem(components, loss)
     # build neuromancer problem for rounding
-    components = [smap, rnd]
-    loss = nm.loss.PenaltyLoss(obj_rnd, constrs_rnd)
-    problem_rnd = nm.problem.Problem(components, loss)
-    return problem_rel, problem_rnd
+    components = nn.ModuleList([smap, rnd])
+    # loss function
+    loss_fn = nmRosenbrock(["p", "a", "x"], steepness, num_blocks)
+    return components, loss_fn
 
 
-def get_trainer(config, problem):
+def get_trainer(config, components, loss_fn):
     """
     Configure a trainer for a neuromancer problem.
 
@@ -173,16 +161,13 @@ def get_trainer(config, problem):
                   "Adam": torch.optim.Adam,
                   "AdamW": torch.optim.AdamW
                   }
-    optimizer = optimizers[optim_type](problem.parameters(), lr=lr)
+    optimizer = optimizers[optim_type](components.parameters(), lr=lr)
     # create a trainer for the problem
-    trainer = nm.trainer.Trainer(problem,
-                                 loader_train, loader_dev, loader_test,
-                                 optimizer, epochs=epochs,
-                                 patience=patience, warmup=warmup)
-    return trainer
+    my_trainer = trainer(components, loss_fn, optimizer, epochs, patience, warmup)
+    return my_trainer
 
 
-def eval(dataset, problem, steepness, num_blocks):
+def eval(dataset, components, steepness, num_blocks):
     """
     Evaluate a trained model on a dataset.
 
@@ -205,10 +190,12 @@ def eval(dataset, problem, steepness, num_blocks):
                       "name": "test"}
         # inference
         tick = time.time()
-        output = problem(datapoints)
+        with torch.no_grad():
+            for comp in components:
+                datapoints.update(comp(datapoints))
         tock = time.time()
         # get values
-        x = output["test_x_rnd"]
+        x = datapoints["x_rnd"]
         # assign params
         model.set_param_val({"p":p, "a":a})
         # assign vars
@@ -256,23 +243,13 @@ if __name__ == "__main__":
                         default="e2e",
                         choices=["e2e", "2s"],
                         help="training pattern")
-    parser.add_argument("--difficulty",
-                        type=str,
-                        default="easy",
-                        choices=["easy", "medium", "hard"],
-                        help="difficulty level of the problem")
+    parser.add_argument("--blocks",
+                        type=int,
+                        default=3,
+                        help="number of blocks")
     # get configuration
     method_config = parser.parse_args()
-    # set problem parameters based on the difficulty level
-    if method_config.difficulty == "easy":
-        method_config.blocks = 1        # number of blocks
-        method_config.steepness = 50    # function steepness
-    elif method_config.difficulty == "medium":
-        method_config.blocks = 2        # number of blocks
-        method_config.steepness = 50    # function steepness
-    elif method_config.difficulty == "hard":
-        method_config.blocks = 3        # number of blocks
-        method_config.steepness = 50    # function steepness
+    method_config.steepness = 50    # function steepness
 
     # configuration for sweep (hyperparameter tuning)
     sweep_config = {
@@ -322,7 +299,7 @@ if __name__ == "__main__":
     loader_train, loader_test, loader_dev = load_data(num_blocks, num_data, test_size, val_size)
 
     # set up project and sweep
-    project_name = "Rosenbrock-{}-{}-{}".format(method_config.difficulty,
+    project_name = "Rosenbrock-{}-{}-{}".format(method_config.blocks,
                                                 method_config.round,
                                                 method_config.train)
     sweep_id = wandb.sweep(sweep_config, project=project_name)
