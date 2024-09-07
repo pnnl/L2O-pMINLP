@@ -2,12 +2,12 @@
 Training pipeline
 """
 
-from tqdm import tqdm
 import copy
 import torch
 
 class trainer:
-    def __init__(self, components, loss_fn, optimizer, epochs=100, patience=5, warmup=0, loss_key="loss", device="cpu"):
+    def __init__(self, components, loss_fn, optimizer, epochs=100,
+                 patience=5, warmup=0, clip=100, loss_key="loss", device="cpu"):
         """
         Initialize the Trainer class.
         """
@@ -17,6 +17,7 @@ class trainer:
         self.epochs = epochs
         self.patience = patience
         self.warmup = warmup
+        self.clip = clip
         self.loss_key = loss_key
         self.device = device
         self.early_stop_counter = 0
@@ -32,8 +33,8 @@ class trainer:
         with torch.no_grad():
             val_loss = self.best_loss = self.calculate_loss(loader_dev)
         # training loop
-        for epoch in tqdm(range(self.epochs)):
-            tqdm.write(f"Epoch {epoch}, Validation Loss: {val_loss:.2f}")
+        for epoch in range(self.epochs):
+            print(f"Epoch {epoch}, Validation Loss: {val_loss:.2f}")
             # training phase
             self.components.train()
             for data_dict in loader_train:
@@ -47,6 +48,7 @@ class trainer:
                 data_dict = self.loss_fn(data_dict)
                 # backward pass
                 data_dict[self.loss_key].backward()
+                torch.nn.utils.clip_grad_norm_(self.components.parameters(), self.clip)
                 self.optimizer.step()
                 self.optimizer.zero_grad()
             # validation phase
@@ -57,7 +59,7 @@ class trainer:
             if epoch >= self.warmup:
                 early_stop = self.update_early_stopping(val_loss)
                 if self.early_stop_counter >= self.patience:
-                    tqdm.write(f"Early stopping at epoch {epoch}")
+                    print(f"Early stopping at epoch {epoch}")
                     break
         # end of training
         if self.best_model_state:
