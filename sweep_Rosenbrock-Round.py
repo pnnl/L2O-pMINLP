@@ -283,7 +283,7 @@ if __name__ == "__main__":
                 "values": [2, 3, 4]
             },
             "hidden_size": {
-                "values": [8, 16, 32, 64, 128]
+                "values": [16, 32, 64, 128]
             },
             "continuous_update": {
                 "values": [False, True]
