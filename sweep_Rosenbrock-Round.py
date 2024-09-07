@@ -134,7 +134,7 @@ def build_problem(config, method_config):
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd])
     # loss function
-    loss_fn = nmRosenbrock(["p", "a", "x"], steepness, num_blocks)
+    loss_fn = nmRosenbrock(["p", "a", "x_rnd"], steepness, num_blocks)
     return components, loss_fn
 
 
@@ -261,11 +261,11 @@ if __name__ == "__main__":
         },
         "parameters": {
             "penalty_weight":{
-                "min": 10,
-                "max": 100
+                "min": 20,
+                "max": 200
             },
             "optimizer": {
-                "values": ["SGD", "Adam", "AdamW"]
+                "values": ["AdamW"]
             },
             "learning_rate": {
                 "distribution": "q_log_uniform_values",
@@ -274,7 +274,7 @@ if __name__ == "__main__":
                 "max": 1e0    # 10^0
             },
             "batch_size": {
-                "values": [16, 32, 64]
+                "values": [32, 64, 128]
             },
             "hidden_layers_sol": {
                 "values": [2, 3, 4]
@@ -283,7 +283,7 @@ if __name__ == "__main__":
                 "values": [2, 3, 4]
             },
             "hidden_size": {
-                "values": [4, 8, 16, 32, 64]
+                "values": [8, 16, 32, 64, 128]
             },
             "continuous_update": {
                 "values": [False, True]
