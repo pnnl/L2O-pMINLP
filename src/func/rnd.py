@@ -35,6 +35,8 @@ class roundModel(nn.Module):
         self.name = name
 
     def forward(self, data):
+        # sigmoid binary variables
+        self._sigmoid(data)
         # get vars & params
         p, x = self._extract_data(data)
         # concatenate all features: params + sol
@@ -44,6 +46,10 @@ class roundModel(nn.Module):
         # rounding
         output_data = self._process_rounding(h, data)
         return output_data
+
+    def _sigmoid(self, data):
+        for k in self.var_keys:
+            data[k][:,self.bin_ind[k]] = torch.sigmoid(data[k][:,self.bin_ind[k]])
 
     def _extract_data(self, data):
         p = [data[k] for k in self.param_keys]
@@ -64,18 +70,20 @@ class roundModel(nn.Module):
         # get index
         int_ind = self.int_ind[key]
         bin_ind = self.bin_ind[key]
+        # load x
+        x = data[key].clone()
         ###################### integer ######################
         # floor(x)
-        x_flr = self.floor(data[key][:,int_ind])
+        x_flr = self.floor(x[:,int_ind])
         # bin(h): binary 0 for floor, 1 for ceil
         bnr = self.bin(h[:,int_ind])
         # mask if already integer
-        bnr = self._int_mask(bnr, data[key][:, int_ind])
+        bnr = self._int_mask(bnr, x[:, int_ind])
         # update continuous variables or not
         if self.continuous_update:
-            x_rnd = data[key] + h
+            x_rnd = x + h
         else:
-            x_rnd = data[key].clone()
+            x_rnd = x
         # update rounding for integer variables int(x) = floor(x) + bin(h)
         x_rnd[:, int_ind] = x_flr + bnr
         ###################### binary ######################
@@ -143,33 +151,37 @@ class roundThresholdModel(roundModel):
         # get index
         int_ind = self.int_ind[key]
         bin_ind = self.bin_ind[key]
+        # load x
+        x = data[key].clone()
         # get threshold from sigmoid
         threshold = torch.sigmoid(h)
         ###################### integer ######################
         # floor(x)
-        x_flr = self.floor(data[key][:,int_ind])
+        x_flr = self.floor(x[:,int_ind])
         # extract fractional part
-        x_frc = data[key][:,int_ind] - x_flr
+        x_frc = x[:,int_ind] - x_flr
         # get threshold
         v = threshold[:,int_ind]
         # bin(x, v): binary 0 for floor, 1 for ceil
         bnr = self.bin(x_frc, v)
         # update continuous variables or not
         if self.continuous_update:
-            x_rnd = data[key] + h
+            x_rnd = x + h
         else:
-            x_rnd = data[key].clone()
+            x_rnd = x
         # update rounding for integer variables int(x) = floor(x) + bin(h)
         x_rnd[:, int_ind] = x_flr + bnr
         ###################### binary ######################
-        # get fractional variables
-        x = data[key][:,bin_ind]
+        # floor(x) = 0 with grad
+        x_flr = self.floor(x[:,bin_ind])
         # get threshold
         v = threshold[:,bin_ind]
-        # bin(x,v): binary 0 for 0, 1 for c1
-        bnr = self.bin(x, v)
+        # fractional part is itself
+        x_frc = x[:,bin_ind]
+        # bin(x, v): binary 0 for floor, 1 for ceil
+        bnr = self.bin(x_frc, v)
         # update rounding for binary variables int(x) = bin(x, v)
-        x_rnd[:, bin_ind] = bnr
+        x_rnd[:, bin_ind] = x_flr + bnr
         return x_rnd
 
 
