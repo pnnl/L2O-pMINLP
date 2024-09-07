@@ -134,7 +134,7 @@ def build_problem(config, method_config):
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd])
     # loss function
-    loss_fn = nmRosenbrock(["p", "a", "x_rnd"], steepness, num_blocks)
+    loss_fn = nmRosenbrock(["p", "a", "x_rnd"], steepness, num_blocks, penalty_weight)
     return components, loss_fn
 
 
@@ -160,7 +160,7 @@ def get_trainer(config, components, loss_fn):
     optimizers = {"SGD": torch.optim.SGD,
                   "Adam": torch.optim.Adam,
                   "AdamW": torch.optim.AdamW
-                  }
+    }
     optimizer = optimizers[optim_type](components.parameters(), lr=lr)
     # create a trainer for the problem
     my_trainer = trainer(components, loss_fn, optimizer, epochs, patience, warmup)
@@ -253,7 +253,7 @@ if __name__ == "__main__":
 
     # configuration for sweep (hyperparameter tuning)
     sweep_config = {
-        "name": "Rosenbrock-easy-round",
+        "name": "Rosenbrock-round",
         "method": "bayes",
         "metric": {
           "name": "Mean Merit",
@@ -261,8 +261,8 @@ if __name__ == "__main__":
         },
         "parameters": {
             "penalty_weight":{
-                "min": 20,
-                "max": 200
+                "min": 1,
+                "max": 100
             },
             "optimizer": {
                 "values": ["AdamW"]
