@@ -12,7 +12,7 @@ class penaltyLoss(nn.Module):
     """
     Penalty loss function for knapsack problem
     """
-    def __init__(self, input_keys, weights, caps, penalty_weight=50, output_key="loss"):
+    def __init__(self, input_keys, weights, caps, penalty_weight=100, output_key="loss"):
         super().__init__()
         self.c_key, self.x_key = input_keys
         self.output_key = output_key
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     torch.manual_seed(42)
 
     # init
-    num_var = 20      # number of variables
+    num_var = 32      # number of variables
     dim = 2           # dimension of constraints
     caps = [20] * dim # capacity
     num_data = 5000   # number of data
@@ -77,8 +77,12 @@ if __name__ == "__main__":
     weights, x, c = pyepo.data.knapsack.genData(num_data=num_data, num_features=5,
                                                 num_items=num_var, dim=dim,
                                                 deg=4, noise_width=0.5)
-    c_samples = torch.FloatTensor(c)
-    data = {"c":c_samples}
+    # normalize
+    c_min = np.min(c, axis=0, keepdims=True)
+    c_max = np.max(c, axis=0, keepdims=True)
+    c_samples = (c - c_min) / (c_max - c_min)
+    # get data
+    data = {"c":c_samples.astype(np.float32)}
     # data split
     from src.utlis import data_split
     data_train, data_test, data_dev = data_split(data, test_size=test_size, val_size=val_size)
