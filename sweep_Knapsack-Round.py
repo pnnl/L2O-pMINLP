@@ -87,7 +87,7 @@ def train(method_config):
         df = eval(loader_test.dataset, components, weights, caps)
         mean_obj_val = df["Obj Val"].mean()
         mean_constr_viol = df["Constraints Viol"].mean()
-        mean_merit = mean_obj_val + 100 * mean_constr_viol
+        mean_merit = - mean_obj_val + 100 * mean_constr_viol
         wandb.log({"Mean Objective Value": mean_obj_val,
                    "Mean Constraint Violation": mean_constr_viol,
                    "Mean Merit": mean_merit})
