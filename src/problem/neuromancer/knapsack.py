@@ -19,6 +19,7 @@ class penaltyLoss(nn.Module):
         self.weights = torch.from_numpy(weights).to(torch.float32)
         self.caps = torch.tensor(caps).to(torch.float32)
         self.penalty_weight = penalty_weight
+        self.device = None
 
     def forward(self, input_dict):
         """
@@ -49,6 +50,11 @@ class penaltyLoss(nn.Module):
         """
         # get values
         x = input_dict[self.x_key]
+        # get device
+        if not self.device:
+            self.device = x.device
+            self.weights = self.weights.to(self.device)
+            self.caps = self.caps.to(self.device)
         # capacity constraints
         lhs = torch.einsum("bj,ij->bi", x, self.weights)
         violation = torch.relu(lhs - self.caps).sum(dim=1)
