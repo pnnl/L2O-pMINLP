@@ -30,7 +30,7 @@ class penaltyLoss(nn.Module):
         # constraints violation
         viol = self.cal_constr_viol(input_dict)
         # penalized loss
-        loss = obj + self.penalty_weight * viol
+        loss = obj + viol
         input_dict[self.output_key] = torch.mean(loss)
         return input_dict
 
@@ -57,9 +57,10 @@ class penaltyLoss(nn.Module):
             self.caps = self.caps.to(self.device)
         # capacity constraints
         lhs = torch.einsum("bj,ij->bi", x, self.weights)
-        violation = torch.relu(lhs - self.caps).sum(dim=1)
-        # non-negative constraints
-        violation += torch.relu(-x).sum(dim=1)
+        violation = self.penalty_weight[0] * torch.relu(lhs - self.caps).sum(dim=1)
+        # bound constraints
+        violation += self.penalty_weight[1] * torch.relu(-x).sum(dim=1)
+        violation += self.penalty_weight[1] * torch.relu(x-1).sum(dim=1)
         return violation
 
 
@@ -106,10 +107,11 @@ if __name__ == "__main__":
     func = nm.modules.blocks.MLP(insize=num_var, outsize=num_var, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[64]*2)
+    # get components
     components =  nn.ModuleList([nm.system.Node(func, ["c"], ["x"], name="smap")])
 
     # build neuromancer problems
-    loss_fn = penaltyLoss(["c", "x"], weights, caps)
+    loss_fn = penaltyLoss(["c", "x"], weights, caps, penalty_weight=[2,100])
 
     # training
     lr = 0.001    # step size for gradient descent
@@ -130,9 +132,9 @@ if __name__ == "__main__":
 
     # test neuroMANCER
     from src.utlis import nm_test_solve
-    c = c[0]
-    datapoint = {"c": torch.tensor([c], dtype=torch.float32),
+    c = c[:1]
+    datapoint = {"c": torch.tensor(c, dtype=torch.float32),
                  "name":"test"}
-    model.set_param_val({"c":c})
+    model.set_param_val({"c":c[0]})
     print("neuroMANCER:")
     nm_test_solve("x", components, datapoint, model)

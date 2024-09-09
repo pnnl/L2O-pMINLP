@@ -27,6 +27,9 @@ class knapsack(abcParamSolver):
         m.cons = pe.ConstraintList()
         for i in range(dim):
             m.cons.add(sum(weights[i,j] * m.x[j] for j in range(num_var)) <= caps[i])
+        for j in range(num_var):
+            m.cons.add(m.x[j] >= 0)
+            m.cons.add(m.x[j] <= 1)
         # attribute
         self.model = m
         self.params ={"c":m.c}

@@ -36,7 +36,7 @@ class roundModel(nn.Module):
 
     def forward(self, data):
         # sigmoid binary variables
-        self._sigmoid(data)
+        # self._sigmoid(data)
         # get vars & params
         p, x = self._extract_data(data)
         # concatenate all features: params + sol
