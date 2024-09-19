@@ -15,7 +15,7 @@ from src.func.layer import netFC
 from src.func import roundModel, roundGumbelModel, roundThresholdModel
 from src.problem.neuromancer.trainer import trainer
 
-def load_data(num_blocks, num_data, test_size, val_size):
+def load_data(num_blocks, num_data, test_size, val_size, batch_size):
     """
     Generate random data for training, testing, and validation.
 
@@ -24,6 +24,7 @@ def load_data(num_blocks, num_data, test_size, val_size):
         num_data (int): Total number of data points.
         test_size (int): Size of the test dataset.
         val_size (int): Size of the validation dataset.
+        batch_size (int): Size of the mini-batch.
 
     Returns:
         tuple: Three DataLoader instances for training, testing, and validation datasets.
@@ -43,11 +44,11 @@ def load_data(num_blocks, num_data, test_size, val_size):
     data_test  = DictDataset({"p":p_test, "a":a_test}, name="test")
     data_dev   = DictDataset({"p":p_dev, "a":a_dev}, name="dev")
     # torch dataloaders
-    loader_train = DataLoader(data_train, batch_size=32, num_workers=0,
+    loader_train = DataLoader(data_train, batch_size=batch_size, num_workers=0,
                               collate_fn=data_train.collate_fn, shuffle=True)
-    loader_test  = DataLoader(data_test, batch_size=32, num_workers=0,
+    loader_test  = DataLoader(data_test, batch_size=batch_size, num_workers=0,
                               collate_fn=data_test.collate_fn, shuffle=False)
-    loader_dev   = DataLoader(data_dev, batch_size=32, num_workers=0,
+    loader_dev   = DataLoader(data_dev, batch_size=batch_size, num_workers=0,
                               collate_fn=data_dev.collate_fn, shuffle=True)
     return loader_train, loader_test, loader_dev
 
@@ -67,6 +68,10 @@ def train(method_config):
         # get config from wandb
         config = wandb.config
         print(config)
+        # load data
+        loader_train, loader_test, loader_dev = load_data(num_blocks, num_data,
+                                                          test_size, val_size,
+                                                          batch_size=config.batch_size)
         # build problems for relaxation and rounding phases
         components, loss_fn = build_problem(config, method_config)
         # 2-stage training, if specified
@@ -291,12 +296,10 @@ if __name__ == "__main__":
         }
     }
 
-    # load dataset
-    num_blocks = method_config.blocks    # number of problem blocks
+    # data size
     num_data = 5000                      # number of data
     test_size = 1000                     # number of test size
     val_size = 1000                      # number of validation size
-    loader_train, loader_test, loader_dev = load_data(num_blocks, num_data, test_size, val_size)
 
     # set up project and sweep
     project_name = "Rosenbrock-{}-{}-{}".format(method_config.blocks,
