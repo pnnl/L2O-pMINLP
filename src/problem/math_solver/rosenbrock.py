@@ -62,3 +62,12 @@ if __name__ == "__main__":
     model_rel.set_param_val(params)
     # scip
     ms_test_solve(model_rel, tee=False)
+
+    # solve the relaxation
+    print()
+    print("======================================================")
+    print("Solve primal heuristic:")
+    model_heur = model.primal_heuristic()
+    model_heur.set_param_val(params)
+    # scip
+    ms_test_solve(model_heur, tee=True)

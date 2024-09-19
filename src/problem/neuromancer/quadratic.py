@@ -10,128 +10,19 @@ import torch
 from torch import nn
 import neuromancer as nm
 
-def quadratic(var_keys, param_keys, penalty_weight=10):
-    # define the coefficients for the quadratic problem
-    c = [0.0200,
-         0.0300]
-    Q = [[0.0196, 0.0063],
-         [0.0063, 0.0199]]
-    d = [-0.3000,
-         -0.3100]
-    b = [0.417425,
-         3.582575,
-         0.413225,
-         0.467075,
-         1.090200,
-         2.909800,
-         1.000000]
-    A = [[ 1.0000,  0.0000],
-         [-1.0000,  0.0000],
-         [-0.0609,  0.0000],
-         [-0.0064,  0.0000],
-         [ 0.0000,  1.0000],
-         [ 0.0000, -1.0000],
-         [ 0.0000,  0.0000]]
-    E = [[-1.0000,  0.0000],
-         [-1.0000,  0.0000],
-         [ 0.0000, -0.5000],
-         [ 0.0000, -0.7000],
-         [-0.6000,  0.0000],
-         [-0.5000,  0.0000],
-         [ 1.0000,  1.0000]]
-    F = [[ 3.16515,  3.7546],
-         [-3.16515, -3.7546],
-         [ 0.17355, -0.2717],
-         [ 0.06585,  0.4714],
-         [ 1.81960, -3.2841],
-         [-1.81960,  3.2841],
-         [ 0.00000,  0.0000]]
-    # mutable parameters
-    params = {}
-    for p in param_keys:
-        params[p] = nm.constraint.variable(p)
-    # decision variables
-    vars = {}
-    for v in var_keys:
-        vars[v] = nm.constraint.variable(v)
-    obj = [get_obj(vars, c, Q, d)]
-    constrs = get_constrs(vars, params, penalty_weight, b, A, E, F)
-    return obj, constrs
-
-
-def get_obj(vars, c, Q, d):
-    """
-    Get neuroMANCER objective component
-    """
-    # get decision variables
-    x, = vars.values()
-    # objective function C^T x + 1/2 x^T Q x + d^T y
-    f = sum(c[j] * x[:, j] for j in range(2)) \
-      + 0.5 * sum(Q[i][j] * x[:, i] * x[:, j] for i in range(2) for j in range(2)) \
-      + sum(d[j] * x[:, j+2] for j in range(2))
-    obj = f.minimize(weight=1.0, name="obj")
-    return obj
-
-def get_constrs(vars, params, penalty_weight, b, A, E, F):
-    """
-    Get neuroMANCER constraint component
-    """
-    # get decision variables
-    x, = vars.values()
-    # get mutable parameters
-    p, = params.values()
-    # constraints
-    constraints = []
-    for i in range(7):
-        lhs = sum(A[i][j] * x[:, j] for j in range(2)) \
-            + sum(E[i][j] * x[:, j+2] for j in range(2))
-        rhs = b[i] + F[i][0] * p[:, 0] + F[i][1] * p[:, 1]
-        con = penalty_weight * (lhs <= rhs)
-        con.name = "c{}".format(i)
-        constraints.append(con)
-    # nonnegative
-    for i in range(4):
-        con = penalty_weight * (x[:, i] >= 0)
-        con.name = "xl{}".format(i)
-        constraints.append(con)
-    return constraints
-
 class penaltyLoss(nn.Module):
     """
     Penalty loss function for quadratic problem
     """
-    def __init__(self, input_keys, penalty_weight=50, output_key="loss"):
+    def __init__(self, input_keys, Q, p, A, penalty_weight=50, output_key="loss"):
         super().__init__()
-        self.p_key, self.x_key = input_keys
+        self.b_key, self.x_key = input_keys
         self.output_key = output_key
         self.penalty_weight = penalty_weight
         # fixed coefficients
-        self.c = torch.tensor([0.0200, 0.0300])
-        self.Q = torch.tensor([[0.0196, 0.0063],
-                              [0.0063, 0.0199]])
-        self.d = torch.tensor([-0.3000, -0.3100])
-        self.b = torch.tensor([0.417425, 3.582575, 0.413225, 0.467075, 1.090200, 2.909800, 1.000000])
-        self.A = torch.tensor([[ 1.0000,  0.0000],
-                               [-1.0000,  0.0000],
-                               [-0.0609,  0.0000],
-                               [-0.0064,  0.0000],
-                               [ 0.0000,  1.0000],
-                               [ 0.0000, -1.0000],
-                               [ 0.0000,  0.0000]])
-        self.E = torch.tensor([[-1.0000,  0.0000],
-                               [-1.0000,  0.0000],
-                               [ 0.0000, -0.5000],
-                               [ 0.0000, -0.7000],
-                               [-0.6000,  0.0000],
-                               [-0.5000,  0.0000],
-                               [ 1.0000,  1.0000]])
-        self.F = torch.tensor([[ 3.16515,  3.7546],
-                               [-3.16515, -3.7546],
-                               [ 0.17355, -0.2717],
-                               [ 0.06585,  0.4714],
-                               [ 1.81960, -3.2841],
-                               [-1.81960,  3.2841],
-                               [ 0.00000,  0.0000]])
+        self.Q = Q
+        self.p = p
+        self.A = A
 
     def forward(self, input_dict):
         """
@@ -152,44 +43,46 @@ class penaltyLoss(nn.Module):
         """
         # get values
         x = input_dict[self.x_key]
-        # C^T x
-        c_term = torch.einsum("i,bi->b", self.c, x[:, :2])
         # 1/2 x^T Q x
-        Q_term = torch.einsum("bi,ij,bj->b", x[:, :2], self.Q, x[:, :2]) / 2
-        # d^T y: dot product of d and x[:, 2:]
-        d_term = torch.einsum("i,bi->b", self.d, x[:, 2:])
-        return c_term + Q_term + d_term
+        Q_term = torch.einsum("bm,nm,bm->b", x, self.Q, x) / 2
+        # p^T y
+        p_term = torch.einsum("m,bm->b", self.p, x)
+        return Q_term + p_term
 
     def cal_constr_viol(self, input_dict):
         """
         calculate constraints violation
         """
         # get values
-        x, p = input_dict[self.x_key], input_dict[self.p_key]
+        x, b = input_dict[self.x_key], input_dict[self.b_key]
         # constraints
-        lhs = torch.einsum("ij,bj->bi", self.A, x[:, :2]) + torch.einsum("ij,bj->bi", self.E, x[:, 2:])
-        rhs = self.b + torch.einsum("ij,bj->bi", self.F, p)
-        violation = torch.relu(lhs - rhs).sum(dim=1)
-        # bounds
-        violation += torch.relu(-x).sum(dim=1)
+        lhs = torch.einsum("mn,bm->bn", self.A, x) # Ax
+        rhs = b # b
+        violation = torch.relu(lhs - rhs).sum(dim=1) # Ax<=b
         return violation
 
 
 if __name__ == "__main__":
 
     # random seed
-    np.random.seed(42)
-    torch.manual_seed(42)
+    np.random.seed(17)
+    torch.manual_seed(17)
 
     # init
+    num_var = 10
+    num_ineq = 10
     num_data = 5000   # number of data
     test_size = 1000  # number of test size
     val_size = 1000   # number of validation size
 
+    # generate parameters
+    Q = torch.from_numpy(np.diag(np.random.random(size=num_var))).float()
+    p = torch.from_numpy(np.random.random(num_var)).float()
+    A = torch.from_numpy(np.random.normal(scale=1, size=(num_ineq, num_var))).float()
+
     # data sample from uniform distribution
-    p_low, p_high = 0.0, 1.0
-    p_samples = torch.FloatTensor(num_data, 2).uniform_(p_low, p_high)
-    data = {"p":p_samples}
+    b_samples = torch.from_numpy(np.random.uniform(-1, 1, size=(num_data, num_ineq))).float()
+    data = {"b":b_samples}
     # data split
     from src.utlis import data_split
     data_train, data_test, data_dev = data_split(data, test_size=test_size, val_size=val_size)
@@ -204,13 +97,13 @@ if __name__ == "__main__":
 
     # define neural architecture for the solution map smap(p) -> x
     import neuromancer as nm
-    func = nm.modules.blocks.MLP(insize=2, outsize=4, bias=True,
+    func = nm.modules.blocks.MLP(insize=num_ineq, outsize=num_var, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[10]*4)
-    components = nn.ModuleList([nm.system.Node(func, ["p"], ["x"], name="smap")])
+    components = nn.ModuleList([nm.system.Node(func, ["b"], ["x"], name="smap")])
 
     # build neuromancer problem
-    loss_fn = penaltyLoss(["p", "x"])
+    loss_fn = penaltyLoss(["b", "x"], Q, p, A)
 
     # training
     lr = 0.001    # step size for gradient descent
@@ -226,14 +119,13 @@ if __name__ == "__main__":
     print()
 
     # init mathmatic model
-    from src.problem.math_solver.quadratic import quadratic
-    model = quadratic()
+    from src.problem.math_solver.quadratic import convexQuadratic
+    model = convexQuadratic(Q.cpu().numpy(), p.cpu().numpy(), A.cpu().numpy())
 
     # test neuroMANCER
-    p = 0.6, 0.8
     from src.utlis import nm_test_solve
     print("neuroMANCER:")
-    datapoint = {"p": torch.tensor([[*p]], dtype=torch.float32),
+    datapoint = {"b": b_samples[:1],
                  "name":"test"}
-    model.set_param_val({"p":p})
+    model.set_param_val({"b":b_samples[0].cpu().numpy()})
     nm_test_solve("x", components, datapoint, model)
