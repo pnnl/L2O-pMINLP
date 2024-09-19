@@ -80,7 +80,7 @@ def train(method_config):
         # training for the rounding problem
         best_model = trainer.train(loader_train, loader_test)
         # evaluate model
-        df = eval(loader_test.dataset, components, num_var)
+        df = eval(loader_test.dataset, components, num_var, num_ineq)
         mean_obj_val = df["Obj Val"].mean()
         mean_constr_viol = df["Constraints Viol"].mean()
         mean_merit = mean_obj_val + 100 * mean_constr_viol
@@ -131,7 +131,7 @@ def build_problem(config, method_config):
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd])
     # loss function
-    loss_fn = nmQuadratic(["b", "x_rnd"], Q, p, A, penalty_weight)
+    loss_fn = nmQuadratic(["b", "x_rnd"], num_var, num_ineq, penalty_weight)
     return components, loss_fn
 
 
@@ -164,7 +164,7 @@ def get_trainer(config, components, loss_fn):
     return my_trainer
 
 
-def eval(dataset, components, num_var):
+def eval(dataset, components, num_var, num_ineq):
     """
     Evaluate a trained model on a dataset.
 
@@ -172,12 +172,13 @@ def eval(dataset, components, num_var):
         dataset (neuromancer.dataset.DictDataset): Dataset for evaluation.
         problem (nm.problem.Problem): Trained problem model.
         num_var (int): number of varibles
+        num_ineq (int): numer of inequality constraints
 
     Returns:
         pd.DataFrame: Results including solution, objective value, constraints violation, and elapsed time.
     """
     # exact mathmatical programming solver
-    model = msQuadratic(Q.cpu().numpy(), p.cpu().numpy(), A.cpu().numpy())
+    model = msQuadratic(num_var, num_ineq)
     # init
     sols, objvals, conviols, elapseds = [], [], [], []
     # iterate through test dataset

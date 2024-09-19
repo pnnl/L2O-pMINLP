@@ -10,8 +10,13 @@ from pyomo import environ as pe
 from src.problem.math_solver import abcParamSolver
 
 class nonconvex(abcParamSolver):
-    def __init__(self, Q, p, A, timelimit=None):
+    def __init__(self, num_var, num_ineq, timelimit=None):
         super().__init__(timelimit=timelimit, solver="scip")
+        # fixed params
+        rng = np.random.RandomState(17)
+        Q = np.diag(rng.random(size=num_var))
+        p = rng.random(num_var)
+        A = rng.normal(scale=1, size=(num_ineq, num_var))
         # size
         num_ineq, num_var = A.shape
         # create model
@@ -42,16 +47,11 @@ if __name__ == "__main__":
     num_data = 5000
 
     # generate parameters
-    np.random.seed(17)
-    Q = np.diag(np.random.random(size=num_var))
-    p = np.random.random(num_var)
-    A = np.random.normal(scale=1, size=(num_ineq, num_var))
     b = np.random.uniform(-1, 1, size=(num_data, num_ineq))
-
     # set params
     params = {"b":b[0]}
     # init model
-    model = nonconvex(Q, p, A)
+    model = nonconvex(num_var, num_ineq)
 
     # solve the MIQP
     print("======================================================")

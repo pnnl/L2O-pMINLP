@@ -14,15 +14,19 @@ class penaltyLoss(nn.Module):
     """
     Penalty loss function for quadratic problem
     """
-    def __init__(self, input_keys, Q, p, A, penalty_weight=50, output_key="loss"):
+    def __init__(self, input_keys, num_var, num_ineq, penalty_weight=50, output_key="loss"):
         super().__init__()
         self.b_key, self.x_key = input_keys
         self.output_key = output_key
         self.penalty_weight = penalty_weight
         # fixed coefficients
-        self.Q = Q
-        self.p = p
-        self.A = A
+        rng = np.random.RandomState(17)
+        Q = np.diag(rng.random(size=num_var))
+        p = rng.random(num_var)
+        A = rng.normal(scale=1, size=(num_ineq, num_var))
+        self.Q = torch.from_numpy(Q).float()
+        self.p = torch.from_numpy(p).float()
+        self.A = torch.from_numpy(A).float()
 
     def forward(self, input_dict):
         """
@@ -103,7 +107,7 @@ if __name__ == "__main__":
     components = nn.ModuleList([nm.system.Node(func, ["b"], ["x"], name="smap")])
 
     # build neuromancer problem
-    loss_fn = penaltyLoss(["b", "x"], Q, p, A)
+    loss_fn = penaltyLoss(["b", "x"], num_var, num_ineq)
 
     # training
     lr = 0.001    # step size for gradient descent
@@ -120,7 +124,7 @@ if __name__ == "__main__":
 
     # init mathmatic model
     from src.problem.math_solver.quadratic import quadratic
-    model = quadratic(Q.cpu().numpy(), p.cpu().numpy(), A.cpu().numpy())
+    model = quadratic(num_var, num_ineq)
 
     # test neuroMANCER
     from src.utlis import nm_test_solve
