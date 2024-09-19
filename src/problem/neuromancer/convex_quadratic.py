@@ -56,7 +56,7 @@ class penaltyLoss(nn.Module):
         # get values
         x, b = input_dict[self.x_key], input_dict[self.b_key]
         # constraints
-        lhs = torch.einsum("mn,bm->bn", self.A, x) # Ax
+        lhs = torch.einsum("mn,bn->bm", self.A, x) # Ax
         rhs = b # b
         violation = torch.relu(lhs - rhs).sum(dim=1) # Ax<=b
         return violation
