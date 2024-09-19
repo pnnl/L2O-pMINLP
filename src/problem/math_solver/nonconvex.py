@@ -1,5 +1,5 @@
 """
-Parametric Mixed Integer Quadratic Programming
+Parametric Mixed Integer Simple Conconvex Programming
 
 https://arxiv.org/abs/2104.12225
 """
@@ -9,9 +9,9 @@ from pyomo import environ as pe
 
 from src.problem.math_solver import abcParamSolver
 
-class quadratic(abcParamSolver):
+class nonconvex(abcParamSolver):
     def __init__(self, Q, p, A, timelimit=None):
-        super().__init__(timelimit=timelimit, solver="gurobi")
+        super().__init__(timelimit=timelimit, solver="scip")
         # size
         num_ineq, num_var = A.shape
         # create model
@@ -20,8 +20,8 @@ class quadratic(abcParamSolver):
         m.b = pe.Param(pe.RangeSet(0, num_ineq-1), default=0, mutable=True)
         # decision variables
         m.x = pe.Var(range(num_var), domain=pe.Integers)
-        # objective function 1/2 x^T Q x + p^T x
-        obj = sum(m.x[j] * Q[j,j] * m.x[j] / 2 + p[j] * m.x[j] for j in range(num_var))
+        # objective function 1/2 x^T Q x + p^T sin(x)
+        obj = sum(m.x[j] * Q[j,j] * m.x[j] / 2 + p[j] * pe.sin(m.x[j]) for j in range(num_var))
         m.obj = pe.Objective(sense=pe.minimize, expr=obj)
         # constraints A x <= b
         m.cons = pe.ConstraintList()
@@ -32,7 +32,6 @@ class quadratic(abcParamSolver):
         self.params ={"b":m.b}
         self.vars = {"x":m.x}
         self.cons = m.cons
-
 
 if __name__ == "__main__":
 
@@ -52,7 +51,7 @@ if __name__ == "__main__":
     # set params
     params = {"b":b[0]}
     # init model
-    model = quadratic(Q, p, A)
+    model = nonconvex(Q, p, A)
 
     # solve the MIQP
     print("======================================================")

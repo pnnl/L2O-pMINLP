@@ -69,8 +69,8 @@ if __name__ == "__main__":
     torch.manual_seed(17)
 
     # init
-    num_var = 10
-    num_ineq = 10
+    num_var = 10      # numner of variables
+    num_ineq = 10     # numner of constraints
     num_data = 5000   # number of data
     test_size = 1000  # number of test size
     val_size = 1000   # number of validation size
@@ -119,8 +119,8 @@ if __name__ == "__main__":
     print()
 
     # init mathmatic model
-    from src.problem.math_solver.quadratic import convexQuadratic
-    model = convexQuadratic(Q.cpu().numpy(), p.cpu().numpy(), A.cpu().numpy())
+    from src.problem.math_solver.quadratic import quadratic
+    model = quadratic(Q.cpu().numpy(), p.cpu().numpy(), A.cpu().numpy())
 
     # test neuroMANCER
     from src.utlis import nm_test_solve

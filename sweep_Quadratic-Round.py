@@ -10,7 +10,7 @@ from tqdm import tqdm
 import neuromancer as nm
 from neuromancer.dataset import DictDataset
 
-from src.problem import msConvexQuadratic, nmConvexQuadratic
+from src.problem import msQuadratic, nmQuadratic
 from src.func.layer import netFC
 from src.func import roundModel, roundGumbelModel, roundThresholdModel
 from src.problem.neuromancer.trainer import trainer
@@ -131,7 +131,7 @@ def build_problem(config, method_config):
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd])
     # loss function
-    loss_fn = nmConvexQuadratic(["b", "x_rnd"], Q, p, A, penalty_weight)
+    loss_fn = nmQuadratic(["b", "x_rnd"], Q, p, A, penalty_weight)
     return components, loss_fn
 
 
@@ -177,7 +177,7 @@ def eval(dataset, components, num_var):
         pd.DataFrame: Results including solution, objective value, constraints violation, and elapsed time.
     """
     # exact mathmatical programming solver
-    model = msConvexQuadratic(Q.cpu().numpy(), p.cpu().numpy(), A.cpu().numpy())
+    model = msQuadratic(Q.cpu().numpy(), p.cpu().numpy(), A.cpu().numpy())
     # init
     sols, objvals, conviols, elapseds = [], [], [], []
     # iterate through test dataset
