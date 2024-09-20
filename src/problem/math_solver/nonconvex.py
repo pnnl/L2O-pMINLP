@@ -14,9 +14,9 @@ class nonconvex(abcParamSolver):
         super().__init__(timelimit=timelimit, solver="scip")
         # fixed params
         rng = np.random.RandomState(17)
-        Q = np.diag(rng.random(size=num_var))
-        p = rng.random(num_var)
-        A = rng.normal(scale=1, size=(num_ineq, num_var))
+        Q = 0.01 * np.diag(rng.random(size=num_var))
+        p = 0.1 * rng.random(num_var)
+        A = rng.normal(scale=0.1, size=(num_ineq, num_var))
         # size
         num_ineq, num_var = A.shape
         # create model

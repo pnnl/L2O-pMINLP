@@ -23,9 +23,9 @@ class penaltyLoss(nn.Module):
         self.device = None
         # fixed coefficients
         rng = np.random.RandomState(17)
-        Q = np.diag(rng.random(size=num_var))
-        p = rng.random(num_var)
-        A = rng.normal(scale=1, size=(num_ineq, num_var))
+        Q = 0.01 * np.diag(rng.random(size=num_var)) # not used
+        p = 0.1 * rng.random(num_var) # not used
+        A = rng.normal(scale=0.1, size=(num_ineq, num_var))
         self.Q = torch.from_numpy(Q).float()
         self.p = torch.from_numpy(p).float()
         self.A = torch.from_numpy(A).float()
@@ -49,12 +49,6 @@ class penaltyLoss(nn.Module):
         """
         # get values
         x = input_dict[self.x_key]
-        # update device
-        if self.device is None:
-            self.device = x.device
-            self.Q = self.Q.to(self.device)
-            self.p = self.p.to(self.device)
-            self.A = self.A.to(self.device)
         norm_term = torch.sqrt(torch.mean(x ** 2, dim=1))
         cos_term = torch.mean(torch.cos(2 * math.pi * x), dim=1)
         return -20 * torch.exp(-0.2 * norm_term) - torch.exp(cos_term) + 20 + math.e
@@ -65,6 +59,10 @@ class penaltyLoss(nn.Module):
         """
         # get values
         x, b = input_dict[self.x_key], input_dict[self.b_key]
+        # update device
+        if self.device is None:
+            self.device = x.device
+            self.A = self.A.to(self.device)
         # constraints
         lhs = torch.einsum("mn,bn->bm", self.A, x) # Ax
         rhs = b # b

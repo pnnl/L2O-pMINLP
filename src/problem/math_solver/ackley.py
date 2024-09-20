@@ -25,7 +25,9 @@ class ackley(abcParamSolver):
         # constraints
         m.cons = pe.ConstraintList()
         rng = np.random.RandomState(17)
-        A = rng.normal(scale=1, size=(num_ineq, num_var))
+        Q = 0.01 * np.diag(rng.random(size=num_var)) # not used
+        p = 0.1 * rng.random(num_var) # not used
+        A = rng.normal(scale=0.1, size=(num_ineq, num_var))
         for i in range(num_ineq):
             m.cons.add(sum(A[i,j] * m.x[j] for j in range(num_var)) <= m.b[i])
         # attribute
