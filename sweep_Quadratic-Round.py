@@ -306,7 +306,7 @@ if __name__ == "__main__":
     torch.cuda.manual_seed(42)
     # set up project and sweep
     project_name = "Quadratic-{}-{}-{}".format(method_config.num_var,
-                                               method_config.num_ineq,
+                                               method_config.round,
                                                method_config.train)
     sweep_id = wandb.sweep(sweep_config, project=project_name)
     wandb.agent(sweep_id, function=lambda: train(method_config), count=100)
