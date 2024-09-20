@@ -20,6 +20,7 @@ class penaltyLoss(nn.Module):
         self.b_key, self.x_key = input_keys
         self.output_key = output_key
         self.penalty_weight = penalty_weight
+        self.device = None
         # fixed coefficients
         rng = np.random.RandomState(17)
         Q = np.diag(rng.random(size=num_var))
@@ -48,6 +49,12 @@ class penaltyLoss(nn.Module):
         """
         # get values
         x = input_dict[self.x_key]
+        # update device
+        if self.device is None:
+            self.device = x.device
+            self.Q = self.Q.to(self.device)
+            self.p = self.p.to(self.device)
+            self.A = self.A.to(self.device)
         norm_term = torch.sqrt(torch.mean(x ** 2, dim=1))
         cos_term = torch.mean(torch.cos(2 * math.pi * x), dim=1)
         return -20 * torch.exp(-0.2 * norm_term) - torch.exp(cos_term) + 20 + math.e

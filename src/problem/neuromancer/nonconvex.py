@@ -19,6 +19,7 @@ class penaltyLoss(nn.Module):
         self.b_key, self.x_key = input_keys
         self.output_key = output_key
         self.penalty_weight = penalty_weight
+        self.device = None
         # fixed coefficients
         rng = np.random.RandomState(17)
         Q = np.diag(rng.random(size=num_var))
@@ -47,6 +48,12 @@ class penaltyLoss(nn.Module):
         """
         # get values
         x = input_dict[self.x_key]
+        # update device
+        if self.device is None:
+            self.device = x.device
+            self.Q = self.Q.to(self.device)
+            self.p = self.p.to(self.device)
+            self.A = self.A.to(self.device)
         # 1/2 x^T Q x
         Q_term = torch.einsum("bm,nm,bm->b", x, self.Q, x) / 2
         # p^T y
