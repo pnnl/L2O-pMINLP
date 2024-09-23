@@ -12,6 +12,8 @@ from src.problem.math_solver import abcParamSolver
 class nonconvex(abcParamSolver):
     def __init__(self, num_var, num_ineq, timelimit=None):
         super().__init__(timelimit=timelimit, solver="scip")
+        # quite mode
+        self.opt.options["quiet"] = True
         # fixed params
         rng = np.random.RandomState(17)
         Q = 0.01 * np.diag(rng.random(size=num_var))
