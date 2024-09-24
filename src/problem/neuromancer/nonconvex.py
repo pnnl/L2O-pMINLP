@@ -1,8 +1,5 @@
 """
-Parametric Mixed Integer Quadratic Programming
-
-https://www.sciencedirect.com/science/article/pii/S0098135401007979
-https://www.sciencedirect.com/science/article/pii/S1570794601801577
+Parametric Simple Nonconvex Problem
 """
 
 import numpy as np

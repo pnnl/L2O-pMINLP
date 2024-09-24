@@ -1,8 +1,5 @@
 """
-Parametric Mixed Integer Quadratic Programming
-
-https://www.sciencedirect.com/science/article/pii/S0098135401007979
-https://www.sciencedirect.com/science/article/pii/S1570794601801577
+Parametric Mixed Integer Ackley Problem
 """
 
 import math
@@ -23,10 +20,9 @@ class penaltyLoss(nn.Module):
         self.device = None
         # fixed coefficients
         rng = np.random.RandomState(17)
-        Q = 0.01 * np.diag(rng.random(size=num_var)) # not used
+        _ = 0.01 * np.diag(rng.random(size=num_var)) # not used
         p = 0.1 * rng.random(num_var) # not used
         A = rng.normal(scale=0.1, size=(num_ineq, num_var))
-        self.Q = torch.from_numpy(Q).float()
         self.p = torch.from_numpy(p).float()
         self.A = torch.from_numpy(A).float()
 
@@ -127,8 +123,8 @@ if __name__ == "__main__":
     print()
 
     # init mathmatic model
-    from src.problem.math_solver.quadratic import quadratic
-    model = quadratic(num_var, num_ineq)
+    from src.problem.math_solver.ackley import ackley
+    model = ackley(num_var, num_ineq)
 
     # test neuroMANCER
     from src.utlis import nm_test_solve

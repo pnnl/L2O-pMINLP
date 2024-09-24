@@ -206,3 +206,28 @@ class abcParamSolver(ABC):
         else:
             raise ValueError("Solver '{}' does not support setting a solution limit.".fomrat(solver))
         return model_heur
+
+    def primal_heuristic(self):
+        """
+        Create a model that only use a primal heuristic
+        """
+        # clone pyomo model
+        model_heur = self.clone()
+        # only support SCIP
+        if self.solver != "scip":
+            raise ValueError("Solver '{}' does not support setting a primal heuristic.".fomrat(solver))
+        # turn off presolving
+        model_heur.opt.options["presolving/maxrounds"] = 0
+        # turn off propagating
+        model_heur.opt.options["propagating/maxrounds"] = 0
+        model_heur.opt.options["propagating/maxroundsroot"] = 0
+        # turn off branch&bound
+        model_heur.opt.options["limits/nodes"] = 1
+        # turn off heuristics
+        model_heur.opt.options["heuristics/clique/freq"] = -1
+        model_heur.opt.options["heuristics/locks/freq"] = -1
+        model_heur.opt.options["heuristics/multistart/freq"] = -1
+        model_heur.opt.options["heuristics/shiftandpropagate/freq"] = -1
+        # turn on 1 heuristics
+        model_heur.opt.options["heuristics/rens/freq"] = 65534
+        return model_heur
