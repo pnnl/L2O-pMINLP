@@ -2,6 +2,8 @@
 Training pipeline
 """
 
+import time
+
 import copy
 import torch
 
@@ -33,6 +35,7 @@ class trainer:
         with torch.no_grad():
             val_loss = self.best_loss = self.calculate_loss(loader_dev)
         # training loop
+        tick = time.time()
         for epoch in range(self.epochs):
             print(f"Epoch {epoch}, Validation Loss: {val_loss:.2f}")
             # training phase
@@ -61,11 +64,14 @@ class trainer:
                 if self.early_stop_counter >= self.patience:
                     print(f"Early stopping at epoch {epoch}")
                     break
+        tock = time.time()
+        elapsed = tock - tick
         # end of training
         if self.best_model_state:
             self.components.load_state_dict(self.best_model_state)
             print("Best model loaded.")
         print("Training complete.")
+        print(f"The training time is {elapsed:.2f} sec.")
 
     def calculate_loss(self, loader):
         """
