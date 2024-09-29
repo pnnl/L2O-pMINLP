@@ -18,6 +18,13 @@ class penaltyLoss(nn.Module):
         self.steepness = steepness
         self.num_blocks = num_blocks
         self.penalty_weight = penalty_weight
+        self.device = None
+        # coef
+        rng = np.random.RandomState(17)
+        b = rng.normal(scale=1, size=(num_blocks))
+        q = rng.normal(scale=1, size=(num_blocks))
+        self.b = torch.from_numpy(b).float()
+        self.q = torch.from_numpy(q).float()
 
     def forward(self, input_dict):
         """
@@ -52,6 +59,11 @@ class penaltyLoss(nn.Module):
         """
         # get values
         x, p = input_dict[self.x_key], input_dict[self.p_key]
+        # update device
+        if self.device is None:
+            self.device = x.device
+            self.b = self.b.to(self.device)
+            self.q = self.q.to(self.device)
         # inner constraint violation
         lhs_inner = torch.sum(x[:, 1::2], dim=1)
         rhs_inner = self.num_blocks * p[:, 0] / 2
@@ -60,7 +72,11 @@ class penaltyLoss(nn.Module):
         lhs_outer = torch.sum(x[:, ::2] ** 2, dim=1)
         rhs_outer = self.num_blocks * p[:, 0]
         outer_violation = torch.relu(lhs_outer - rhs_outer)
-        return inner_violation + outer_violation
+        # lear constraint violation
+        lhs_1 = torch.matmul(x[:, 0::2], self.b)
+        lhs_2 = torch.matmul(x[:, 1::2], self.q)
+        linear_violation = torch.relu(lhs_1) + torch.relu(lhs_2)
+        return inner_violation + outer_violation + linear_violation
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@
 Parametric Mixed Integer Constrained Rosenbrock Problem
 """
 
+import numpy as np
 from pyomo import environ as pe
 
 from src.problem.math_solver import abcParamSolver
@@ -27,6 +28,11 @@ class rosenbrock(abcParamSolver):
         m.cons = pe.ConstraintList()
         m.cons.add(sum(m.x[2*i+1] for i in range(num_blocks)) >= num_blocks * m.p / 2)
         m.cons.add(sum(m.x[2*i] ** 2 for i in range(num_blocks)) <= num_blocks * m.p)
+        rng = np.random.RandomState(17)
+        b = rng.normal(scale=1, size=(num_blocks))
+        q = rng.normal(scale=1, size=(num_blocks))
+        m.cons.add(sum(b[i] * m.x[2*i] for i in range(num_blocks)) <= 0)
+        m.cons.add(sum(q[i] * m.x[2*i+1] for i in range(num_blocks)) <= 0)
         # attribute
         self.model = m
         self.params ={"p":m.p, "a":m.a}
