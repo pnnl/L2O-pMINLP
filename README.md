@@ -1,35 +1,16 @@
-# Differentiable Mixed-Integer Programming Layers
+# Learning to Optimize for Mixed-Integer Nonlinear Programming
 
 ![Framework](img/pipeline.png)
 
-This project is an implementation of Differentiable Mixed-Integer Programming Layers based on the [NeuroMANCER library](https://github.com/pnnl/neuromancer). It introduces learnable differentiable correction layers for rounding and projection, enabling efficient integer solution acquisition for parametric nonlinear mixed-integer problems through neural networks, thus eliminating the need for traditional mathematical programming solvers.
+Mixed-integer nonlinear programs (MINLPs) arise in various domains, such as energy systems and transportation, but are notoriously difficult to solve. Recent advances in machine learning have achieved remarkable success in optimization tasks, an area known as learning to optimize. This approach includes using predictive models to generate solutions for optimization problems with continuous decision variables, thereby avoiding the need for computationally expensive optimization algorithms. However, applying learning to MINLPs remains challenging primarily due to integer decision variables, which complicate gradient-based learning. To address this limitation, we propose two differentiable correction layers that generate integer outputs while preserving gradient information. The experiments demonstrate that the proposed learning-based approach consistently produces high-quality solutions for parametric MINLPs extremely quickly. As problem size increases, traditional exact solvers and heuristic methods struggle to find feasible solutions, whereas our approach continues to deliver reliable results. Our work extends the scope of learning-to-optimize to MINLP, paving the way for integrating integer constraints into deep learning models.
 
-While inherently heuristic and not guaranteed to find the optimal or even a feasible solution, the framework often provides high-quality feasible solutions that are extremely useful either as alternatives to optimal solutions or as initial solutions for traditional solvers. This capability makes them invaluable tools in complex optimization scenarios where exact methods might struggle or be too slow.
+## Contribution
 
-## Features
+Our contributions are as follows:
 
-- **Efficient Solution Acquisition**: The entire solution process relies entirely on neural networks without the need for mathematical programming solvers.
-
-- **Integer Solution Guarantee**: Integrates learnable rounding directly into the network architecture, ensuring that solutions adhere strictly to integer constraints.
-
-## Problem Definition
-
-A generic formulation of a multiparametric mix-integer nonlinear program (pMINLP) is given in the form:
-
-$$
-\begin{aligned}
-  \underset{\boldsymbol{\Theta}}{\min} \quad & \frac{1}{m} \sum_{i=1}^m f(\mathbf{x}^i_R, \mathbf{x}^i_Z, \boldsymbol{\xi}^i) \\
-  \text{s.t.} \quad
-  & \mathbf{g} (\mathbf{x}^i_R, \mathbf{x}^i_Z, \boldsymbol{\xi}^i) \leq \mathbf{0} \quad \forall i \\
-  & \mathbf{h} (\mathbf{x}^i_R, \mathbf{x}^i_Z, \boldsymbol{\xi}^i) = \mathbf{0} \quad \forall i \\
-  & \mathbf{x}^i_R \in \mathbb{R}^{n_R} \quad \forall i \\
-  & \mathbf{x}^i_Z \in \mathbb{Z}^{n_Z} \quad \forall i \\
-  & [\mathbf{x}^i_R, \mathbf{x}^i_Z] = \boldsymbol{\pi}_{\boldsymbol{\Theta}} (\boldsymbol{\xi}^i) \quad \forall i \\
-  & \boldsymbol{\xi}^i \in \boldsymbol{\Xi} \subset \mathbb{R}^s \quad \forall i
-\end{aligned}
-$$
-
-where $\boldsymbol{\Xi}$ represents the sampled dataset and $\boldsymbol{\xi}^i$ denotes the $i$-th sample. The vector $\mathbf{x}^i_R$ represents the continuous variables, and $\mathbf{x}^i_Z$ represents the integer variables, both of which are involved in minimizing the objective function $f(\cdot)$ while satisfying a set of inequality and equality constraints $\mathbf{g}(\cdot) \leq 0$ and $\mathbf{h}(\cdot) = 0$. The mapping $\boldsymbol{\pi}_{\boldsymbol{\Theta}}(\boldsymbol{\xi}^i)$, given by a deep neural network parametrized by $\Theta$, represents the solution to the optimization problem.
+- We study the learning-to-optimize problem in the context of parametric MINLP (pMINLP), enabling, for the first time, quick, dynamic solution generation as problem parameters change.
+- We propose two novel differentiable correction layers that effectively handle the non-differentiability of integer outputs in deep learning models. Combined with a penalty method for soft constraint satisfaction, we are able to learn a neural network mapping from instance parameters to solutions through gradient-based learning. Not only does this yield an extremely fast heuristic at test time, but the method is also self-supervised and thus efficiently trainable.
+- We conduct extensive experiments on three problem classes from the literature: a convex integer quadratic problem, a nonconvex integer problem, and a nonconvex mixed-integer problem. Our learning-based methods consistently yield high-quality, feasible solutions extremely fast, outperforming exact solvers and heuristics. For the largest test instances we consider, the baselines fail to produce any solutions, whereas our methods continue to generate good, feasible solutions in most instances.
 
 ## Requirements
 
@@ -47,7 +28,6 @@ To run this project, you will need the following libraries and software installe
 ## Code Structure
 
 ```
-├── archive                        # Archive for older files and documents
 ├── img                            # Image resources for the project
 ├── src                            # Main source code directory
 │   ├── __init__.py                # Initializes the src package
@@ -55,27 +35,48 @@ To run this project, you will need the following libraries and software installe
 │       ├── __init__.py            # Initializes the function submodule
 │       ├── layer.py               # Pre-defined neural network layers
 │       ├── ste.py                 # Straight-through estimators for non-differentiable operations
-│       ├── rnd.py                 # Modules for differentiable and learnable rounding
-│       └── proj.py                # Modules for differentiable and learnable projection
+│       └── rnd.py                 # Modules for differentiable and learnable rounding
 │   ├── problem                    # Modules for the benchmark of constrained optimization
 │       ├── __init__.py            # Initializes the problem submodule
-│       ├── math_solver            # Collection of Predefined SCIP solvers
+│       ├── math_solver            # Collection of Predefined Gurobi / SCIP solvers
 │           ├── __init__.py        # Initializes the mathematical solver submodule
 │           ├── abc_solver.py      # Abstract base class for solver implementations
-│           ├── quadratic.py       # SCIP model for MIQP
-│           └── rosenbrock.py      # SCIP model for MIRosenbrock
+│           ├── quadratic.py       # Gurobi model for MI Convex Quadratic problem
+│           ├── nonconvex.py       # SCIP model for MI Simple Nonconvex problem
+│           └── rosenbrock.py      # SCIP model for MI Rosenbrock problem
 │       └── neuromancer            # Collection of Predefined NeuroMANCER maps
 │           ├── __init__.py        # Initializes the NeuroMANCER map submodule
-│           ├── quadratic.py       # NeuroMANCER map for MIQP
-│           └── rosenbrock.py      # NeuroMANCER map for MIRosenbrock
+│           ├── quadratic.py       # NeuroMANCER mapping for MI Convex Quadratic problem
+│           ├── nonconvex.py       # NeuroMANCER mapping for MI Simple Nonconvex problem
+│           └── rosenbrock.py      # NeuroMANCER mapping for MI Rosenbrock problem
 │   └── utlis                      # Utility tools such as data processing and result test
 │       ├── __init__.py            # Initializes the utility submodule
 │       └── data.py                # Data processing file
 │       └── solve_test.py          # Testing functions to evaluate optimization solution
-├── sweep_QP-Round.py              # Script for hyperparameter tuning for MIQP
-├── sweep_Rosenbrock-Round.py      # Script for hyperparameter tuning for MIRosenbrock
+├── run_qp.py                      # Script for training for MI Convex Quadratic problem
+├── run_nc.py                      # Script for training for MI Simple Nonconvex problem
+├── run_rb.py                      # Script for training for MI Rosenbrock problem
 └── README.md                      # README file for the project
 ```
+
+## Problem Formulation
+
+A generic learning-to-optimize formulation for parametric mixed-integer nonlinear programming (pMINLP) is given by:
+
+$$
+\begin{equations}
+\label{eq:pMINLP}
+\begin{align}
+\min_{\Theta}  \quad &  \mathbb{E}_{{\boldsymbol \xi} \sim \mathcal{P}_{\xi}} \, {\bf f}({\bf x^{\boldsymbol \xi}}, {\boldsymbol \xi}) \\ 
+\text{s.t.} \quad
+& {\bf g}({\bf x^{\boldsymbol \xi}}, {\boldsymbol \xi}) \le 0, &\forall {{\boldsymbol \xi} \in \mathcal{P}_{\xi}} \\
+& {\bf x^{\boldsymbol \xi}} \in  \mathbb{R}^{n_r} \times \mathbb{Z}^{n_z}, &\forall {{\boldsymbol \xi} \in \mathcal{P}_{\xi}} \\
+& {\bf x^{\boldsymbol \xi}} =  \boldsymbol \psi_{\Theta}({\boldsymbol \xi}), &\forall {{\boldsymbol \xi} \in \mathcal{P}_{\xi}}
+\end{align}
+\end{equations}
+$$
+
+Here, $\mathcal{P}_{\xi}$ represents the distribution over parametric MINLP instances and ${\boldsymbol \xi} \in  \mathbb{R}^{n_{\xi}} $ is a vector of instance parameters. Vector ${\bf x^{\boldsymbol \xi}} \in \mathbb{R}^{n_r} \times \mathbb{Z}^{n_z}$ represents the mixed-integer decision variables for parameters ${\boldsymbol \xi}$. The mapping $\boldsymbol{\psi}_{\Theta}({\boldsymbol \xi})$ is a neural network with weights $\Theta$ that outputs a parametric solution ${\bf  x^{\boldsymbol \xi}}$ for parameters ${\boldsymbol \xi}$. The goal is to find the neural network weights that minimize the expected objective function value over the parameter distribution, subject to the constraints. Note that $\bf{g}(\cdot)$ is a vector-valued function representing one or more inequality constraints. As is typical in MINLP, we assume that the objective and constraint functions are differentiable.
 
 ## Algorithms
 
