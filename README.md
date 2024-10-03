@@ -116,33 +116,3 @@ $$
 $$
 
 The scalar parameter $p$ is uniformly distributed between $1$ and $8$, while the vector parameter $\mathbf{a}$, with length $b$, uniformly ranges from  $0.5$ and $4.5$.
-
-## Code Example
-
-Here is a simple example demonstrating learnable rounding within a neural network framework:
-
-```Python
-# get objective function & constraints
-from src.problem import nmQuadratic
-obj, constrs = nmQuadratic(["x_rnd"], ["p"], penalty_weight=10)
-
-# define neural architecture for the solution map
-import neuromancer as nm
-func = nm.modules.blocks.MLP(insize=2, outsize=4, bias=True,
-                             linear_map=nm.slim.maps["linear"],
-                             nonlin=nn.ReLU, hsizes=[10]*4)
-smap = nm.system.Node(func, ["p"], ["x"], name="smap")
-
-# define rounding model using Gumbel binarization
-from src.func.layer import netFC
-layers_rnd = netFC(input_dim=6, hidden_dims=[20]*3, output_dim=4)
-from src.func.rnd import roundGumbelModel
-round_func = roundGumbelModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"], output_keys=["x_rnd"],
-                              bin_ind={"x":[2,3]}, continuous_update=False, name="round")
-
-
-# construct the complete neuromancer problem with all components
-components = [smap, round_func]
-loss = nm.loss.PenaltyLoss(obj, constrs)
-problem = nm.problem.Problem(components, loss)
-```
