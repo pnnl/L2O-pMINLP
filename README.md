@@ -116,3 +116,23 @@ $$
 $$
 
 The scalar parameter $p$ is uniformly distributed between $1$ and $8$, while the vector parameter $\mathbf{a}$, with length $b$, uniformly ranges from  $0.5$ and $4.5$.
+
+## Running the Code
+
+Use the following commands to execute different experiments, depending on the problem you want to solve:
+
+- For the Integer Convex Quadratic problem:
+```
+python run_qp.py --round classfication --size 20
+```
+- For the Integer Simple Nonconvex problem:
+```
+python run_nc.py --round threshold --size 20
+```
+- For the Mixed-Integer Rosenbrock problem:
+```
+python run_nc.py --round threshold --size 10
+```
+
+The `--round` argument allows you to choose the rounding method (classification or threshold), and `--size` sets the size of the problem.
+  
