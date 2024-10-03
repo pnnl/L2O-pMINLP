@@ -64,125 +64,60 @@ To run this project, you will need the following libraries and software installe
 We introduce the two differentiable correction layers designed to handle the integrality constraints of MINLPs.
 They differ in how they round an integer variable's fractional value but are equally easy to train with gradient descent and fast at test time. We decompose the mapping from an instance parameter vector to a candidate mixed-integer solution into two steps.
 
+<p align="center"><img width="70%" src="img/algo.png" /></p>
+
 1. The first step consists in applying a learnable **relaxed solution mapping** encoded by a deep neural network. It outputs a continuously relaxed solution without enforcing the integrality requirement. Note that continuous variables are also predicted in this first step.
 2. The second step is a **differentiable correction layer** that takes as input the instance parameter vector and the continuous solution produced in the first step, and outputs a candidate mixed-integer solution while maintaining differentiability.
 
 ### Rounding Classification
 
-![Framework](img/round.png)
-
+<p align="center"><img width="50%" src="img/classifcation.png" /></p>
 
 ### Learnable Threshold
 
-![Framework](img/threshold.png)
+<p align="center"><img width="50%" src="img\threshold.png" /></p>
 
 
 ## Parametric MINLP Benchmark
 
 ### Integer Convex Quadratic problem
 
-A parametric MIQP model with both continuous variables $\mathbf{x}$ and binary variables $\mathbf{y}$ can be structured as follows:
+The convex quadratic problems used in the experiments:
 
 $$
-\begin{aligned}
-  \underset{\boldsymbol{\mathbf{x}, \mathbf{y}}}{\min} \quad & \mathbf{c}^\top \mathbf{x} + \frac{1}{2} \mathbf{x}^\top \mathbf{Q} \mathbf{x} + \mathbf{d}^\top \mathbf{y} \\
-  \text{s.t.} \quad
-  & \mathbf{A} \mathbf{x} + \mathbf{E} \mathbf{y} \leq \mathbf{b} + \mathbf{F} \mathbf{\theta} \\
-  & \mathbf{x} \geq \mathbf{0} \\
-  & \mathbf{y} \in \{ 0, 1 \}
-\end{aligned}
+\min_{x \in \mathbb{Z}^n} \ \frac{1}{2} \bm{x}^{\intercal} \bm{Q} \bm{x} + \bm{p}^{\intercal} \bm{x} \quad \text{subject to } \bm{A} \bm{x} \leq \bm{b}
 $$
 
-In this formulation, the objective function is a quadratic function of $\mathbf{x}$ plus linear in both $\mathbf{x}$ and $\mathbf{y}$. The constraints involve linear combinations of these variables, while the right-hand sides are modulated by the parameter $\mathbf{\theta}$.
-
-The fixed parameters of an example from [A multiparametric programming approach for mixed-integer quadratic engineering problems](https://www.sciencedirect.com/science/article/abs/pii/S0098135401007979), are defined as follows:
-
-$$
-\mathbf{c} = \begin{bmatrix}
-    0.02 \\
-    0.03
-\end{bmatrix},
-\quad
-\mathbf{Q} = \begin{bmatrix}
-    0.0196 & 0.0063 \\
-    0.0063 & 0.0199
-\end{bmatrix},
-\quad
-\mathbf{d} = \begin{bmatrix}
-    -0.30 \\
-    -0.31
-\end{bmatrix}
-$$
-
-$$
-\mathbf{b} = \begin{bmatrix}
-    0.417425 \\
-    3.582575 \\
-    0.413225 \\
-    0.467075 \\
-    1.090200 \\
-    2.909800 \\
-    1.000000
-\end{bmatrix},
-\quad
-\mathbf{A} = \begin{bmatrix}
-    1 & 0 \\
-    -1 & 0 \\
-    -0.0609 & 0 \\
-    -0.0064 & 0 \\
-    0 & 1 \\
-    0 & -1 \\
-    0 & 0
-\end{bmatrix};
-$$
-
-$$
-\mathbf{E} = \begin{bmatrix}
-    -1 & 0 \\
-    -1 & 0 \\
-    0 & -0.5 \\
-    0 & -0.7 \\
-    -0.6 & 0 \\
-    -0.5 & 0 \\
-    1 & 1
-\end{bmatrix};
-$$
-
-$$
-\mathbf{F} = \begin{bmatrix}
-    3.16515 & 3.7546 \\
-    -3.16515 & -3.7546 \\
-    0.17355 & -0.2717 \\
-    0.06585 & 0.4714 \\
-    1.81960 & -3.2841 \\
-    -1.81960 & 3.2841 \\
-    0 & 0
-\end{bmatrix}
-$$
-
-The variable parameter $\mathbf{\theta}$ follows a uniform distribution between $0$ and $1$.
+The variable parameter $\mathbf{b}$ follows a uniform distribution between $-1$ and $1$.
 
 ### Integer Simple Nonconvex problem
 
+To explore the performance on nonconvex optimization tasks, we extended the convex quadratic programming problem by introducing a trigonometric term to the objective function:
+
+$$
+\min_{x \in \mathbb{Z}^n} \ \frac{1}{2} \bm{x}^{\intercal} \bm{Q} \bm{x} + \bm{p}^{\intercal} \sin{(\bm{x})} \quad \text{subject to } \bm{A} \bm{x} \leq \bm{b}
+$$
+
+The variable parameter $\mathbf{b}$ follows a uniform distribution between $-1$ and $1$.
+
 ### Mixed-Integer Rosenbrock problem
 
-The parametric, high-dimension, Integer, and constrained Rosenbrock problem implemented in this project serves as a rigorous testbed for evaluating the efficacy of our differentiable programming framework, in which $s$ controls the steepness of the function:
+The parametric, high-dimensional mixed-integer Rosenbrock problem serves as a challenging testbed. Adapted from the classic Rosenbrock function, this formulation introduces additional complexity by incorporating integer variables, nonlinear constraints, and parametric variations in high dimensions. The problem can be expressed as follows:
 
 $$
 \begin{aligned}
-  \underset{\boldsymbol{\mathbf{x}}}{\min} \quad & \sum_{i=1}^b [{(a - x_i)}^2 + s {(y_i - x_i^2)}^2] \\
-  \text{s.t.} \quad
-  & \sum_{i=1}^b y_i \geq \frac{b p}{2} \\
-  & \sum_{i=1}^b x_i^2 \leq b p \\
-  & \mathbf{x} \in \mathbb{R}^{b}, \mathbf{y} \in \mathbb{Z}^{b} \\
+\min_{\bm{x} \in \mathbb{R}^n, \bm{y} \in \mathbb{Z}^n} \quad 
+& (\bm{a} - \bm{x})^\intercal (\bm{a} - \bm{x}) + 50 (\bm{y} - \bm{x}^2)^\intercal (\bm{y} - \bm{x}^2) \\
+\text{subject to} \quad & \bm{x}^\top \bm{x} \leq n b,
+\mathbf{1}^\intercal \bm{y} \geq \frac{nb}{2}, 
+\bm{p}^\intercal  \bm{x} \leq 0,
+\bm{q}^\intercal  \bm{y} \leq 0.
 \end{aligned}
 $$
 
 The scalar parameter $p$ is uniformly distributed between $1$ and $8$, while the vector parameter $\mathbf{a}$, with length $b$, uniformly ranges from  $0.5$ and $4.5$.
 
-## Example
-
-### Rounding
+## Code Example
 
 Here is a simple example demonstrating learnable rounding within a neural network framework:
 
