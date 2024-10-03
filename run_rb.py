@@ -85,7 +85,7 @@ if __name__ == "__main__":
                         help="method for rounding")
     parser.add_argument("--size",
                         type=int,
-                        default=100,
+                        default=10,
                         choices = [1, 10, 100, 1000, 10000],
                         help="number of decsion variables")
     # get experiment setting
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     # init
     num_blocks = config.size  # number of blocks
     steepness = 50            # steepness of objective function
-    num_data = 91000          # number of data
+    num_data = 9100           # number of data
     test_size = 100           # number of test size
     val_size = 1000           # number of validation size
     train_size = num_data - test_size - val_size
