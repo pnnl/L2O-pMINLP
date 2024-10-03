@@ -70,6 +70,7 @@ $$
 & {\bf g}({\bf x^{\boldsymbol \xi}}, {\boldsymbol \xi}) \le 0, &\forall {{\boldsymbol \xi} \in \mathcal{P}_{\xi}} \\
 & {\bf x^{\boldsymbol \xi}} \in  \mathbb{R}^{n_r} \times \mathbb{Z}^{n_z}, &\forall {{\boldsymbol \xi} \in \mathcal{P}_{\xi}} \\
 & {\bf x^{\boldsymbol \xi}} =  \boldsymbol \psi_{\Theta}({\boldsymbol \xi}), &\forall {{\boldsymbol \xi} \in \mathcal{P}_{\xi}}
+\end{align}
 $$
 
 Here, $\mathcal{P}_{\xi}$ represents the distribution over parametric MINLP instances and ${\boldsymbol \xi} \in  \mathbb{R}^{n_{\xi}} $ is a vector of instance parameters. Vector ${\bf x^{\boldsymbol \xi}} \in \mathbb{R}^{n_r} \times \mathbb{Z}^{n_z}$ represents the mixed-integer decision variables for parameters ${\boldsymbol \xi}$. The mapping $\boldsymbol{\psi}_{\Theta}({\boldsymbol \xi})$ is a neural network with weights $\Theta$ that outputs a parametric solution ${\bf  x^{\boldsymbol \xi}}$ for parameters ${\boldsymbol \xi}$. The goal is to find the neural network weights that minimize the expected objective function value over the parameter distribution, subject to the constraints. Note that $\bf{g}(\cdot)$ is a vector-valued function representing one or more inequality constraints. As is typical in MINLP, we assume that the objective and constraint functions are differentiable.
