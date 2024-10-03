@@ -41,83 +41,45 @@ To run this project, you will need the following libraries and software installe
 │       ├── math_solver            # Collection of Predefined Gurobi / SCIP solvers
 │           ├── __init__.py        # Initializes the mathematical solver submodule
 │           ├── abc_solver.py      # Abstract base class for solver implementations
-│           ├── quadratic.py       # Gurobi model for MI Convex Quadratic problem
-│           ├── nonconvex.py       # SCIP model for MI Simple Nonconvex problem
-│           └── rosenbrock.py      # SCIP model for MI Rosenbrock problem
+│           ├── quadratic.py       # Gurobi model for Integer Convex Quadratic problem
+│           ├── nonconvex.py       # SCIP model for Integer Simple Nonconvex problem
+│           └── rosenbrock.py      # SCIP model for Mixed-Integer Rosenbrock problem
 │       └── neuromancer            # Collection of Predefined NeuroMANCER maps
 │           ├── __init__.py        # Initializes the NeuroMANCER map submodule
-│           ├── quadratic.py       # NeuroMANCER mapping for MI Convex Quadratic problem
-│           ├── nonconvex.py       # NeuroMANCER mapping for MI Simple Nonconvex problem
-│           └── rosenbrock.py      # NeuroMANCER mapping for MI Rosenbrock problem
+│           ├── quadratic.py       # NeuroMANCER mapping for Integer Convex Quadratic problem
+│           ├── nonconvex.py       # NeuroMANCER mapping for Integer Simple Nonconvex problem
+│           └── rosenbrock.py      # NeuroMANCER mapping for Mixed-Integer Rosenbrock problem
 │   └── utlis                      # Utility tools such as data processing and result test
 │       ├── __init__.py            # Initializes the utility submodule
 │       └── data.py                # Data processing file
 │       └── solve_test.py          # Testing functions to evaluate optimization solution
-├── run_qp.py                      # Script for training for MI Convex Quadratic problem
-├── run_nc.py                      # Script for training for MI Simple Nonconvex problem
-├── run_rb.py                      # Script for training for MI Rosenbrock problem
+├── run_qp.py                      # Script for training for Integer Convex Quadratic problem
+├── run_nc.py                      # Script for training for Integer Simple Nonconvex problem
+├── run_rb.py                      # Script for training for Mixed-Integer Rosenbrock problem
 └── README.md                      # README file for the project
 ```
 
-## Problem Formulation
-
-A generic learning-to-optimize formulation for parametric mixed-integer nonlinear programming (pMINLP) is given by:
-
-$$
-\begin{align}
-\min_{\Theta}  \quad &  \mathbb{E}_{{\boldsymbol \xi} \sim \mathcal{P}_{\xi}} \, {\bf f}({\bf x^{\boldsymbol \xi}}, {\boldsymbol \xi}) \\ 
-\text{s.t.} \quad
-& {\bf g}({\bf x^{\boldsymbol \xi}}, {\boldsymbol \xi}) \le 0, &\forall {{\boldsymbol \xi} \in \mathcal{P}_{\xi}} \\
-& {\bf x^{\boldsymbol \xi}} \in  \mathbb{R}^{n_r} \times \mathbb{Z}^{n_z}, &\forall {{\boldsymbol \xi} \in \mathcal{P}_{\xi}} \\
-& {\bf x^{\boldsymbol \xi}} =  \boldsymbol \psi_{\Theta}({\boldsymbol \xi}), &\forall {{\boldsymbol \xi} \in \mathcal{P}_{\xi}}
-\end{align}
-$$
-
-Here, $\mathcal{P}_{\xi}$ represents the distribution over parametric MINLP instances and ${\boldsymbol \xi} \in  \mathbb{R}^{n_{\xi}} $ is a vector of instance parameters. Vector ${\bf x^{\boldsymbol \xi}} \in \mathbb{R}^{n_r} \times \mathbb{Z}^{n_z}$ represents the mixed-integer decision variables for parameters ${\boldsymbol \xi}$. The mapping $\boldsymbol{\psi}_{\Theta}({\boldsymbol \xi})$ is a neural network with weights $\Theta$ that outputs a parametric solution ${\bf  x^{\boldsymbol \xi}}$ for parameters ${\boldsymbol \xi}$. The goal is to find the neural network weights that minimize the expected objective function value over the parameter distribution, subject to the constraints. Note that $\bf{g}(\cdot)$ is a vector-valued function representing one or more inequality constraints. As is typical in MINLP, we assume that the objective and constraint functions are differentiable.
-
 ## Algorithms
 
-### Rounding
+We introduce the two differentiable correction layers designed to handle the integrality constraints of MINLPs.
+They differ in how they round an integer variable's fractional value but are equally easy to train with gradient descent and fast at test time. We decompose the mapping from an instance parameter vector to a candidate mixed-integer solution into two steps.
 
-These algorithms provide mechanisms for rounding within a differentiable programming framework, addressing the challenge of non-differentiable operations inherent in discrete optimization. They are crucial in scenarios where solutions must adhere to integer output with constraints.
+1. The first step consists in applying a learnable **relaxed solution mapping** encoded by a deep neural network. It outputs a continuously relaxed solution without enforcing the integrality requirement. Note that continuous variables are also predicted in this first step.
+2. The second step is a **differentiable correction layer** that takes as input the instance parameter vector and the continuous solution produced in the first step, and outputs a candidate mixed-integer solution while maintaining differentiability.
 
-The algorithm starts with a relaxed solution $\mathbf{x}^i_R, \mathbf{x}^i_Z$ which may come from a mathematical solver or a NeuroMANCER map, providing a baseline for further refinement. Correction layers then adjust this relaxed solution via rounding the integer variables $\mathbf{x}^i_Z$ and updating continuous variables $\mathbf{x}^i_R$ to minimize the Langrage penalty function.
-
-During the training of neural networks, non-differentiable operations such as binarization, flooring, and indicator functions pose significant challenges for gradient-based optimization methods because these functions lost gradients. To avoid these issues, the straight-through estimator (STE) is employed. This approach allows the gradient of a rounded result to pass through unaltered from its input, effectively enabling optimization of functions that involve non-differentiable transformations.
-
-#### Learnable Binarized Rounding
+### Rounding Classification
 
 ![Framework](img/round.png)
 
-This algorithm is specifically designed to adaptively decide the rounding direction—whether to round up (ceiling) or down (floor)—for each variable based on the contextual data it processes.
 
-The `diffGumbelBinarize`, as implemented, utilizes the Gumbel-Softmax distribution to introduce two Gumbel noises into the logits of 0 and 1 during the training. This approach simulates the randomness associated with rounding decisions, and by adjusting the `temperature` parameter, it controls the sharpness of the binarization, effectively balancing exploration and exploitation in the rounding process.
-
-#### Rounding with Learnable Threshold
+### Learnable Threshold
 
 ![Framework](img/threshold.png)
 
-This algorithm introduces a dynamic, learnable threshold that determines the specific rounding behavior for each integer variable.
-
-### Projection
-
-These algorithms aim to reduce constraint violation. The projection is applied iteratively for a predefined number of steps $K$, adjusting the solution in each iteration using a step size $\alpha$.
-
-#### Projected Gradient
-
-![Framework](img/proj.png)
-
-This algorithm is designed to refine solutions to ensure they adhere to the defined constraints by repeatedly projecting onto a feasible region.
-
-#### Solution Map with Projected Gradient
-
-![Framework](img/solproj.png)
-
-Extending the concept of projected gradients, this algorithm incorporates a solution mapping phase that predicts residuals used to adjust the solution before projection.
 
 ## Parametric MINLP Benchmark
 
-### MIQP
+### Integer Convex Quadratic problem
 
 A parametric MIQP model with both continuous variables $\mathbf{x}$ and binary variables $\mathbf{y}$ can be structured as follows:
 
@@ -200,7 +162,9 @@ $$
 
 The variable parameter $\mathbf{\theta}$ follows a uniform distribution between $0$ and $1$.
 
-### MIRosenbrock
+### Integer Simple Nonconvex problem
+
+### Mixed-Integer Rosenbrock problem
 
 The parametric, high-dimension, Integer, and constrained Rosenbrock problem implemented in this project serves as a rigorous testbed for evaluating the efficacy of our differentiable programming framework, in which $s$ controls the steepness of the function:
 
@@ -246,45 +210,4 @@ round_func = roundGumbelModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"
 components = [smap, round_func]
 loss = nm.loss.PenaltyLoss(obj, constrs)
 problem = nm.problem.Problem(components, loss)
-```
-
-### Projection
-
-Here is a simple example demonstrating learnable projection within a neural network framework:
-
-```Python
-# get objective function & constraints
-from src.problem import nmQuadratic
-obj_bar, constrs_bar = nmQuadratic(["x_bar"], ["p"], penalty_weight=10)
-obj_rnd, constrs_rnd = nmQuadratic(["x_rnd"], ["p"], penalty_weight=10)
-
-# define neural architecture for the solution map
-import neuromancer as nm
-func = nm.modules.blocks.MLP(insize=2, outsize=4, bias=True,
-                             linear_map=nm.slim.maps["linear"],
-                             nonlin=nn.ReLU, hsizes=[10]*4)
-smap = nm.system.Node(func, ["p"], ["x"], name="smap")
-
-# define rounding layer using Gumbel binarization
-from src.func.layer import netFC
-layers_rnd = netFC(input_dim=6, hidden_dims=[20]*3, output_dim=4)
-from src.func.rnd import roundGumbelModel
-round_func = roundGumbelModel(layers=layers_rnd, param_keys=["p"], var_keys=["x"], output_keys=["x_rnd"],
-                              bin_ind={"x":[2,3]}, continuous_update=False, name="round")
-
-
-# define projection layer with specified parameters
-num_steps = 10
-step_size = 0.1
-decay = 0.1
-layers_proj = netFC(input_dim=10, hidden_dims=[20]*3, output_dim=4)
-from src.func.proj import solPredGradProj
-proj = solPredGradProj(layers=layers_proj, constraints=constrs_bar, param_keys=["p"],
-                       var_keys=["x_rnd"], output_keys=["x_bar"], num_steps=num_steps,
-                       step_size=step_size, decay=decay)
-
-# construct the complete neuromancer problem with all components
-components = [smap, round_func, proj]
-loss = nm.loss.PenaltyLoss(obj_bar, constrs_bar)
-problem = nm.problem.Problem(components, loss, grad_inference=True)
 ```
