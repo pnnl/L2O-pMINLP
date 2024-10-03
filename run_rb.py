@@ -43,9 +43,10 @@ def eval(data_test, model, components):
     Evaluate model performence
     """
     params, sols, objvals, conviols, elapseds = [], [], [], [], []
-    for b in tqdm(data_test.datadict["b"][:100]):
+    for p, a in tqdm(zip(data_test.datadict["p"], data_test.datadict["a"])):
         # data point as tensor
-        datapoints = {"b": torch.unsqueeze(b, 0).to("cuda"),
+        datapoints = {"p": torch.tensor(np.array([p]), dtype=torch.float32).to("cuda"),
+                      "a": torch.tensor(np.array([a]), dtype=torch.float32).to("cuda"),
                       "name": "test"}
         # infer
         components.eval()
@@ -55,14 +56,14 @@ def eval(data_test, model, components):
                 datapoints.update(comp(datapoints))
         tock = time.time()
         # assign params
-        model.set_param_val({"b":b.cpu().numpy()})
+        model.set_param_val({"p":p, "a":a})
         # assign vars
         x = datapoints["x_rnd"]
-        for i in range(num_var):
+        for i in range(num_blocks*2):
             model.vars["x"][i].value = x[0,i].item()
         # get solutions
         xval, objval = model.get_val()
-        params.append(list(b.cpu().numpy()))
+        params.append(list(p)+list(a))
         sols.append(list(list(xval.values())[0].values()))
         objvals.append(objval)
         conviols.append(sum(model.cal_violation()))
