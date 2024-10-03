@@ -69,11 +69,11 @@ They differ in how they round an integer variable's fractional value but are equ
 1. The first step consists in applying a learnable **relaxed solution mapping** encoded by a deep neural network. It outputs a continuously relaxed solution without enforcing the integrality requirement. Note that continuous variables are also predicted in this first step.
 2. The second step is a **differentiable correction layer** that takes as input the instance parameter vector and the continuous solution produced in the first step, and outputs a candidate mixed-integer solution while maintaining differentiability.
 
-### Rounding Classification
+### Example for Rounding Classification
 
 <p align="center"><img width="50%" src="img/classifcation.png" /></p>
 
-### Learnable Threshold
+### Example for Learnable Threshold
 
 <p align="center"><img width="50%" src="img\threshold.png" /></p>
 
