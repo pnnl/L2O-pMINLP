@@ -17,13 +17,13 @@ Our contributions are as follows:
 To run this project, you will need the following libraries and software installed:
 
 - **Python**: The project is developed using Python. Ensure you have Python 3.9 or later installed.
-- **Scikit-Learn**: Useful for performing various machine learning tasks.
 - **PyTorch**: Used for building and training neural network models.
 - **NumPy**: Essential for numerical operations.
 - **Pandas**: Useful for data manipulation and analysis.
 - **Pyomo**: A Python library for optimization modeling.
-- **SCIP**: A powerful solver for mathematical programming, which might need a separate installation process.
-- **Neuromancer**: This project uses the Neuromancer library for differentiable programming.
+- **Gurobi**: A solver for mathematical programming.
+- **SCIP**: A solver for mathematical programming.
+- **Neuromancer**: A library for differentiable programming.
 
 ## Code Structure
 
