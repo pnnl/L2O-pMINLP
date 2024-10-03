@@ -85,7 +85,7 @@ They differ in how they round an integer variable's fractional value but are equ
 The convex quadratic problems used in the experiments:
 
 $$
-\min_{x \in \mathbb{Z}^n} \ \frac{1}{2} \bm{x}^{\intercal} \bm{Q} \bm{x} + \bm{p}^{\intercal} \bm{x} \quad \text{subject to } \bm{A} \bm{x} \leq \bm{b}
+\min_{x \in \mathbb{Z}^n} \ \frac{1}{2} \mathbf{x}^{\intercal} \mathbf{Q} \mathbf{x} + \mathbf{p}^{\intercal} \mathbf{x} \quad \text{subject to } \mathbf{A} \mathbf{x} \leq \mathbf{b}
 $$
 
 The variable parameter $\mathbf{b}$ follows a uniform distribution between $-1$ and $1$.
@@ -95,7 +95,7 @@ The variable parameter $\mathbf{b}$ follows a uniform distribution between $-1$ 
 To explore the performance on nonconvex optimization tasks, we extended the convex quadratic programming problem by introducing a trigonometric term to the objective function:
 
 $$
-\min_{x \in \mathbb{Z}^n} \ \frac{1}{2} \bm{x}^{\intercal} \bm{Q} \bm{x} + \bm{p}^{\intercal} \sin{(\bm{x})} \quad \text{subject to } \bm{A} \bm{x} \leq \bm{b}
+\min_{x \in \mathbb{Z}^n} \ \frac{1}{2} \mathbf{x}^{\intercal} \mathbf{Q} \mathbf{x} + \mathbf{p}^{\intercal} \sin{(\mathbf{x})} \quad \text{subject to } \mathbf{A} \mathbf{x} \leq \mathbf{b}
 $$
 
 The variable parameter $\mathbf{b}$ follows a uniform distribution between $-1$ and $1$.
@@ -106,12 +106,12 @@ The parametric, high-dimensional mixed-integer Rosenbrock problem serves as a ch
 
 $$
 \begin{aligned}
-\min_{\bm{x} \in \mathbb{R}^n, \bm{y} \in \mathbb{Z}^n} \quad 
-& (\bm{a} - \bm{x})^\intercal (\bm{a} - \bm{x}) + 50 (\bm{y} - \bm{x}^2)^\intercal (\bm{y} - \bm{x}^2) \\
-\text{subject to} \quad & \bm{x}^\top \bm{x} \leq n b,
-\mathbf{1}^\intercal \bm{y} \geq \frac{nb}{2}, 
-\bm{p}^\intercal  \bm{x} \leq 0,
-\bm{q}^\intercal  \bm{y} \leq 0.
+\min_{\mathbf{x} \in \mathbb{R}^n, \mathbf{y} \in \mathbb{Z}^n} \quad 
+& (\mathbf{a} - \mathbf{x})^\intercal (\mathbf{a} - \mathbf{x}) + 50 (\mathbf{y} - \mathbf{x}^2)^\intercal (\mathbf{y} - \mathbf{x}^2) \\
+\text{subject to} \quad & \mathbf{x}^\top \mathbf{x} \leq n b,
+\mathbf{1}^\intercal \mathbf{y} \geq \frac{nb}{2}, 
+\mathbf{p}^\intercal  \mathbf{x} \leq 0,
+\mathbf{q}^\intercal  \mathbf{y} \leq 0.
 \end{aligned}
 $$
 
