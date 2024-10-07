@@ -83,11 +83,6 @@ if __name__ == "__main__":
     test_size = 1000  # number of test size
     val_size = 1000   # number of validation size
 
-    # generate parameters
-    Q = torch.from_numpy(np.diag(np.random.random(size=num_var))).float()
-    p = torch.from_numpy(np.random.random(num_var)).float()
-    A = torch.from_numpy(np.random.normal(scale=1, size=(num_ineq, num_var))).float()
-
     # data sample from uniform distribution
     b_samples = torch.from_numpy(np.random.uniform(-1, 1, size=(num_data, num_ineq))).float()
     data = {"b":b_samples}
