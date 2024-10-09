@@ -137,7 +137,7 @@ class roundThresholdModel(roundModel):
     """
     def __init__(self, layers, param_keys, var_keys,output_keys=[],
                  int_ind=defaultdict(list), bin_ind=defaultdict(list),
-                 continuous_update=False, slope=10, name="Rounding"):
+                 continuous_update=False, slope=1, name="Rounding"):
         super(roundThresholdModel, self).__init__(layers, param_keys, var_keys,
                                                   output_keys, int_ind, bin_ind,
                                                   continuous_update,
