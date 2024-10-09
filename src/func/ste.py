@@ -11,7 +11,7 @@ class thresholdBinarize(nn.Module):
     An autograd function smoothly rounds the elements in `x` based on the
     corresponding values in `threshold` using a sigmoid function.
     """
-    def __init__(self, slope=1):
+    def __init__(self, slope=10):
         super(thresholdBinarize, self).__init__()
         self.slope = slope
 
