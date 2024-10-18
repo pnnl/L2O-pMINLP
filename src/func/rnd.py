@@ -8,6 +8,60 @@ from torch import nn
 
 from src.func.ste import diffFloor, diffBinarize, diffGumbelBinarize, thresholdBinarize
 
+class roundSTEModel(nn.Module):
+    """
+    STE model to round integer variables
+    """
+    def __init__(self, param_keys, var_keys, output_keys=[],
+                 int_ind=defaultdict(list), bin_ind=defaultdict(list),
+                 tolerance=1e-3, temperature=1.0, name="Rounding"):
+        super(roundSTEModel, self).__init__()
+        # data keys
+        self.param_keys, self.var_keys = param_keys, var_keys
+        self.input_keys = self.param_keys + self.var_keys
+        self.output_keys = output_keys if output_keys else self.var_keys
+        # index of integer and binary variables
+        self.int_ind = int_ind
+        self.bin_ind = bin_ind
+        # random temperature
+        self.temperature = temperature
+        # binarize
+        self.floor, self.bin = diffFloor(), diffGumbelBinarize(temperature=self.temperature)
+        # name
+        self.name = name
+
+    def forward(self, data):
+        # rounding
+        output_data = self._process_rounding(data)
+        return output_data
+
+    def _process_rounding(self, data):
+        output_data = {}
+        for k_in, k_out in zip(self.var_keys, self.output_keys):
+            # get rounding
+            x_rnd = self._round_vars(data, k_in)
+            output_data[k_out] = x_rnd
+        return output_data
+
+    def _round_vars(self, data, key):
+        # get index
+        int_ind = self.int_ind[key]
+        bin_ind = self.bin_ind[key]
+        # load x
+        x = data[key].clone()
+        ###################### integer ######################
+        # floor(x)
+        x_flr = self.floor(x[:,int_ind])
+        # bin(h): binary 0 for floor, 1 for ceil
+        bnr = self.bin(x[:,int_ind] - x_flr.detach() - 0.5)
+        # update rounding for integer variables int(x) = floor(x) + bin(h)
+        x[:, int_ind] = x_flr + bnr
+        ###################### binary ######################
+        # update rounding for binary variables: bin(x) = bin(h)
+        x[:, bin_ind] = self.bin(x[:,bin_ind] - 0.5)
+        return x
+
+
 class roundModel(nn.Module):
     """
     Learnable model to round integer variables
