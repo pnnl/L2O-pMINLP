@@ -4,6 +4,21 @@
 
 Mixed-integer nonlinear programs (MINLPs) arise in various domains, such as energy systems and transportation, but are notoriously difficult to solve. Recent advances in machine learning have achieved remarkable success in optimization tasks, an area known as learning to optimize. This approach includes using predictive models to generate solutions for optimization problems with continuous decision variables, thereby avoiding the need for computationally expensive optimization algorithms. However, applying learning to MINLPs remains challenging primarily due to integer decision variables, which complicate gradient-based learning. To address this limitation, we propose two differentiable correction layers that generate integer outputs while preserving gradient information. The experiments demonstrate that the proposed learning-based approach consistently produces high-quality solutions for parametric MINLPs extremely quickly. As problem size increases, traditional exact solvers and heuristic methods struggle to find feasible solutions, whereas our approach continues to deliver reliable results. Our work extends the scope of learning-to-optimize to MINLP, paving the way for integrating integer constraints into deep learning models.
 
+## Publication
+
+This repository is the official implementation of the paper:
+[Learning to Optimize for Mixed-Integer Non-linear Programming](https://arxiv.org/abs/2410.11061)
+
+Citation:
+```
+@article{tang2024learning,
+  title={Learning to Optimize for Mixed-Integer Non-linear Programming},
+  author={Tang, Bo and Khalil, Elias B and Drgo{\v{n}}a, J{\'a}n},
+  journal={arXiv preprint arXiv:2410.11061},
+  year={2024}
+}
+```
+
 ## Contribution
 
 Our contributions are as follows:
