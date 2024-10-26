@@ -8,15 +8,17 @@ import copy
 import torch
 
 class trainer:
-    def __init__(self, components, loss_fn, optimizer, epochs=100,
+    def __init__(self, components, loss_fn, optimizer, epochs=100, growth_rate=1,
                  patience=5, warmup=0, clip=100, loss_key="loss", device="cpu"):
         """
         Initialize the Trainer class.
         """
         self.components = components
         self.loss_fn = loss_fn
+        self.orig_weight = self.loss_fn.penalty_weight
         self.optimizer = optimizer
         self.epochs = epochs
+        self.growth_rate = growth_rate
         self.patience = patience
         self.warmup = warmup
         self.clip = clip
@@ -57,13 +59,20 @@ class trainer:
             # validation phase
             self.components.eval()
             with torch.no_grad():
+                # use orignal penalty weight for validation
+                #self.loss_fn.penalty_weight, temp_weight = self.orig_weight, self.loss_fn.penalty_weight
+                # get loss
                 val_loss = self.calculate_loss(loader_dev)
+                # restore weight
+                #self.loss_fn.penalty_weight = temp_weight
             # early stopping check
             if epoch >= self.warmup:
                 early_stop = self.update_early_stopping(val_loss)
                 if self.early_stop_counter >= self.patience:
                     print(f"Early stopping at epoch {epoch}")
                     break
+            # update penalty weight
+            self.loss_fn.penalty_weight *= self.growth_rate
         tock = time.time()
         elapsed = tock - tick
         # end of training
