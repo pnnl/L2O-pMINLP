@@ -123,7 +123,7 @@ $$
 \begin{aligned}
 \min_{\mathbf{x} \in \mathbb{R}^n, \mathbf{y} \in \mathbb{Z}^n} \quad 
 & (\mathbf{a} - \mathbf{x})^\top (\mathbf{a} - \mathbf{x}) + 50 (\mathbf{y} - \mathbf{x}^2)^\top (\mathbf{y} - \mathbf{x}^2) \\
-\text{subject to} \quad & \mathbf{x}^\top \mathbf{x} \leq n b,
+\text{subject to} \quad & {\lVert \mathbf{x} \rVert}^2_2 \leq n b,
 \mathbf{1}^\top \mathbf{y} \geq \frac{nb}{2}, 
 \mathbf{p}^\top  \mathbf{x} \leq 0,
 \mathbf{q}^\top  \mathbf{y} \leq 0.
