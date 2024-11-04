@@ -58,8 +58,9 @@ class trainer:
                 torch.nn.utils.clip_grad_norm_(self.components.parameters(), self.clip)
                 self.optimizer.step()
                 self.optimizer.zero_grad()
+                iters += 1
                 if iters % 125 == 0:
-                    val_loss = self.validate(iters, loader_dev)
+                    val_loss = self.validate(loader_dev)
                     print(f"Epoch {epoch}, Iters {iters}, Validation Loss: {val_loss:.2f}")
                     # update penalty weight
                     self.loss_fn.penalty_weight *= self.growth_rate
@@ -67,19 +68,18 @@ class trainer:
                     if self.early_stop_counter >= self.patience:
                         print(f"Early stopping at iters {iters}")
                         break
-                iters += 1
             if self.early_stop_counter >= self.patience:
                 break
         tock = time.time()
         elapsed = tock - tick
         # end of training
-        if self.best_model_state:
+        if self.best_model_state is not None:
             self.components.load_state_dict(self.best_model_state)
             print("Best model loaded.")
         print("Training complete.")
         print(f"The training time is {elapsed:.2f} sec.")
 
-    def validate(self, iters, loader_dev):
+    def validate(self, loader_dev):
         """
         validation
         """
@@ -93,8 +93,7 @@ class trainer:
             # restore weight
             #self.loss_fn.penalty_weight = temp_weight
         # early stopping update
-        if iters // 125 >= self.warmup:
-            self.update_early_stopping(val_loss)
+        self.update_early_stopping(val_loss)
         return val_loss
 
     def calculate_loss(self, loader):
