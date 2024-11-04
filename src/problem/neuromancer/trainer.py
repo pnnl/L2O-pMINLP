@@ -100,8 +100,9 @@ class trainer:
             if self.early_stop_counter >= self.patience:
                 print(f"Early stopping at iters {iters}")
                 # load best model
-                self.components.load_state_dict(self.best_model_state)
-                print("Best model loaded.")
+                if self.best_model_state is not None:
+                    self.components.load_state_dict(self.best_model_state)
+                    print("Best model loaded.")
                 return True
             else:
                 return False
