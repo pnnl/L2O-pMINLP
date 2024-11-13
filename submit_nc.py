@@ -83,7 +83,8 @@ if config.size <= 10:
                                                             "constraint": "v100l"},
                                timeout_min=20,
                                mem_gb=64,
-                               cpus_per_task=16)
+                               cpus_per_task=16,
+                               gpus_per_node=1)
     job = executor.submit(run.quadratic.exact, loader_test, config)
     print(f"Submitted job with ID: {job.job_id}")
     # rounding after relaxtion
@@ -92,7 +93,8 @@ if config.size <= 10:
                                                             "constraint": "v100l"},
                                timeout_min=20,
                                mem_gb=64,
-                               cpus_per_task=16)
+                               cpus_per_task=16,
+                               gpus_per_node=1)
     job = executor.submit(run.quadratic.relRnd, loader_test, config)
     print(f"Submitted job with ID: {job.job_id}")
     # root nodes
@@ -101,7 +103,8 @@ if config.size <= 10:
                                                             "constraint": "v100l"},
                                timeout_min=20,
                                mem_gb=64,
-                               cpus_per_task=16)
+                               cpus_per_task=16,
+                               gpus_per_node=1)
     job = executor.submit(run.quadratic.root, loader_test, config)
     print(f"Submitted job with ID: {job.job_id}")
     # rounding classification
