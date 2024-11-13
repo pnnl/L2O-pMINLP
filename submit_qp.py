@@ -69,6 +69,7 @@ loader_val   = DataLoader(data_val, config.batch_size, num_workers=0,
                           collate_fn=data_val.collate_fn, shuffle=False)
 
 import run
+print("Convex Quadratic")
 #run.quadratic.exact(loader_test, config)
 #run.quadratic.relRnd(loader_test, config)
 #run.quadratic.root(loader_test, config)
