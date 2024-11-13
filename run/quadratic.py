@@ -31,13 +31,20 @@ def exact(loader_test, config):
         model.set_param_val({"b":b.cpu().numpy()})
         # solve
         tick = time.time()
-        xval, objval = model.solve("gurobi")
+        try:
+            xval, objval = model.solve("gurobi")
+            # eval
+            params.append(list(b.cpu().numpy()))
+            sols.append(list(list(xval.values())[0].values()))
+            objvals.append(objval)
+            conviols.append(sum(model.cal_violation()))
+        except:
+            # infeasible
+            params.append(list(b.cpu().numpy()))
+            sols.append(None)
+            objvals.append(None)
+            conviols.append(None)
         tock = time.time()
-        # eval
-        params.append(list(b.cpu().numpy()))
-        sols.append(list(list(xval.values())[0].values()))
-        objvals.append(objval)
-        conviols.append(sum(model.cal_violation()))
         elapseds.append(tock - tick)
     df = pd.DataFrame({"Param":params,
                        "Sol":sols,
@@ -68,14 +75,21 @@ def relRnd(loader_test, config):
         model_rel = model.relax()
         # solve
         tick = time.time()
-        xval_rel, _ = model_rel.solve("gurobi")
-        xval, objval = naive_round(xval_rel, model)
+        try:
+            xval_rel, _ = model_rel.solve("gurobi")
+            xval, objval = naive_round(xval_rel, model)
+            # eval
+            params.append(list(b.cpu().numpy()))
+            sols.append(list(list(xval.values())[0].values()))
+            objvals.append(objval)
+            conviols.append(sum(model.cal_violation()))
+        except:
+            # infeasible
+            params.append(list(b.cpu().numpy()))
+            sols.append(None)
+            objvals.append(None)
+            conviols.append(None)
         tock = time.time()
-        # eval
-        params.append(list(b.cpu().numpy()))
-        sols.append(list(list(xval.values())[0].values()))
-        objvals.append(objval)
-        conviols.append(sum(model.cal_violation()))
         elapseds.append(tock - tick)
     df = pd.DataFrame({"Param":params,
                        "Sol":sols,
@@ -104,13 +118,20 @@ def root(loader_test, config):
         model_heur.set_param_val({"b":b.cpu().numpy()})
         # solve
         tick = time.time()
-        xval, objval = model_heur.solve("gurobi")
+        try:
+            xval, objval = model_heur.solve("gurobi")
+            # eval
+            params.append(list(b.cpu().numpy()))
+            sols.append(list(list(xval.values())[0].values()))
+            objvals.append(objval)
+            conviols.append(sum(model_heur.cal_violation()))
+        except:
+            # infeasible
+            params.append(list(b.cpu().numpy()))
+            sols.append(None)
+            objvals.append(None)
+            conviols.append(None)
         tock = time.time()
-        # eval
-        params.append(list(b.cpu().numpy()))
-        sols.append(list(list(xval.values())[0].values()))
-        objvals.append(objval)
-        conviols.append(sum(model_heur.cal_violation()))
         elapseds.append(tock - tick)
     df = pd.DataFrame({"Param":params,
                        "Sol":sols,
