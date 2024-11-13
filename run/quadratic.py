@@ -12,6 +12,10 @@ from torch import nn
 from tqdm import tqdm
 from run import utils
 
+# turn off warning
+import logging
+logging.getLogger("pyomo.core").setLevel(logging.ERROR)
+
 def exact(loader_test, config):
     # config
     num_var = config.size
@@ -85,9 +89,6 @@ def relRnd(loader_test, config):
 
 
 def root(loader_test, config):
-    # turn off warning
-    import logging
-    logging.getLogger("pyomo.core").setLevel(logging.ERROR)
     # config
     num_var = config.size
     num_ineq = config.size
@@ -204,6 +205,113 @@ def rndThd(loader_train, loader_test, loader_val, config):
     # eval
     df = eval(components, model, loader_test)
     df.to_csv(f"result/cq_thd_{num_var}-{num_ineq}.csv")
+
+
+def lrnRnd(loader_train, loader_test, loader_val, config):
+    import neuromancer as nm
+    from src.problem import nmQuadratic
+    from src.func.layer import netFC
+    from src.func import roundThresholdModel
+    # random seed
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
+    # config
+    num_var = config.size
+    num_ineq = config.size
+    hlayers_sol = config.hlayers_sol
+    hsize = config.hsize
+    lr = config.lr
+    penalty_weight = config.penalty
+    # init model
+    from src.problem import msQuadratic
+    model = msQuadratic(num_var, num_ineq, timelimit=1000)
+    # build neural architecture for the solution map
+    func = nm.modules.blocks.MLP(insize=num_ineq, outsize=num_var, bias=True,
+                                 linear_map=nm.slim.maps["linear"],
+                                 nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
+    smap = nm.system.Node(func, ["b"], ["x"], name="smap")
+    # build neuromancer problem for rounding
+    components = nn.ModuleList([smap]).to("cuda")
+    loss_fn = nmQuadratic(["b", "x"], num_var, num_ineq, penalty_weight)
+    # train
+    utils.train(components, loss_fn, loader_train, loader_val, lr)
+    # eval
+    from src.heuristic import naive_round
+    params, sols, objvals, conviols, elapseds = [], [], [], [], []
+    for b in tqdm(loader_test.dataset.datadict["b"][:100]):
+        # data point as tensor
+        datapoints = {"b": torch.unsqueeze(b, 0).to("cuda"),
+                      "name": "test"}
+        # infer
+        components.eval()
+        tick = time.time()
+        with torch.no_grad():
+            for comp in components:
+                datapoints.update(comp(datapoints))
+        tock = time.time()
+        # assign params
+        model.set_param_val({"b":b.cpu().numpy()})
+        # assign vars
+        x = datapoints["x"]
+        for i in range(num_var):
+            model.vars["x"][i].value = x[0,i].item()
+        # get solutions
+        xval_rel, _ = model.get_val()
+        xval, objval = naive_round(xval_rel, model)
+        params.append(list(b.cpu().numpy()))
+        sols.append(list(list(xval.values())[0].values()))
+        objvals.append(objval)
+        conviols.append(sum(model.cal_violation()))
+        elapseds.append(tock - tick)
+    df = pd.DataFrame({"Param":params,
+                       "Sol":sols,
+                       "Obj Val": objvals,
+                       "Constraints Viol": conviols,
+                       "Elapsed Time": elapseds})
+    time.sleep(1)
+    print(df.describe())
+    print("Number of infeasible solution: {}".format(np.sum(df["Constraints Viol"] > 0)))
+    df.to_csv(f"result/cq_lrn_{num_var}-{num_ineq}.csv")
+
+
+def rndSte(loader_train, loader_test, loader_val, config):
+    import neuromancer as nm
+    from src.problem import nmQuadratic
+    from src.func.layer import netFC
+    from src.func import roundSTEModel
+    # random seed
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
+    # config
+    num_var = config.size
+    num_ineq = config.size
+    hlayers_sol = config.hlayers_sol
+    hsize = config.hsize
+    lr = config.lr
+    penalty_weight = config.penalty
+    # init model
+    from src.problem import msQuadratic
+    model = msQuadratic(num_var, num_ineq, timelimit=1000)
+    # build neural architecture for the solution map
+    func = nm.modules.blocks.MLP(insize=num_ineq, outsize=num_var, bias=True,
+                                 linear_map=nm.slim.maps["linear"],
+                                 nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
+    smap = nm.system.Node(func, ["b"], ["x"], name="smap")
+    # define rounding model
+    rnd = roundSTEModel(param_keys=["b"], var_keys=["x"],  output_keys=["x_rnd"], int_ind=model.int_ind, name="round")
+    # build neuromancer problem for rounding
+    components = nn.ModuleList([smap, rnd]).to("cuda")
+    loss_fn = nmQuadratic(["b", "x_rnd"], num_var, num_ineq, penalty_weight)
+    # build neuromancer problem for rounding
+    components = nn.ModuleList([smap, rnd]).to("cuda")
+    loss_fn = nmQuadratic(["b", "x_rnd"], num_var, num_ineq, penalty_weight)
+    # train
+    utils.train(components, loss_fn, loader_train, loader_val, lr)
+    # eval
+    df = eval(components, model, loader_test)
+    df.to_csv(f"result/cq_ste_{num_var}-{num_ineq}.csv")
 
 
 def eval(components, model, loader_test):
