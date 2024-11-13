@@ -23,7 +23,7 @@ class abcParamSolver(ABC):
             elif self.solver == "gurobi":
                 self.opt.options["timelimit"] = timelimit
             else:
-                raise ValueError("Solver '{}' does not support setting a time limit.".fomrat(solver))
+                raise ValueError("Solver '{}' does not support setting a time limit.".format(solver))
         # init attributes
         self.model = None # pyomo model
         self.params ={} # dict for pyomo mutable parameters
@@ -56,11 +56,14 @@ class abcParamSolver(ABC):
                     bin_ind[key].append(i)
         return bin_ind
 
-
     def solve(self, max_iter=None, tee=False, keepfiles=False):
         """
         Solve the model and return variable values and the objective value
         """
+        # clear value
+        for var in self.model.component_objects(pe.Var, active=True):
+            for index in var:
+                var[index].value = None
         # solve the model
         self.res = self.opt.solve(self.model, tee=tee, keepfiles=keepfiles)
         # get variable values and objective value
@@ -157,7 +160,7 @@ class abcParamSolver(ABC):
         elif self.solver == "gurobi":
             model_rel.opt.options["NodeLimit"] = 100
         else:
-            raise ValueError("Solver '{}' does not support setting a total nodes limit.".fomrat(solver))
+            raise ValueError("Solver '{}' does not support setting a total nodes limit.".format(solver))
         return model_rel
 
     def penalty(self, weight):
@@ -204,30 +207,5 @@ class abcParamSolver(ABC):
         elif self.solver == "gurobi":
             model_heur.opt.options["SolutionLimit"] = nodes_limit
         else:
-            raise ValueError("Solver '{}' does not support setting a solution limit.".fomrat(solver))
-        return model_heur
-
-    def primal_heuristic(self):
-        """
-        Create a model that only use a primal heuristic
-        """
-        # clone pyomo model
-        model_heur = self.clone()
-        # only support SCIP
-        if self.solver != "scip":
-            raise ValueError("Solver '{}' does not support setting a primal heuristic.".fomrat(solver))
-        # turn off presolving
-        model_heur.opt.options["presolving/maxrounds"] = 0
-        # turn off propagating
-        model_heur.opt.options["propagating/maxrounds"] = 0
-        model_heur.opt.options["propagating/maxroundsroot"] = 0
-        # turn off branch&bound
-        model_heur.opt.options["limits/nodes"] = 1
-        # turn off heuristics
-        model_heur.opt.options["heuristics/clique/freq"] = -1
-        model_heur.opt.options["heuristics/locks/freq"] = -1
-        model_heur.opt.options["heuristics/multistart/freq"] = -1
-        model_heur.opt.options["heuristics/shiftandpropagate/freq"] = -1
-        # turn on 1 heuristics
-        model_heur.opt.options["heuristics/rens/freq"] = 65534
+            raise ValueError("Solver '{}' does not support setting a solution limit.".format(solver))
         return model_heur
