@@ -85,7 +85,7 @@ if config.size <= 10:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.exact, loader_test, config)
+    job = executor.submit(run.nonconvex.exact, loader_test, config)
     print(f"Submitted job with ID: {job.job_id}")
     # rounding after relaxtion
     executor = submitit.AutoExecutor(folder="logs")
@@ -95,7 +95,7 @@ if config.size <= 10:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.relRnd, loader_test, config)
+    job = executor.submit(run.nonconvex.relRnd, loader_test, config)
     print(f"Submitted job with ID: {job.job_id}")
     # root nodes
     executor = submitit.AutoExecutor(folder="logs")
@@ -105,7 +105,7 @@ if config.size <= 10:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.root, loader_test, config)
+    job = executor.submit(run.nonconvex.root, loader_test, config)
     print(f"Submitted job with ID: {job.job_id}")
     # rounding classification
     executor = submitit.AutoExecutor(folder="logs")
@@ -115,7 +115,7 @@ if config.size <= 10:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.rndCls, loader_train, loader_test, loader_val, config)
+    job = executor.submit(run.nonconvex.rndCls, loader_train, loader_test, loader_val, config)
     print(f"Submitted job with ID: {job.job_id}")
     # learnable threshold
     executor = submitit.AutoExecutor(folder="logs")
@@ -125,7 +125,7 @@ if config.size <= 10:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.rndThd, loader_train, loader_test, loader_val, config)
+    job = executor.submit(run.nonconvex.rndThd, loader_train, loader_test, loader_val, config)
     print(f"Submitted job with ID: {job.job_id}")
     # rounding after learning
     executor = submitit.AutoExecutor(folder="logs")
@@ -135,7 +135,7 @@ if config.size <= 10:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.rndCls, loader_train, loader_test, loader_val, config)
+    job = executor.submit(run.nonconvex.rndCls, loader_train, loader_test, loader_val, config)
     print(f"Submitted job with ID: {job.job_id}")
     # STE Rounding
     executor = submitit.AutoExecutor(folder="logs")
@@ -145,7 +145,7 @@ if config.size <= 10:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.rndSte, loader_train, loader_test, loader_val, config)
+    job = executor.submit(run.nonconvex.rndSte, loader_train, loader_test, loader_val, config)
     print(f"Submitted job with ID: {job.job_id}")
 elif config.size <= 50:
     # exact solver
@@ -156,7 +156,7 @@ elif config.size <= 50:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.exact, loader_test, config)
+    job = executor.submit(run.nonconvex.exact, loader_test, config)
     print(f"Submitted job with ID: {job.job_id}")
     # rounding after relaxtion
     executor = submitit.AutoExecutor(folder="logs")
@@ -166,7 +166,7 @@ elif config.size <= 50:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.relRnd, loader_test, config)
+    job = executor.submit(run.nonconvex.relRnd, loader_test, config)
     print(f"Submitted job with ID: {job.job_id}")
     # root nodes
     executor = submitit.AutoExecutor(folder="logs")
@@ -176,7 +176,7 @@ elif config.size <= 50:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.root, loader_test, config)
+    job = executor.submit(run.nonconvex.root, loader_test, config)
     print(f"Submitted job with ID: {job.job_id}")
     # rounding classification
     executor = submitit.AutoExecutor(folder="logs")
@@ -186,7 +186,7 @@ elif config.size <= 50:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.rndCls, loader_train, loader_test, loader_val, config)
+    job = executor.submit(run.nonconvex.rndCls, loader_train, loader_test, loader_val, config)
     print(f"Submitted job with ID: {job.job_id}")
     # learnable threshold
     executor = submitit.AutoExecutor(folder="logs")
@@ -196,7 +196,7 @@ elif config.size <= 50:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.rndThd, loader_train, loader_test, loader_val, config)
+    job = executor.submit(run.nonconvex.rndThd, loader_train, loader_test, loader_val, config)
     print(f"Submitted job with ID: {job.job_id}")
     # rounding after learning
     executor = submitit.AutoExecutor(folder="logs")
@@ -206,7 +206,7 @@ elif config.size <= 50:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.rndCls, loader_train, loader_test, loader_val, config)
+    job = executor.submit(run.nonconvex.rndCls, loader_train, loader_test, loader_val, config)
     print(f"Submitted job with ID: {job.job_id}")
     # STE Rounding
     executor = submitit.AutoExecutor(folder="logs")
@@ -216,7 +216,7 @@ elif config.size <= 50:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.rndSte, loader_train, loader_test, loader_val, config)
+    job = executor.submit(run.nonconvex.rndSte, loader_train, loader_test, loader_val, config)
     print(f"Submitted job with ID: {job.job_id}")
 else:
     # exact solver
@@ -227,7 +227,7 @@ else:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.exact, loader_test, config)
+    job = executor.submit(run.nonconvex.exact, loader_test, config)
     print(f"Submitted job with ID: {job.job_id}")
     # rounding after relaxtion
     executor = submitit.AutoExecutor(folder="logs")
@@ -237,7 +237,7 @@ else:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.relRnd, loader_test, config)
+    job = executor.submit(run.nonconvex.relRnd, loader_test, config)
     print(f"Submitted job with ID: {job.job_id}")
     # root nodes
     executor = submitit.AutoExecutor(folder="logs")
@@ -247,7 +247,7 @@ else:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.root, loader_test, config)
+    job = executor.submit(run.nonconvex.root, loader_test, config)
     print(f"Submitted job with ID: {job.job_id}")
     # rounding classification
     executor = submitit.AutoExecutor(folder="logs")
@@ -257,7 +257,7 @@ else:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.rndCls, loader_train, loader_test, loader_val, config)
+    job = executor.submit(run.nonconvex.rndCls, loader_train, loader_test, loader_val, config)
     print(f"Submitted job with ID: {job.job_id}")
     # learnable threshold
     executor = submitit.AutoExecutor(folder="logs")
@@ -267,7 +267,7 @@ else:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.rndThd, loader_train, loader_test, loader_val, config)
+    job = executor.submit(run.nonconvex.rndThd, loader_train, loader_test, loader_val, config)
     print(f"Submitted job with ID: {job.job_id}")
     # rounding after learning
     executor = submitit.AutoExecutor(folder="logs")
@@ -277,7 +277,7 @@ else:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.rndCls, loader_train, loader_test, loader_val, config)
+    job = executor.submit(run.nonconvex.rndCls, loader_train, loader_test, loader_val, config)
     print(f"Submitted job with ID: {job.job_id}")
     # STE Rounding
     executor = submitit.AutoExecutor(folder="logs")
@@ -287,5 +287,5 @@ else:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.rndSte, loader_train, loader_test, loader_val, config)
+    job = executor.submit(run.nonconvex.rndSte, loader_train, loader_test, loader_val, config)
     print(f"Submitted job with ID: {job.job_id}")
