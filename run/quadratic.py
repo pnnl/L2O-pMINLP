@@ -55,6 +55,7 @@ def exact(loader_test, config):
     time.sleep(1)
     print(df.describe())
     print("Number of infeasible solution: {}".format(np.sum(df["Constraints Viol"] > 0)))
+    print("Number of unsolved instances: ", df["Sol"].isna().sum())
     df.to_csv(f"result/cq_exact_{num_var}-{num_ineq}.csv")
 
 
@@ -100,7 +101,8 @@ def relRnd(loader_test, config):
                        "Elapsed Time": elapseds})
     time.sleep(1)
     print(df.describe())
-    print("Number of infeasible solution: {}".format(np.sum(df["Constraints Viol"] > 0)))
+    print("Number of infeasible solutions: {}".format(np.sum(df["Constraints Viol"] > 0)))
+    print("Number of unsolved instances: ", df["Sol"].isna().sum())
     df.to_csv(f"result/cq_rel_{num_var}-{num_ineq}.csv")
 
 
@@ -144,6 +146,7 @@ def root(loader_test, config):
     time.sleep(1)
     print(df.describe())
     print("Number of infeasible solution: {}".format(np.sum(df["Constraints Viol"] > 0)))
+    print("Number of unsolved instances: ", df["Sol"].isna().sum())
     df.to_csv(f"result/cq_root_{num_var}-{num_ineq}.csv")
 
 
