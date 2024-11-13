@@ -40,6 +40,8 @@ class trainer:
         with torch.no_grad():
             val_loss = self.best_loss = self.calculate_loss(loader_dev)
         print(f"Epoch 0, Iters {iters}, Validation Loss: {val_loss:.2f}")
+        # init accumulate training loss
+        train_loss_total = 0
         # training loop
         tick = time.time()
         for epoch in range(self.epochs):
@@ -63,11 +65,15 @@ class trainer:
                 torch.nn.utils.clip_grad_norm_(self.components.parameters(), self.clip)
                 self.optimizer.step()
                 self.optimizer.zero_grad()
+                # accumulate train loss
+                train_loss_total += data_dict[self.loss_key].item()
                 iters += 1
                 if iters % 125 == 0:
-                    stop_training = self.validate(epoch, iters, loader_dev)
+                    stop_training = self.validate(epoch, iters, loader_dev, train_loss_total/125)
                     # update penalty weight
                     self.loss_fn.penalty_weight *= self.growth_rate
+                    # reset accumulated train loss
+                    train_loss_total = 0
                     # early stop
                     if stop_training:
                         break
@@ -76,7 +82,7 @@ class trainer:
         print("Training complete.")
         print(f"The training time is {elapsed:.2f} sec.")
 
-    def validate(self, epoch, iters, loader_dev):
+    def validate(self, epoch, iters, loader_dev, train_loss):
         """
         validation
         """
@@ -87,7 +93,7 @@ class trainer:
             #self.loss_fn.penalty_weight, temp_weight = self.orig_weight, self.loss_fn.penalty_weight
             # get loss
             val_loss = self.calculate_loss(loader_dev)
-            print(f"Epoch {epoch}, Iters {iters}, Validation Loss: {val_loss:.2f}")
+            print(f"Epoch {epoch}, Iters {iters}, Training Loss: {train_loss:.2f}, Validation Loss: {val_loss:.2f}")
             # restore weight
             #self.loss_fn.penalty_weight = temp_weight
         # turn into training phase
