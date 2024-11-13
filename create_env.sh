@@ -23,6 +23,8 @@ module load gcc/12.3
 module load python/$PYTHON_VER
 module load ipopt/$IPOPT_VER
 module load scipoptsuite/$SCIP_VER
+module load gurobi/$GRB_VER
+gurobi_cl 1> /dev/null && echo Success || echo Fail
 
 # create virtual env
 if [ ! -d "./$VENVS_DIR/$VENV_NAME" ]; then
