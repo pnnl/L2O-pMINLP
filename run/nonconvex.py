@@ -17,6 +17,7 @@ import logging
 logging.getLogger("pyomo.core").setLevel(logging.ERROR)
 
 def exact(loader_test, config):
+    print(f"EX for size {config.size}.")
     # config
     num_var = config.size
     num_ineq = config.size
@@ -58,6 +59,7 @@ def exact(loader_test, config):
 
 
 def relRnd(loader_test, config):
+    print(f"RR for size {config.size}.")
     from src.heuristic import naive_round
     # config
     num_var = config.size
@@ -103,6 +105,7 @@ def relRnd(loader_test, config):
 
 
 def root(loader_test, config):
+    print(f"N1 for size {config.size}.")
     # config
     num_var = config.size
     num_ineq = config.size
@@ -145,6 +148,7 @@ def root(loader_test, config):
 
 
 def rndCls(loader_train, loader_test, loader_val, config):
+    print(f"RC for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmNonconvex
     from src.func.layer import netFC
@@ -187,6 +191,7 @@ def rndCls(loader_train, loader_test, loader_val, config):
 
 
 def rndThd(loader_train, loader_test, loader_val, config):
+    print(f"LT for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmNonconvex
     from src.func.layer import netFC
@@ -229,6 +234,7 @@ def rndThd(loader_train, loader_test, loader_val, config):
 
 
 def lrnRnd(loader_train, loader_test, loader_val, config):
+    print(f"RL for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmNonconvex
     from src.func.layer import netFC
@@ -297,6 +303,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config):
 
 
 def rndSte(loader_train, loader_test, loader_val, config):
+    print(f"RS for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmNonconvex
     from src.func.layer import netFC
