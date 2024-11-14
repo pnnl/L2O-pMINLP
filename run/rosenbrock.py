@@ -321,9 +321,9 @@ def lrnRnd(loader_train, loader_test, loader_val, config):
 
 def rndSte(loader_train, loader_test, loader_val, config):
     # random seed
-    np.random.seed(42)
-    torch.manual_seed(42)
-    torch.cuda.manual_seed(42)
+    np.random.seed(2)
+    torch.manual_seed(2)
+    torch.cuda.manual_seed(2)
     print(f"RS for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmRosenbrock
