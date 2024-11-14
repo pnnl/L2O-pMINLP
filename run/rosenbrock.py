@@ -205,7 +205,7 @@ def rndCls(loader_train, loader_test, loader_val, config):
     utils.train(components, loss_fn, loader_train, loader_val, lr)
     # eval
     df = eval(components, model, loader_test)
-    df.to_csv(f"result/rb_cls_{num_blocks}.csv")
+    df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}.csv")
 
 
 def rndThd(loader_train, loader_test, loader_val, config):
@@ -244,7 +244,7 @@ def rndThd(loader_train, loader_test, loader_val, config):
     utils.train(components, loss_fn, loader_train, loader_val, lr)
     # eval
     df = eval(components, model, loader_test)
-    df.to_csv(f"result/rb_thd_{num_blocks}.csv")
+    df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}.csv")
 
 
 def lrnRnd(loader_train, loader_test, loader_val, config):
@@ -316,7 +316,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config):
     time.sleep(1)
     print(df.describe())
     print("Number of infeasible solution: {}".format(np.sum(df["Constraints Viol"] > 0)))
-    df.to_csv(f"result/rb_lrn_{num_blocks}.csv")
+    df.to_csv(f"result/rb_lrn{penalty_weight}_{num_blocks}.csv")
 
 
 def rndSte(loader_train, loader_test, loader_val, config):
@@ -354,7 +354,7 @@ def rndSte(loader_train, loader_test, loader_val, config):
     utils.train(components, loss_fn, loader_train, loader_val, lr)
     # eval
     df = eval(components, model, loader_test)
-    df.to_csv(f"result/rb_ste_{num_blocks}.csv")
+    df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}.csv")
 
 
 def eval(components, model, loader_test):
