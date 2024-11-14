@@ -17,6 +17,10 @@ import logging
 logging.getLogger("pyomo.core").setLevel(logging.ERROR)
 
 def exact(loader_test, config):
+    # random seed
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
     print(f"Ex for size {config.size}.")
     # config
     num_var = config.size
@@ -60,6 +64,10 @@ def exact(loader_test, config):
 
 
 def relRnd(loader_test, config):
+    # random seed
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
     print(f"RR for size {config.size}.")
     from src.heuristic import naive_round
     # config
@@ -107,6 +115,10 @@ def relRnd(loader_test, config):
 
 
 def root(loader_test, config):
+    # random seed
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
     print(f"N1 for size {config.size}.")
     # config
     num_var = config.size
@@ -151,15 +163,15 @@ def root(loader_test, config):
 
 
 def rndCls(loader_train, loader_test, loader_val, config):
+    # random seed
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
     print(f"RC for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmQuadratic
     from src.func.layer import netFC
     from src.func import roundGumbelModel
-    # random seed
-    np.random.seed(42)
-    torch.manual_seed(42)
-    torch.cuda.manual_seed(42)
     # config
     num_var = config.size
     num_ineq = config.size
@@ -194,15 +206,15 @@ def rndCls(loader_train, loader_test, loader_val, config):
 
 
 def rndThd(loader_train, loader_test, loader_val, config):
+    # random seed
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
     print(f"LT for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmQuadratic
     from src.func.layer import netFC
     from src.func import roundThresholdModel
-    # random seed
-    np.random.seed(42)
-    torch.manual_seed(42)
-    torch.cuda.manual_seed(42)
     # config
     num_var = config.size
     num_ineq = config.size
@@ -237,15 +249,15 @@ def rndThd(loader_train, loader_test, loader_val, config):
 
 
 def lrnRnd(loader_train, loader_test, loader_val, config):
+    # random seed
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
     print(f"RL for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmQuadratic
     from src.func.layer import netFC
     from src.func import roundThresholdModel
-    # random seed
-    np.random.seed(42)
-    torch.manual_seed(42)
-    torch.cuda.manual_seed(42)
     # config
     num_var = config.size
     num_ineq = config.size
@@ -306,15 +318,15 @@ def lrnRnd(loader_train, loader_test, loader_val, config):
 
 
 def rndSte(loader_train, loader_test, loader_val, config):
+    # random seed
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
     print(f"RS for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmQuadratic
     from src.func.layer import netFC
     from src.func import roundSTEModel
-    # random seed
-    np.random.seed(42)
-    torch.manual_seed(42)
-    torch.cuda.manual_seed(42)
     # config
     num_var = config.size
     num_ineq = config.size
@@ -332,9 +344,6 @@ def rndSte(loader_train, loader_test, loader_val, config):
     smap = nm.system.Node(func, ["b"], ["x"], name="smap")
     # define rounding model
     rnd = roundSTEModel(param_keys=["b"], var_keys=["x"],  output_keys=["x_rnd"], int_ind=model.int_ind, name="round")
-    # build neuromancer problem for rounding
-    components = nn.ModuleList([smap, rnd]).to("cuda")
-    loss_fn = nmQuadratic(["b", "x_rnd"], num_var, num_ineq, penalty_weight)
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd]).to("cuda")
     loss_fn = nmQuadratic(["b", "x_rnd"], num_var, num_ineq, penalty_weight)

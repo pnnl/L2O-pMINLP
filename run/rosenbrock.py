@@ -17,6 +17,10 @@ import logging
 logging.getLogger("pyomo.core").setLevel(logging.ERROR)
 
 def exact(loader_test, config):
+    # random seed
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
     print(f"EX for size {config.size}.")
     # config
     steepness = config.steepness
@@ -62,6 +66,10 @@ def exact(loader_test, config):
 
 
 def relRnd(loader_test, config):
+    # random seed
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
     print(f"RR for size {config.size}.")
     from src.heuristic import naive_round
     # config
@@ -110,6 +118,10 @@ def relRnd(loader_test, config):
 
 
 def root(loader_test, config):
+    # random seed
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
     print(f"N1 for size {config.size}.")
     # config
     steepness = config.steepness
@@ -157,15 +169,15 @@ def root(loader_test, config):
 
 
 def rndCls(loader_train, loader_test, loader_val, config):
+    # random seed
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
     print(f"RC for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmRosenbrock
     from src.func.layer import netFC
     from src.func import roundGumbelModel
-    # random seed
-    np.random.seed(42)
-    torch.manual_seed(42)
-    torch.cuda.manual_seed(42)
     # config
     steepness = config.steepness
     num_blocks = config.size
@@ -179,12 +191,12 @@ def rndCls(loader_train, loader_test, loader_val, config):
     model = msRosenbrock(steepness, num_blocks, timelimit=1000)
     # build neural architecture for the solution map
     func = nm.modules.blocks.MLP(insize=num_blocks+1, outsize=2*num_blocks, bias=True,
-                             linear_map=nm.slim.maps["linear"],
-                             nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
+                                 linear_map=nm.slim.maps["linear"],
+                                 nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
     smap = nm.system.Node(func, ["p", "a"], ["x"], name="smap")
     # define rounding model
     layers_rnd = netFC(input_dim=3*num_blocks+1, hidden_dims=[hsize]*hlayers_rnd, output_dim=2*num_blocks)
-    rnd = roundGumbelModel(layers=layers_rnd, param_keys=["p", "a"], var_keys=["x"],  output_keys=["x_rnd"],
+    rnd = roundGumbelModel(layers=layers_rnd, param_keys=["p", "a"], var_keys=["x"], output_keys=["x_rnd"],
                            int_ind=model.int_ind, continuous_update=True, name="round")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd]).to("cuda")
@@ -197,16 +209,15 @@ def rndCls(loader_train, loader_test, loader_val, config):
 
 
 def rndThd(loader_train, loader_test, loader_val, config):
+    # random seed
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
     print(f"LT for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmRosenbrock
     from src.func.layer import netFC
     from src.func import roundThresholdModel
-    # random seed
-    np.random.seed(42)
-    torch.manual_seed(42)
-    torch.cuda.manual_seed(42)
-    # config
     steepness = config.steepness
     num_blocks = config.size
     hlayers_sol = config.hlayers_sol
@@ -237,15 +248,15 @@ def rndThd(loader_train, loader_test, loader_val, config):
 
 
 def lrnRnd(loader_train, loader_test, loader_val, config):
+    # random seed
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
     print(f"RL for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmRosenbrock
     from src.func.layer import netFC
     from src.func import roundThresholdModel
-    # random seed
-    np.random.seed(42)
-    torch.manual_seed(42)
-    torch.cuda.manual_seed(42)
     # config
     steepness = config.steepness
     num_blocks = config.size
@@ -309,15 +320,15 @@ def lrnRnd(loader_train, loader_test, loader_val, config):
 
 
 def rndSte(loader_train, loader_test, loader_val, config):
+    # random seed
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
     print(f"RS for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmRosenbrock
     from src.func.layer import netFC
     from src.func import roundSTEModel
-    # random seed
-    np.random.seed(42)
-    torch.manual_seed(42)
-    torch.cuda.manual_seed(42)
     # config
     steepness = config.steepness
     num_blocks = config.size
