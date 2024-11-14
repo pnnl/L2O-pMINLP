@@ -162,7 +162,7 @@ def root(loader_test, config):
     df.to_csv(f"result/cq_root_{num_var}-{num_ineq}.csv")
 
 
-def rndCls(loader_train, loader_test, loader_val, config):
+def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # random seed
     np.random.seed(42)
     torch.manual_seed(42)
@@ -199,13 +199,16 @@ def rndCls(loader_train, loader_test, loader_val, config):
     components = nn.ModuleList([smap, rnd]).to("cuda")
     loss_fn = nmQuadratic(["b", "x_rnd"], num_var, num_ineq, penalty_weight)
     # train
-    utils.train(components, loss_fn, loader_train, loader_val, lr)
+    utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
     df = eval(components, model, loader_test)
-    df.to_csv(f"result/cq_cls{penalty_weight}_{num_var}-{num_ineq}.csv")
+    if penalty_growth:
+        df.to_csv(f"result/cq_cls{penalty_weight}_{num_var}-{num_ineq}-g.csv")
+    else:
+        df.to_csv(f"result/cq_cls{penalty_weight}_{num_var}-{num_ineq}.csv")
 
 
-def rndThd(loader_train, loader_test, loader_val, config):
+def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # random seed
     np.random.seed(42)
     torch.manual_seed(42)
@@ -242,13 +245,16 @@ def rndThd(loader_train, loader_test, loader_val, config):
     components = nn.ModuleList([smap, rnd]).to("cuda")
     loss_fn = nmQuadratic(["b", "x_rnd"], num_var, num_ineq, penalty_weight)
     # train
-    utils.train(components, loss_fn, loader_train, loader_val, lr)
+    utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
     df = eval(components, model, loader_test)
-    df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}.csv")
+    if penalty_growth:
+        df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}-g.csv")
+    else:
+        df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}.csv")
 
 
-def lrnRnd(loader_train, loader_test, loader_val, config):
+def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # random seed
     np.random.seed(42)
     torch.manual_seed(42)
@@ -277,7 +283,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config):
     components = nn.ModuleList([smap]).to("cuda")
     loss_fn = nmQuadratic(["b", "x"], num_var, num_ineq, penalty_weight)
     # train
-    utils.train(components, loss_fn, loader_train, loader_val, lr)
+    utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
     from src.heuristic import naive_round
     params, sols, objvals, conviols, elapseds = [], [], [], [], []
@@ -314,10 +320,13 @@ def lrnRnd(loader_train, loader_test, loader_val, config):
     time.sleep(1)
     print(df.describe())
     print("Number of infeasible solution: {}".format(np.sum(df["Constraints Viol"] > 0)))
-    df.to_csv(f"result/cq_lrn{penalty_weight}_{num_var}-{num_ineq}.csv")
+    if penalty_growth:
+        df.to_csv(f"result/cq_lrn{penalty_weight}_{num_var}-{num_ineq}-g.csv")
+    else:
+        df.to_csv(f"result/cq_lrn{penalty_weight}_{num_var}-{num_ineq}.csv")
 
 
-def rndSte(loader_train, loader_test, loader_val, config):
+def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # random seed
     np.random.seed(42)
     torch.manual_seed(42)
@@ -348,10 +357,13 @@ def rndSte(loader_train, loader_test, loader_val, config):
     components = nn.ModuleList([smap, rnd]).to("cuda")
     loss_fn = nmQuadratic(["b", "x_rnd"], num_var, num_ineq, penalty_weight)
     # train
-    utils.train(components, loss_fn, loader_train, loader_val, lr)
+    utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
     df = eval(components, model, loader_test)
-    df.to_csv(f"result/cq_ste{penalty_weight}_{num_var}-{num_ineq}.csv")
+    if penalty_growth:
+        df.to_csv(f"result/cq_ste{penalty_weight}_{num_var}-{num_ineq}-g.csv")
+    else:
+        df.to_csv(f"result/cq_ste{penalty_weight}_{num_var}-{num_ineq}.csv")
 
 
 def eval(components, model, loader_test):
