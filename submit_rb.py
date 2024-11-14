@@ -12,7 +12,7 @@ import pandas as pd
 import torch
 from torch import nn
 from tqdm import tqdm
-#import submitit
+import submitit
 
 # random seed
 random.seed(42)
