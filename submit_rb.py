@@ -27,7 +27,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--size",
                     type=int,
                     default=1,
-                    choices=[1, 10, 100, 1000, 10000],
+                    choices=[1, 10, 100, 1000, 10000, 100000],
                     help="problem type")
 parser.add_argument("--samples",
                     type=int,
@@ -44,7 +44,7 @@ test_size = 100                  # number of test size
 val_size = 1000                  # number of validation size
 
 # hyperparameters
-hsize_dict = {1:4, 10:16, 100:64, 1000:256, 10000:1024, 10000:4096}
+hsize_dict = {1:4, 10:16, 100:64, 1000:256, 10000:1024, 100000:4096}
 config.batch_size = 64                  # batch size
 config.hlayers_sol = 5                  # number of hidden layers for solution mapping
 config.hlayers_rnd = 4                  # number of hidden layers for solution mapping
