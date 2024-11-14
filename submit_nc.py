@@ -153,7 +153,7 @@ elif config.size <= 50:
     executor = submitit.AutoExecutor(folder="logs")
     executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
                                                             "constraint": "v100l"},
-                               timeout_min=20,
+                               timeout_min=2880,
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
