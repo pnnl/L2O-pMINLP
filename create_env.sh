@@ -13,6 +13,7 @@ IPOPT_VER="3.14.14"
 GRB_VER="11.0.1"
 TORCH_VER="2.5.0"
 NM_VER="1.5.2"
+HSL_ARCHIVE_PATH="./coinhsl.tar.gz"
 LOGDIR="./logs"
 
 # load module
@@ -52,6 +53,28 @@ if [ ! -d "./$VENVS_DIR/$VENV_NAME" ]; then
   pip install lightning wandb
   pip install neuromancer==$NM_VER --no-deps
   pip install submitit
+
+  # Setup Coin-HSL
+  echo "Setting up Coin-HSL..."
+  git clone https://github.com/coin-or-tools/ThirdParty-HSL.git
+
+  echo "Unpacking Coin-HSL archive..."
+  tar -xzf "$HSL_ARCHIVE_PATH"
+  mv coinhsl-archive-2023.11.17 ThirdParty-HSL/coinhsl
+
+  echo "Configuring and compiling Coin-HSL..."
+  cd ThirdParty-HSL || exit
+  ./configure --prefix=$HOME/local
+  make
+  make install
+
+  # Add the lib path to LD_LIBRARY_PATH
+  echo "Adding Coin-HSL to LD_LIBRARY_PATH..."
+  ln -s $HOME/local/lib/libcoinhsl.so $HOME/local/lib/libhsl.so
+  export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH
+  echo 'export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH' >> ~/.bashrc
+  source ~/.bashrc
+  cd ..
 
 # activate virtual env
 else
