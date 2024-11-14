@@ -26,7 +26,7 @@ import run
 print("Convex Quadratic")
 for penalty in [1, 5, 10, 50, 500, 1000]:
     config.penalty = penalty
-    for size in [1, 10, 100, 1000, 10000]:
+    for size in [100, 1000, 10000]:
         # random seed
         random.seed(42)
         np.random.seed(42)
