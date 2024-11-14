@@ -136,7 +136,7 @@ if config.size <= 20:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.quadratic.rndCls, loader_train, loader_test, loader_val, config)
+    job = executor.submit(run.quadratic.lrnRnd, loader_train, loader_test, loader_val, config)
     print(f"Submitted job with ID: {job.job_id}")
     # STE Rounding
     executor = submitit.AutoExecutor(folder="logs")
