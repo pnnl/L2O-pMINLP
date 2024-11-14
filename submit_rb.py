@@ -90,7 +90,7 @@ executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2
                            mem_gb=64,
                            cpus_per_task=16,
                            gpus_per_node=1)
-job = executor.submit(run.quadratic.exact, loader_test, config)
+job = executor.submit(run.rosenbrock.exact, loader_test, config)
 print(f"Submitted job with ID: {job.job_id}")
 # rounding after relaxtion
 executor = submitit.AutoExecutor(folder="logs")
@@ -100,7 +100,7 @@ executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2
                            mem_gb=64,
                            cpus_per_task=16,
                            gpus_per_node=1)
-job = executor.submit(run.quadratic.relRnd, loader_test, config)
+job = executor.submit(run.rosenbrock.relRnd, loader_test, config)
 print(f"Submitted job with ID: {job.job_id}")
 # root nodes
 executor = submitit.AutoExecutor(folder="logs")
@@ -110,7 +110,7 @@ executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2
                            mem_gb=64,
                            cpus_per_task=16,
                            gpus_per_node=1)
-job = executor.submit(run.quadratic.root, loader_test, config)
+job = executor.submit(run.rosenbrock.root, loader_test, config)
 print(f"Submitted job with ID: {job.job_id}")
 # rounding classification
 executor = submitit.AutoExecutor(folder="logs")
@@ -120,7 +120,7 @@ executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2
                            mem_gb=64,
                            cpus_per_task=16,
                            gpus_per_node=1)
-job = executor.submit(run.quadratic.rndCls, loader_train, loader_test, loader_val, config)
+job = executor.submit(run.rosenbrock.rndCls, loader_train, loader_test, loader_val, config)
 print(f"Submitted job with ID: {job.job_id}")
 # learnable threshold
 executor = submitit.AutoExecutor(folder="logs")
@@ -130,7 +130,7 @@ executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2
                            mem_gb=64,
                            cpus_per_task=16,
                            gpus_per_node=1)
-job = executor.submit(run.quadratic.rndThd, loader_train, loader_test, loader_val, config)
+job = executor.submit(run.rosenbrock.rndThd, loader_train, loader_test, loader_val, config)
 print(f"Submitted job with ID: {job.job_id}")
 # rounding after learning
 executor = submitit.AutoExecutor(folder="logs")
@@ -140,7 +140,7 @@ executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2
                            mem_gb=64,
                            cpus_per_task=16,
                            gpus_per_node=1)
-job = executor.submit(run.quadratic.rndCls, loader_train, loader_test, loader_val, config)
+job = executor.submit(run.rosenbrock.rndCls, loader_train, loader_test, loader_val, config)
 print(f"Submitted job with ID: {job.job_id}")
 # STE Rounding
 executor = submitit.AutoExecutor(folder="logs")
@@ -150,5 +150,5 @@ executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2
                            mem_gb=64,
                            cpus_per_task=16,
                            gpus_per_node=1)
-job = executor.submit(run.quadratic.rndSte, loader_train, loader_test, loader_val, config)
+job = executor.submit(run.rosenbrock.rndSte, loader_train, loader_test, loader_val, config)
 print(f"Submitted job with ID: {job.job_id}")
