@@ -55,7 +55,8 @@ config.penalty = 100                    # penalty weight
 
 # data sample from uniform distribution
 b_samples = torch.from_numpy(np.random.uniform(-1, 1, size=(num_data, num_ineq))).float()
-data = {"b":b_samples}
+d_samples = torch.from_numpy(np.random.uniform(-0.1, 0.1, size=(num_data, num_ineq))).float()
+data = {"b":b_samples, "d":d_samples}
 # data split
 from src.utlis import data_split
 data_train, data_test, data_val = data_split(data, test_size=test_size, val_size=val_size)

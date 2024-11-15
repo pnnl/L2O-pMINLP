@@ -31,21 +31,23 @@ def exact(loader_test, config):
     # init df
     params, sols, objvals, conviols, elapseds = [], [], [], [], []
     # go through test data
-    for b in tqdm(loader_test.dataset.datadict["b"][:100]):
+    b_test = loader_test.dataset.datadict["b"][:100]
+    d_test = loader_test.dataset.datadict["d"][:100]
+    for b, d in tqdm(list(zip(b_test, d_test))):
         # set params
-        model.set_param_val({"b":b.cpu().numpy()})
+        model.set_param_val({"b":b.cpu().numpy(), "d":d.cpu().numpy()})
         # solve
         tick = time.time()
         try:
             xval, objval = model.solve("scip")
             # eval
-            params.append(list(b.cpu().numpy()))
+            params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
             sols.append(list(list(xval.values())[0].values()))
             objvals.append(objval)
             conviols.append(sum(model.cal_violation()))
         except:
             # infeasible
-            params.append(list(b.cpu().numpy()))
+            params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
             sols.append(None)
             objvals.append(None)
             conviols.append(None)
@@ -60,7 +62,7 @@ def exact(loader_test, config):
     print(df.describe())
     print("Number of infeasible solution: {}".format(np.sum(df["Constraints Viol"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
-    df.to_csv(f"result/nc_exact_{num_var}-{num_ineq}.csv")
+    df.to_csv(f"result/nc_exact_{num_var}-{num_ineq}_new.csv")
 
 
 def relRnd(loader_test, config):
@@ -79,9 +81,11 @@ def relRnd(loader_test, config):
     # init df
     params, sols, objvals, conviols, elapseds = [], [], [], [], []
     # go through test data
-    for b in tqdm(loader_test.dataset.datadict["b"][:100]):
+    b_test = loader_test.dataset.datadict["b"][:100]
+    d_test = loader_test.dataset.datadict["d"][:100]
+    for b, d in tqdm(list(zip(b_test, d_test))):
         # set params
-        model.set_param_val({"b":b.cpu().numpy()})
+        model.set_param_val({"b":b.cpu().numpy(), "d":d.cpu().numpy()})
         # relax
         model_rel = model.relax()
         # solve
@@ -90,13 +94,13 @@ def relRnd(loader_test, config):
             xval_rel, _ = model_rel.solve("scip")
             xval, objval = naive_round(xval_rel, model)
             # eval
-            params.append(list(b.cpu().numpy()))
+            params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
             sols.append(list(list(xval.values())[0].values()))
             objvals.append(objval)
             conviols.append(sum(model.cal_violation()))
         except:
             # infeasible
-            params.append(list(b.cpu().numpy()))
+            params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
             sols.append(None)
             objvals.append(None)
             conviols.append(None)
@@ -111,7 +115,7 @@ def relRnd(loader_test, config):
     print(df.describe())
     print("Number of infeasible solution: {}".format(np.sum(df["Constraints Viol"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
-    df.to_csv(f"result/nc_rel_{num_var}-{num_ineq}.csv")
+    df.to_csv(f"result/nc_rel_{num_var}-{num_ineq}_new.csv")
 
 
 def root(loader_test, config):
@@ -130,21 +134,23 @@ def root(loader_test, config):
     # init df
     params, sols, objvals, conviols, elapseds = [], [], [], [], []
     # go through test data
-    for b in tqdm(loader_test.dataset.datadict["b"][:100]):
+    b_test = loader_test.dataset.datadict["b"][:100]
+    d_test = loader_test.dataset.datadict["d"][:100]
+    for b, d in tqdm(list(zip(b_test, d_test))):
         # set params
-        model_heur.set_param_val({"b":b.cpu().numpy()})
+        model_heur.set_param_val({"b":b.cpu().numpy(), "d":d.cpu().numpy()})
         # solve
         tick = time.time()
         try:
             xval, objval = model_heur.solve("scip")
             # eval
-            params.append(list(b.cpu().numpy()))
+            params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
             sols.append(list(list(xval.values())[0].values()))
             objvals.append(objval)
             conviols.append(sum(model_heur.cal_violation()))
         except:
             # infeasible
-            params.append(list(b.cpu().numpy()))
+            params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
             sols.append(None)
             objvals.append(None)
             conviols.append(None)
@@ -159,7 +165,7 @@ def root(loader_test, config):
     print(df.describe())
     print("Number of infeasible solution: {}".format(np.sum(df["Constraints Viol"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
-    df.to_csv(f"result/nc_root_{num_var}-{num_ineq}.csv")
+    df.to_csv(f"result/nc_root_{num_var}-{num_ineq}_new.csv")
 
 
 def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
@@ -184,28 +190,28 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     from src.problem import msNonconvex
     model = msNonconvex(num_var, num_ineq, timelimit=1000)
     # build neural architecture for the solution map
-    func = nm.modules.blocks.MLP(insize=num_ineq, outsize=num_var, bias=True,
+    func = nm.modules.blocks.MLP(insize=num_ineq*2, outsize=num_var, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
-    smap = nm.system.Node(func, ["b"], ["x"], name="smap")
+    smap = nm.system.Node(func, ["b", "d"], ["x"], name="smap")
     # define rounding model
-    layers_rnd = netFC(input_dim=num_ineq+num_var,
+    layers_rnd = netFC(input_dim=num_ineq*2+num_var,
                        hidden_dims=[hsize]*hlayers_rnd,
                        output_dim=num_var)
-    rnd = roundGumbelModel(layers=layers_rnd, param_keys=["b"], var_keys=["x"],
+    rnd = roundGumbelModel(layers=layers_rnd, param_keys=["b", "d"], var_keys=["x"],
                            output_keys=["x_rnd"], int_ind=model.int_ind,
                            continuous_update=True, name="round")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd]).to("cuda")
-    loss_fn = nmNonconvex(["b", "x_rnd"], num_var, num_ineq, penalty_weight)
+    loss_fn = nmNonconvex(["b", "d", "x_rnd"], num_var, num_ineq, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
     df = eval(components, model, loader_test)
     if penalty_growth:
-        df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}-g.csv")
+        df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}-g_new.csv")
     else:
-        df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}.csv")
+        df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}_new.csv")
 
 
 def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
@@ -230,28 +236,28 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     from src.problem import msNonconvex
     model = msNonconvex(num_var, num_ineq, timelimit=1000)
     # build neural architecture for the solution map
-    func = nm.modules.blocks.MLP(insize=num_ineq, outsize=num_var, bias=True,
+    func = nm.modules.blocks.MLP(insize=num_ineq*2, outsize=num_var, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
-    smap = nm.system.Node(func, ["b"], ["x"], name="smap")
+    smap = nm.system.Node(func, ["b", "d"], ["x"], name="smap")
     # define rounding model
-    layers_rnd = netFC(input_dim=num_ineq+num_var,
+    layers_rnd = netFC(input_dim=num_ineq*2+num_var,
                        hidden_dims=[hsize]*hlayers_rnd,
                        output_dim=num_var)
-    rnd = roundThresholdModel(layers=layers_rnd, param_keys=["b"], var_keys=["x"],
+    rnd = roundThresholdModel(layers=layers_rnd, param_keys=["b", "d"], var_keys=["x"],
                               output_keys=["x_rnd"], int_ind=model.int_ind,
                               continuous_update=True, name="round")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd]).to("cuda")
-    loss_fn = nmNonconvex(["b", "x_rnd"], num_var, num_ineq, penalty_weight)
+    loss_fn = nmNonconvex(["b", "d", "x_rnd"], num_var, num_ineq, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
     df = eval(components, model, loader_test)
     if penalty_growth:
-        df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}-g.csv")
+        df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}-g_new.csv")
     else:
-        df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}.csv")
+        df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}_new.csv")
 
 
 def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
@@ -275,21 +281,24 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     from src.problem import msNonconvex
     model = msNonconvex(num_var, num_ineq, timelimit=1000)
     # build neural architecture for the solution map
-    func = nm.modules.blocks.MLP(insize=num_ineq, outsize=num_var, bias=True,
+    func = nm.modules.blocks.MLP(insize=num_ineq*2, outsize=num_var, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
-    smap = nm.system.Node(func, ["b"], ["x"], name="smap")
+    smap = nm.system.Node(func, ["b", "d"], ["x"], name="smap")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap]).to("cuda")
-    loss_fn = nmNonconvex(["b", "x"], num_var, num_ineq, penalty_weight)
+    loss_fn = nmNonconvex(["b", "d", "x"], num_var, num_ineq, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
     from src.heuristic import naive_round
     params, sols, objvals, conviols, elapseds = [], [], [], [], []
-    for b in tqdm(loader_test.dataset.datadict["b"][:100]):
+    b_test = loader_test.dataset.datadict["b"][:100]
+    d_test = loader_test.dataset.datadict["d"][:100]
+    for b, d in tqdm(list(zip(b_test, d_test))):
         # data point as tensor
         datapoints = {"b": torch.unsqueeze(b, 0).to("cuda"),
+                      "d": torch.unsqueeze(d, 0).to("cuda"),
                       "name": "test"}
         # infer
         components.eval()
@@ -299,7 +308,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
                 datapoints.update(comp(datapoints))
         tock = time.time()
         # assign params
-        model.set_param_val({"b":b.cpu().numpy()})
+        model.set_param_val({"b":b.cpu().numpy(), "d":d.cpu().numpy()})
         # assign vars
         x = datapoints["x"]
         for i in range(num_var):
@@ -321,9 +330,9 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     print(df.describe())
     print("Number of infeasible solution: {}".format(np.sum(df["Constraints Viol"] > 0)))
     if penalty_growth:
-        df.to_csv(f"result/nc_lrn{penalty_weight}_{num_var}-{num_ineq}-g.csv")
+        df.to_csv(f"result/nc_lrn{penalty_weight}_{num_var}-{num_ineq}-g_new.csv")
     else:
-        df.to_csv(f"result/nc_lrn{penalty_weight}_{num_var}-{num_ineq}.csv")
+        df.to_csv(f"result/nc_lrn{penalty_weight}_{num_var}-{num_ineq}_new.csv")
 
 
 def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
@@ -347,33 +356,33 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     from src.problem import msNonconvex
     model = msNonconvex(num_var, num_ineq, timelimit=1000)
     # build neural architecture for the solution map
-    func = nm.modules.blocks.MLP(insize=num_ineq, outsize=num_var, bias=True,
+    func = nm.modules.blocks.MLP(insize=num_ineq*2, outsize=num_var, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
-    smap = nm.system.Node(func, ["b"], ["x"], name="smap")
+    smap = nm.system.Node(func, ["b", "d"], ["x"], name="smap")
     # define rounding model
-    rnd = roundSTEModel(param_keys=["b"], var_keys=["x"],  output_keys=["x_rnd"], int_ind=model.int_ind, name="round")
+    rnd = roundSTEModel(param_keys=["b", "d"], var_keys=["x"], output_keys=["x_rnd"], int_ind=model.int_ind, name="round")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd]).to("cuda")
-    loss_fn = nmNonconvex(["b", "x_rnd"], num_var, num_ineq, penalty_weight)
-    # build neuromancer problem for rounding
-    components = nn.ModuleList([smap, rnd]).to("cuda")
-    loss_fn = nmNonconvex(["b", "x_rnd"], num_var, num_ineq, penalty_weight)
+    loss_fn = nmNonconvex(["b", "d", "x_rnd"], num_var, num_ineq, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
     df = eval(components, model, loader_test)
     if penalty_growth:
-        df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}-g.csv")
+        df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}-g_new.csv")
     else:
-        df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}.csv")
+        df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}_new.csv")
 
 
 def eval(components, model, loader_test):
     params, sols, objvals, conviols, elapseds = [], [], [], [], []
-    for b in tqdm(loader_test.dataset.datadict["b"][:100]):
+    b_test = loader_test.dataset.datadict["b"][:100]
+    d_test = loader_test.dataset.datadict["d"][:100]
+    for b, d in tqdm(list(zip(b_test, d_test))):
         # data point as tensor
         datapoints = {"b": torch.unsqueeze(b, 0).to("cuda"),
+                      "d": torch.unsqueeze(d, 0).to("cuda"),
                       "name": "test"}
         # infer
         components.eval()
@@ -383,7 +392,7 @@ def eval(components, model, loader_test):
                 datapoints.update(comp(datapoints))
         tock = time.time()
         # assign params
-        model.set_param_val({"b":b.cpu().numpy()})
+        model.set_param_val({"b":b.cpu().numpy(), "d":d.cpu().numpy()})
         # assign vars
         x = datapoints["x_rnd"]
         for i in range(len(model.vars["x"])):

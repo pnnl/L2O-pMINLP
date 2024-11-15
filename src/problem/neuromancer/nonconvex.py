@@ -13,7 +13,7 @@ class penaltyLoss(nn.Module):
     """
     def __init__(self, input_keys, num_var, num_ineq, penalty_weight=50, output_key="loss"):
         super().__init__()
-        self.b_key, self.x_key = input_keys
+        self.b_key, self.d_key, self.x_key = input_keys
         self.output_key = output_key
         self.penalty_weight = penalty_weight
         self.device = None
@@ -62,9 +62,13 @@ class penaltyLoss(nn.Module):
         calculate constraints violation
         """
         # get values
-        x, b = input_dict[self.x_key], input_dict[self.b_key]
+        x, b, d = input_dict[self.x_key], input_dict[self.b_key], input_dict[self.d_key]
+        # perturb A
+        perturbed_A = self.A.unsqueeze(0).expand(x.shape[0], -1, -1).clone()
+        perturbed_A[:,:,0] += d
+        perturbed_A[:,:,1] -= d
         # constraints
-        lhs = torch.einsum("mn,bn->bm", self.A, x) # Ax
+        lhs = torch.einsum("bmn,bn->bm", perturbed_A, x) # Ax
         rhs = b # b
         violation = (torch.relu(lhs - rhs)**2).sum(dim=1) # Ax<=b
         return violation
@@ -85,7 +89,8 @@ if __name__ == "__main__":
 
     # data sample from uniform distribution
     b_samples = torch.from_numpy(np.random.uniform(-1, 1, size=(num_data, num_ineq))).float()
-    data = {"b":b_samples}
+    d_samples = torch.from_numpy(np.random.uniform(-0.01, 0.01, size=(num_data, num_ineq))).float()
+    data = {"b":b_samples, "d":d_samples}
     # data split
     from src.utlis import data_split
     data_train, data_test, data_dev = data_split(data, test_size=test_size, val_size=val_size)
@@ -100,13 +105,13 @@ if __name__ == "__main__":
 
     # define neural architecture for the solution map smap(p) -> x
     import neuromancer as nm
-    func = nm.modules.blocks.MLP(insize=num_ineq, outsize=num_var, bias=True,
+    func = nm.modules.blocks.MLP(insize=num_ineq*2, outsize=num_var, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[10]*4)
-    components = nn.ModuleList([nm.system.Node(func, ["b"], ["x"], name="smap")])
+    components = nn.ModuleList([nm.system.Node(func, ["b", "d"], ["x"], name="smap")])
 
     # build neuromancer problem
-    loss_fn = penaltyLoss(["b", "x"], num_var, num_ineq)
+    loss_fn = penaltyLoss(["b", "d", "x"], num_var, num_ineq)
 
     # training
     lr = 0.001    # step size for gradient descent
@@ -129,6 +134,8 @@ if __name__ == "__main__":
     from src.utlis import nm_test_solve
     print("neuroMANCER:")
     datapoint = {"b": b_samples[:1],
+                 "d": d_samples[:1],
                  "name":"test"}
-    model.set_param_val({"b":b_samples[0].cpu().numpy()})
+    model.set_param_val({"b":b_samples[0].cpu().numpy(),
+                         "d":d_samples[0].cpu().numpy()})
     nm_test_solve("x", components, datapoint, model)

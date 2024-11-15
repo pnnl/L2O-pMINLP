@@ -12,7 +12,7 @@ import pandas as pd
 import torch
 from torch import nn
 from tqdm import tqdm
-import submitit
+#import submitit
 
 # set parser
 parser = argparse.ArgumentParser()
@@ -53,7 +53,8 @@ for size in [100, 200, 500, 1000]:
     config.lr = 1e-3                        # learning rate
     # data sample from uniform distribution
     b_samples = torch.from_numpy(np.random.uniform(-1, 1, size=(num_data, num_ineq))).float()
-    data = {"b":b_samples}
+    d_samples = torch.from_numpy(np.random.uniform(-0.1, 0.1, size=(num_data, num_ineq))).float()
+    data = {"b":b_samples, "d":d_samples}
     # data split
     from src.utlis import data_split
     data_train, data_test, data_val = data_split(data, test_size=test_size, val_size=val_size)
@@ -66,7 +67,7 @@ for size in [100, 200, 500, 1000]:
     loader_val   = DataLoader(data_val, config.batch_size, num_workers=0,
                               collate_fn=data_val.collate_fn, shuffle=False)
     # submit experiments
-    #run.nonconvex.rndCls(loader_train, loader_test, loader_val, config, penalty_growth=True)
+    run.nonconvex.rndCls(loader_train, loader_test, loader_val, config, penalty_growth=True)
     #run.nonconvex.rndThd(loader_train, loader_test, loader_val, config, penalty_growth=True)
     #run.nonconvex.rndSte(loader_train, loader_test, loader_val, config, penalty_growth=True)
     # rounding classification
@@ -128,7 +129,8 @@ for penalty in [1, 5, 10, 50, 500, 1000]:
         config.lr = 1e-3                        # learning rate
         # data sample from uniform distribution
         b_samples = torch.from_numpy(np.random.uniform(-1, 1, size=(num_data, num_ineq))).float()
-        data = {"b":b_samples}
+        d_samples = torch.from_numpy(np.random.uniform(-0.1, 0.1, size=(num_data, num_ineq))).float()
+        data = {"b":b_samples, "d":d_samples}
         # data split
         from src.utlis import data_split
         data_train, data_test, data_val = data_split(data, test_size=test_size, val_size=val_size)
