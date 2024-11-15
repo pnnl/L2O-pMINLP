@@ -66,7 +66,7 @@ class penaltyLoss(nn.Module):
         # constraints
         lhs = torch.einsum("mn,bn->bm", self.A, x) # Ax
         rhs = b # b
-        violation = torch.relu(lhs - rhs).sum(dim=1) # Ax<=b
+        violation = (torch.relu(lhs - rhs)**2).sum(dim=1) # Ax<=b
         return violation
 
 
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     num_data = 5000   # number of data
     test_size = 1000  # number of test size
     val_size = 1000   # number of validation size
-    
+
     # data sample from uniform distribution
     b_samples = torch.from_numpy(np.random.uniform(-1, 1, size=(num_data, num_ineq))).float()
     data = {"b":b_samples}
