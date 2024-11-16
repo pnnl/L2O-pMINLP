@@ -225,6 +225,10 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     df = eval(components, model, loader_test)
     if penalty_growth:
         df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-g_new.csv")
+    elif config.samples == 800:
+        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-s_new.csv")
+    elif config.samples == 8000:
+        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-l_new.csv")
     else:
         df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}_new.csv")
 
@@ -266,6 +270,10 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     df = eval(components, model, loader_test)
     if penalty_growth:
         df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-g_new.csv")
+    elif config.samples == 800:
+        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-s_new.csv")
+    elif config.samples == 8000:
+        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-l_new.csv")
     else:
         df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}_new.csv")
 
@@ -385,6 +393,10 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     df = eval(components, model, loader_test)
     if penalty_growth:
         df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-g_new.csv")
+    elif config.samples == 800:
+        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-s_new.csv")
+    elif config.samples == 8000:
+        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-l_new.csv")
     else:
         df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}_new.csv")
 
