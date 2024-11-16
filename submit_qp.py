@@ -32,7 +32,7 @@ parser.add_argument("--size",
 parser.add_argument("--samples",
                     type=int,
                     default=8000,
-                    choices=[800, 8000, 80000],
+                    choices=[8000],
                     help="problem type")
 config = parser.parse_args()
 
