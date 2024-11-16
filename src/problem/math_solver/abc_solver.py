@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable
 import copy
 
+import numpy as np
 from pyomo import environ as pe
 from pyomo import opt as po
 from pyomo.core import TransformationFactory
@@ -112,7 +113,7 @@ class abcParamSolver(ABC):
         """
         Calculate the magnitude of violations for each constraint
         """
-        return [self._constraint_violation(constr) for constr in self.model.cons.values()]
+        return np.array([self._constraint_violation(constr) for constr in self.model.cons.values()])
 
     def _constraint_violation(self, constr):
         """
