@@ -50,7 +50,6 @@ for size in [1000, 3000, 10000]:
     config.hlayers_rnd = 4                  # number of hidden layers for solution mapping
     config.hsize = hsize_dict[config.size]  # width of hidden layers for solution mapping
     config.lr = 1e-3                        # learning rate
-    config.penalty = 100                    # penalty weight
     # parameters as input data
     p_low, p_high = 1.0, 8.0
     a_low, a_high = 0.5, 4.5
@@ -130,7 +129,6 @@ for penalty in [1, 5, 10, 50, 500, 1000]:
         config.hlayers_rnd = 4                  # number of hidden layers for solution mapping
         config.hsize = hsize_dict[config.size]  # width of hidden layers for solution mapping
         config.lr = 1e-3                        # learning rate
-        config.penalty = 100                    # penalty weight
         # parameters as input data
         p_low, p_high = 1.0, 8.0
         a_low, a_high = 0.5, 4.5
