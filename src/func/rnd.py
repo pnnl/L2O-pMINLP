@@ -226,8 +226,6 @@ class roundThresholdModel(roundModel):
         # update rounding for integer variables int(x) = floor(x) + bin(h)
         x_rnd[:, int_ind] = x_flr + bnr
         ###################### binary ######################
-        # floor(x) = 0 with grad
-        x_flr = self.floor(x[:,bin_ind])
         # get threshold
         v = threshold[:,bin_ind]
         # fractional part is itself
@@ -235,7 +233,7 @@ class roundThresholdModel(roundModel):
         # bin(x, v): binary 0 for floor, 1 for ceil
         bnr = self.bin(x_frc, v)
         # update rounding for binary variables int(x) = bin(x, v)
-        x_rnd[:, bin_ind] = x_flr + bnr
+        x_rnd[:, bin_ind] = bnr
         return x_rnd
 
 
