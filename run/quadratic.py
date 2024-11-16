@@ -29,7 +29,7 @@ def exact(loader_test, config):
     from src.problem import msQuadratic
     model = msQuadratic(num_var, num_ineq, timelimit=1000)
     # init df
-    params, sols, objvals, conviols, elapseds = [], [], [], [], []
+    params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     # go through test data
     for b in tqdm(loader_test.dataset.datadict["b"][:100]):
         # set params
@@ -42,23 +42,31 @@ def exact(loader_test, config):
             params.append(list(b.cpu().numpy()))
             sols.append(list(list(xval.values())[0].values()))
             objvals.append(objval)
-            conviols.append(sum(model.cal_violation()))
+            viol = model.cal_violation()
+            mean_viols.append(np.mean(viol))
+            max_viols.append(np.max(viol))
+            num_viols.append(np.sum(viol > 1e-6))
         except:
             # infeasible
             params.append(list(b.cpu().numpy()))
             sols.append(None)
             objvals.append(None)
-            conviols.append(None)
+            mean_viols.append(None)
+            max_viols.append(None)
+            num_viols.append(None)
         tock = time.time()
         elapseds.append(tock - tick)
-    df = pd.DataFrame({"Param":params,
-                       "Sol":sols,
+    print(len(params), len(sols), len(objvals), len(mean_viols), len(max_viols), len(num_viols), len(elapseds))
+    df = pd.DataFrame({"Param": params,
+                       "Sol": sols,
                        "Obj Val": objvals,
-                       "Constraints Viol": conviols,
+                       "Mean Violation": mean_viols,
+                       "Max Violation": max_viols,
+                       "Num Violations": num_viols,
                        "Elapsed Time": elapseds})
     time.sleep(1)
     print(df.describe())
-    print("Number of infeasible solution: {}".format(np.sum(df["Constraints Viol"] > 0)))
+    print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
     df.to_csv(f"result/cq_exact_{num_var}-{num_ineq}.csv")
 
@@ -77,7 +85,7 @@ def relRnd(loader_test, config):
     from src.problem import msQuadratic
     model = msQuadratic(num_var, num_ineq, timelimit=1000)
     # init df
-    params, sols, objvals, conviols, elapseds = [], [], [], [], []
+    params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     # go through test data
     for b in tqdm(loader_test.dataset.datadict["b"][:100]):
         # set params
@@ -93,23 +101,30 @@ def relRnd(loader_test, config):
             params.append(list(b.cpu().numpy()))
             sols.append(list(list(xval.values())[0].values()))
             objvals.append(objval)
-            conviols.append(sum(model.cal_violation()))
+            viol = model.cal_violation()
+            mean_viols.append(np.mean(viol))
+            max_viols.append(np.max(viol))
+            num_viols.append(np.sum(viol > 1e-6))
         except:
             # infeasible
             params.append(list(b.cpu().numpy()))
             sols.append(None)
             objvals.append(None)
-            conviols.append(None)
+            mean_viols.append(None)
+            max_viols.append(None)
+            num_viols.append(None)
         tock = time.time()
         elapseds.append(tock - tick)
-    df = pd.DataFrame({"Param":params,
-                       "Sol":sols,
+    df = pd.DataFrame({"Param": params,
+                       "Sol": sols,
                        "Obj Val": objvals,
-                       "Constraints Viol": conviols,
+                       "Mean Violation": mean_viols,
+                       "Max Violation": max_viols,
+                       "Num Violations": num_viols,
                        "Elapsed Time": elapseds})
     time.sleep(1)
     print(df.describe())
-    print("Number of infeasible solutions: {}".format(np.sum(df["Constraints Viol"] > 0)))
+    print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
     df.to_csv(f"result/cq_rel_{num_var}-{num_ineq}.csv")
 
@@ -128,7 +143,7 @@ def root(loader_test, config):
     model = msQuadratic(num_var, num_ineq, timelimit=1000)
     model_heur = model.first_solution_heuristic(nodes_limit=1)
     # init df
-    params, sols, objvals, conviols, elapseds = [], [], [], [], []
+    params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     # go through test data
     for b in tqdm(loader_test.dataset.datadict["b"][:100]):
         # set params
@@ -141,23 +156,30 @@ def root(loader_test, config):
             params.append(list(b.cpu().numpy()))
             sols.append(list(list(xval.values())[0].values()))
             objvals.append(objval)
-            conviols.append(sum(model_heur.cal_violation()))
+            viol = model_heur.cal_violation()
+            mean_viols.append(np.mean(viol))
+            max_viols.append(np.max(viol))
+            num_viols.append(np.sum(viol > 1e-6))
         except:
             # infeasible
             params.append(list(b.cpu().numpy()))
             sols.append(None)
             objvals.append(None)
-            conviols.append(None)
+            mean_viols.append(None)
+            max_viols.append(None)
+            num_viols.append(None)
         tock = time.time()
         elapseds.append(tock - tick)
-    df = pd.DataFrame({"Param":params,
-                       "Sol":sols,
+    df = pd.DataFrame({"Param": params,
+                       "Sol": sols,
                        "Obj Val": objvals,
-                       "Constraints Viol": conviols,
+                       "Mean Violation": mean_viols,
+                       "Max Violation": max_viols,
+                       "Num Violations": num_viols,
                        "Elapsed Time": elapseds})
     time.sleep(1)
     print(df.describe())
-    print("Number of infeasible solution: {}".format(np.sum(df["Constraints Viol"] > 0)))
+    print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
     df.to_csv(f"result/cq_root_{num_var}-{num_ineq}.csv")
 
@@ -286,7 +308,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
     from src.heuristic import naive_round
-    params, sols, objvals, conviols, elapseds = [], [], [], [], []
+    params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     for b in tqdm(loader_test.dataset.datadict["b"][:100]):
         # data point as tensor
         datapoints = {"b": torch.unsqueeze(b, 0).to("cuda"),
@@ -310,16 +332,21 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
         params.append(list(b.cpu().numpy()))
         sols.append(list(list(xval.values())[0].values()))
         objvals.append(objval)
-        conviols.append(sum(model.cal_violation()))
+        viol = model.cal_violation()
+        mean_viols.append(np.mean(viol))
+        max_viols.append(np.max(viol))
+        num_viols.append(np.sum(viol > 1e-6))
         elapseds.append(tock - tick)
-    df = pd.DataFrame({"Param":params,
-                       "Sol":sols,
+    df = pd.DataFrame({"Param": params,
+                       "Sol": sols,
                        "Obj Val": objvals,
-                       "Constraints Viol": conviols,
+                       "Mean Violation": mean_viols,
+                       "Max Violation": max_viols,
+                       "Num Violations": num_viols,
                        "Elapsed Time": elapseds})
     time.sleep(1)
     print(df.describe())
-    print("Number of infeasible solution: {}".format(np.sum(df["Constraints Viol"] > 0)))
+    print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     if penalty_growth:
         df.to_csv(f"result/cq_lrn{penalty_weight}_{num_var}-{num_ineq}-g.csv")
     else:
@@ -367,7 +394,7 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
 
 
 def eval(components, model, loader_test):
-    params, sols, objvals, conviols, elapseds = [], [], [], [], []
+    params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     for b in tqdm(loader_test.dataset.datadict["b"][:100]):
         # data point as tensor
         datapoints = {"b": torch.unsqueeze(b, 0).to("cuda"),
@@ -390,14 +417,18 @@ def eval(components, model, loader_test):
         params.append(list(b.cpu().numpy()))
         sols.append(list(list(xval.values())[0].values()))
         objvals.append(objval)
-        conviols.append(sum(model.cal_violation()))
+        viol = model.cal_violation()
+        mean_viols.append(np.mean(viol))
+        max_viols.append(np.max(viol))
+        num_viols.append(np.sum(viol > 1e-6))
         elapseds.append(tock - tick)
-    df = pd.DataFrame({"Param":params,
-                       "Sol":sols,
+    df = pd.DataFrame({"Param": params,
+                       "Sol": sols,
                        "Obj Val": objvals,
-                       "Constraints Viol": conviols,
+                       "Mean Violation": mean_viols,
+                       "Max Violation": max_viols,
+                       "Num Violations": num_viols,
                        "Elapsed Time": elapseds})
-    time.sleep(1)
     print(df.describe())
-    print("Number of infeasible solution: {}".format(np.sum(df["Constraints Viol"] > 0)))
+    print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     return df
