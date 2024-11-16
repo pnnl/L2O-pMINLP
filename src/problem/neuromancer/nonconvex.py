@@ -70,7 +70,7 @@ class penaltyLoss(nn.Module):
         # constraints
         lhs = torch.einsum("bmn,bn->bm", perturbed_A, x) # Ax
         rhs = b # b
-        violation = (torch.relu(lhs - rhs)**2).sum(dim=1) # Ax<=b
+        violation = (torch.relu(lhs - rhs)).sum(dim=1) # Ax<=b
         return violation
 
 
