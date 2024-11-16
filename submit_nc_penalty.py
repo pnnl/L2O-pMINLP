@@ -67,7 +67,7 @@ for size in [100, 200, 500, 1000]:
     loader_val   = DataLoader(data_val, config.batch_size, num_workers=0,
                               collate_fn=data_val.collate_fn, shuffle=False)
     # submit experiments
-    run.nonconvex.rndCls(loader_train, loader_test, loader_val, config, penalty_growth=True)
+    #run.nonconvex.rndCls(loader_train, loader_test, loader_val, config, penalty_growth=True)
     #run.nonconvex.rndThd(loader_train, loader_test, loader_val, config, penalty_growth=True)
     #run.nonconvex.rndSte(loader_train, loader_test, loader_val, config, penalty_growth=True)
     # rounding classification
