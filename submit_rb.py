@@ -112,43 +112,85 @@ executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2
                            gpus_per_node=1)
 job = executor.submit(run.rosenbrock.root, loader_test, config)
 print(f"Submitted job with ID: {job.job_id}")
-# rounding classification
-executor = submitit.AutoExecutor(folder="logs")
-executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
-                                                        "constraint": "v100l"},
-                           timeout_min=30,
-                           mem_gb=64,
-                           cpus_per_task=16,
-                           gpus_per_node=1)
-job = executor.submit(run.rosenbrock.rndCls, loader_train, loader_test, loader_val, config)
-print(f"Submitted job with ID: {job.job_id}")
-# learnable threshold
-executor = submitit.AutoExecutor(folder="logs")
-executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
-                                                        "constraint": "v100l"},
-                           timeout_min=30,
-                           mem_gb=64,
-                           cpus_per_task=16,
-                           gpus_per_node=1)
-job = executor.submit(run.rosenbrock.rndThd, loader_train, loader_test, loader_val, config)
-print(f"Submitted job with ID: {job.job_id}")
-# rounding after learning
-executor = submitit.AutoExecutor(folder="logs")
-executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
-                                                        "constraint": "v100l"},
-                           timeout_min=30,
-                           mem_gb=64,
-                           cpus_per_task=16,
-                           gpus_per_node=1)
-job = executor.submit(run.rosenbrock.lrnRnd, loader_train, loader_test, loader_val, config)
-print(f"Submitted job with ID: {job.job_id}")
-# STE Rounding
-executor = submitit.AutoExecutor(folder="logs")
-executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
-                                                        "constraint": "v100l"},
-                           timeout_min=30,
-                           mem_gb=64,
-                           cpus_per_task=16,
-                           gpus_per_node=1)
-job = executor.submit(run.rosenbrock.rndSte, loader_train, loader_test, loader_val, config)
-print(f"Submitted job with ID: {job.job_id}")
+if config.size <= 300:
+    # rounding classification
+    executor = submitit.AutoExecutor(folder="logs")
+    executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
+                                                            "constraint": "v100l"},
+                               timeout_min=30,
+                               mem_gb=64,
+                               cpus_per_task=16,
+                               gpus_per_node=1)
+    job = executor.submit(run.rosenbrock.rndCls, loader_train, loader_test, loader_val, config)
+    print(f"Submitted job with ID: {job.job_id}")
+    # learnable threshold
+    executor = submitit.AutoExecutor(folder="logs")
+    executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
+                                                            "constraint": "v100l"},
+                               timeout_min=30,
+                               mem_gb=64,
+                               cpus_per_task=16,
+                               gpus_per_node=1)
+    job = executor.submit(run.rosenbrock.rndThd, loader_train, loader_test, loader_val, config)
+    print(f"Submitted job with ID: {job.job_id}")
+    # rounding after learning
+    executor = submitit.AutoExecutor(folder="logs")
+    executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
+                                                            "constraint": "v100l"},
+                               timeout_min=30,
+                               mem_gb=64,
+                               cpus_per_task=16,
+                               gpus_per_node=1)
+    job = executor.submit(run.rosenbrock.lrnRnd, loader_train, loader_test, loader_val, config)
+    print(f"Submitted job with ID: {job.job_id}")
+    # STE Rounding
+    executor = submitit.AutoExecutor(folder="logs")
+    executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
+                                                            "constraint": "v100l"},
+                               timeout_min=30,
+                               mem_gb=64,
+                               cpus_per_task=16,
+                               gpus_per_node=1)
+    job = executor.submit(run.rosenbrock.rndSte, loader_train, loader_test, loader_val, config)
+    print(f"Submitted job with ID: {job.job_id}")
+else:
+    # rounding classification
+    executor = submitit.AutoExecutor(folder="logs")
+    executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
+                                                            "constraint": "v100l"},
+                               timeout_min=180,
+                               mem_gb=64,
+                               cpus_per_task=16,
+                               gpus_per_node=1)
+    job = executor.submit(run.rosenbrock.rndCls, loader_train, loader_test, loader_val, config)
+    print(f"Submitted job with ID: {job.job_id}")
+    # learnable threshold
+    executor = submitit.AutoExecutor(folder="logs")
+    executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
+                                                            "constraint": "v100l"},
+                               timeout_min=30,
+                               mem_gb=64,
+                               cpus_per_task=16,
+                               gpus_per_node=1)
+    job = executor.submit(run.rosenbrock.rndThd, loader_train, loader_test, loader_val, config)
+    print(f"Submitted job with ID: {job.job_id}")
+    # rounding after learning
+    executor = submitit.AutoExecutor(folder="logs")
+    executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
+                                                            "constraint": "v100l"},
+                               timeout_min=180,
+                               mem_gb=64,
+                               cpus_per_task=16,
+                               gpus_per_node=1)
+    job = executor.submit(run.rosenbrock.lrnRnd, loader_train, loader_test, loader_val, config)
+    print(f"Submitted job with ID: {job.job_id}")
+    # STE Rounding
+    executor = submitit.AutoExecutor(folder="logs")
+    executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
+                                                            "constraint": "v100l"},
+                               timeout_min=180,
+                               mem_gb=64,
+                               cpus_per_task=16,
+                               gpus_per_node=1)
+    job = executor.submit(run.rosenbrock.rndSte, loader_train, loader_test, loader_val, config)
+    print(f"Submitted job with ID: {job.job_id}")

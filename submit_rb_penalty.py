@@ -79,7 +79,7 @@ for size in [1000, 3000, 10000]:
     executor = submitit.AutoExecutor(folder="logs")
     executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
                                                             "constraint": "v100l"},
-                               timeout_min=30,
+                               timeout_min=180,
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
@@ -89,7 +89,7 @@ for size in [1000, 3000, 10000]:
     executor = submitit.AutoExecutor(folder="logs")
     executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
                                                             "constraint": "v100l"},
-                               timeout_min=30,
+                               timeout_min=180,
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
@@ -99,7 +99,7 @@ for size in [1000, 3000, 10000]:
     executor = submitit.AutoExecutor(folder="logs")
     executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
                                                             "constraint": "v100l"},
-                               timeout_min=30,
+                               timeout_min=180,
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
@@ -159,7 +159,7 @@ for penalty in [1, 5, 10, 50, 500, 1000]:
         executor = submitit.AutoExecutor(folder="logs")
         executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
                                                                 "constraint": "v100l"},
-                                   timeout_min=30,
+                                   timeout_min=180,
                                    mem_gb=64,
                                    cpus_per_task=16,
                                    gpus_per_node=1)
@@ -169,7 +169,7 @@ for penalty in [1, 5, 10, 50, 500, 1000]:
         executor = submitit.AutoExecutor(folder="logs")
         executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
                                                                 "constraint": "v100l"},
-                                   timeout_min=30,
+                                   timeout_min=180,
                                    mem_gb=64,
                                    cpus_per_task=16,
                                    gpus_per_node=1)
@@ -179,7 +179,7 @@ for penalty in [1, 5, 10, 50, 500, 1000]:
         executor = submitit.AutoExecutor(folder="logs")
         executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
                                                                 "constraint": "v100l"},
-                                   timeout_min=30,
+                                   timeout_min=180,
                                    mem_gb=64,
                                    cpus_per_task=16,
                                    gpus_per_node=1)
