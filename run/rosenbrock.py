@@ -38,10 +38,10 @@ def exact(loader_test, config):
         model.set_param_val({"p":p, "a":a})
         # solve
         tick = time.time()
+        params.append(list(p)+list(a))
         try:
             xval, objval = model.solve("scip")
             # eval
-            params.append(list(p)+list(a))
             sols.append(list(list(xval.values())[0].values()))
             objvals.append(objval)
             viol = model.cal_violation()
@@ -50,7 +50,6 @@ def exact(loader_test, config):
             num_viols.append(np.sum(viol > 1e-6))
         except:
             # infeasible
-            params.append(list(p)+list(a))
             sols.append(None)
             objvals.append(None)
             mean_viols.append(None)
@@ -96,11 +95,11 @@ def relRnd(loader_test, config):
         model_rel = model.relax()
         # solve
         tick = time.time()
+        params.append(list(p)+list(a))
         try:
             xval_rel, _ = model_rel.solve("scip")
             xval, objval = naive_round(xval_rel, model)
             # eval
-            params.append(list(p)+list(a))
             sols.append(list(list(xval.values())[0].values()))
             objvals.append(objval)
             viol = model.cal_violation()
@@ -109,7 +108,6 @@ def relRnd(loader_test, config):
             num_viols.append(np.sum(viol > 1e-6))
         except:
             # infeasible
-            params.append(list(p)+list(a))
             sols.append(None)
             objvals.append(None)
             mean_viols.append(None)
@@ -155,10 +153,10 @@ def root(loader_test, config):
         model_heur.set_param_val({"p":p, "a":a})
         # solve
         tick = time.time()
+        params.append(list(p)+list(a))
         try:
             xval, objval = model_heur.solve("scip")
             # eval
-            params.append(list(p)+list(a))
             sols.append(list(list(xval.values())[0].values()))
             objvals.append(objval)
             viol = model_heur.cal_violation()
@@ -167,7 +165,6 @@ def root(loader_test, config):
             num_viols.append(np.sum(viol > 1e-6))
         except:
             # infeasible
-            params.append(list(p)+list(a))
             sols.append(None)
             objvals.append(None)
             mean_viols.append(None)

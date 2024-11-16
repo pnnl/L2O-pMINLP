@@ -38,10 +38,10 @@ def exact(loader_test, config):
         model.set_param_val({"b":b.cpu().numpy(), "d":d.cpu().numpy()})
         # solve
         tick = time.time()
+        params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
         try:
             xval, objval = model.solve("scip")
             # eval
-            params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
             sols.append(list(list(xval.values())[0].values()))
             objvals.append(objval)
             viol = model.cal_violation()
@@ -50,7 +50,6 @@ def exact(loader_test, config):
             num_viols.append(np.sum(viol > 1e-6))
         except:
             # infeasible
-            params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
             sols.append(None)
             objvals.append(None)
             mean_viols.append(None)
@@ -97,11 +96,11 @@ def relRnd(loader_test, config):
         model_rel = model.relax()
         # solve
         tick = time.time()
+        params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
         try:
             xval_rel, _ = model_rel.solve("scip")
             xval, objval = naive_round(xval_rel, model)
             # eval
-            params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
             sols.append(list(list(xval.values())[0].values()))
             objvals.append(objval)
             viol = model.cal_violation()
@@ -110,7 +109,6 @@ def relRnd(loader_test, config):
             num_viols.append(np.sum(viol > 1e-6))
         except:
             # infeasible
-            params.append(list(b.cpu().numpy()))
             sols.append(None)
             objvals.append(None)
             mean_viols.append(None)
@@ -155,10 +153,10 @@ def root(loader_test, config):
         model_heur.set_param_val({"b":b.cpu().numpy(), "d":d.cpu().numpy()})
         # solve
         tick = time.time()
+        params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
         try:
             xval, objval = model_heur.solve("scip")
             # eval
-            params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
             sols.append(list(list(xval.values())[0].values()))
             objvals.append(objval)
             viol = model_heur.cal_violation()
@@ -167,7 +165,6 @@ def root(loader_test, config):
             num_viols.append(np.sum(viol > 1e-6))
         except:
             # infeasible
-            params.append(list(b.cpu().numpy()))
             sols.append(None)
             objvals.append(None)
             mean_viols.append(None)
