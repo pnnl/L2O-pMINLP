@@ -227,7 +227,7 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
         df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-g_new.csv")
     elif config.samples == 800:
         df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-s_new.csv")
-    elif config.samples == 8000:
+    elif config.samples == 80000:
         df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-l_new.csv")
     else:
         df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}_new.csv")
