@@ -1,9 +1,11 @@
 import os
+import glob
 import numpy as np
+import pandas as pd
 
 # dir and file
 data_path = "./result/"
-csv_files = glob.glob(os.path.join(data_path, "cq_*.csv"))
+csv_files = glob.glob(os.path.join(data_path, "nc_*.csv"))
 
 # loop through each CSV file and process it
 for file in csv_files:
