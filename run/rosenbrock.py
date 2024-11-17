@@ -68,7 +68,7 @@ def exact(loader_test, config):
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
-    df.to_csv(f"result/rb_exact_{num_blocks}_new.csv")
+    df.to_csv(f"result/rb_exact_{num_blocks}.csv")
 
 
 def relRnd(loader_test, config):
@@ -126,7 +126,7 @@ def relRnd(loader_test, config):
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
-    df.to_csv(f"result/rb_rel_{num_blocks}_new.csv")
+    df.to_csv(f"result/rb_rel_{num_blocks}.csv")
 
 
 def root(loader_test, config):
@@ -183,7 +183,7 @@ def root(loader_test, config):
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
-    df.to_csv(f"result/rb_root_{num_blocks}_new.csv")
+    df.to_csv(f"result/rb_root_{num_blocks}.csv")
 
 
 def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
@@ -224,13 +224,13 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # eval
     df = eval(components, model, loader_test)
     if penalty_growth:
-        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-g_new.csv")
+        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-g.csv")
     elif config.samples == 800:
-        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-s_new.csv")
+        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-s.csv")
     elif config.samples == 80000:
-        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-l_new.csv")
+        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-l.csv")
     else:
-        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}_new.csv")
+        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}.csv")
 
 def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # random seed
@@ -269,13 +269,13 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # eval
     df = eval(components, model, loader_test)
     if penalty_growth:
-        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-g_new.csv")
+        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-g.csv")
     elif config.samples == 800:
-        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-s_new.csv")
+        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-s.csv")
     elif config.samples == 8000:
-        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-l_new.csv")
+        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-l.csv")
     else:
-        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}_new.csv")
+        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}.csv")
 
 def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # random seed
@@ -352,9 +352,9 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     if penalty_growth:
-        df.to_csv(f"result/rb_lrn{penalty_weight}_{num_blocks}-g_new.csv")
+        df.to_csv(f"result/rb_lrn{penalty_weight}_{num_blocks}-g.csv")
     else:
-        df.to_csv(f"result/rb_lrn{penalty_weight}_{num_blocks}_new.csv")
+        df.to_csv(f"result/rb_lrn{penalty_weight}_{num_blocks}.csv")
 
 def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # random seed
@@ -392,13 +392,13 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # eval
     df = eval(components, model, loader_test)
     if penalty_growth:
-        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-g_new.csv")
+        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-g.csv")
     elif config.samples == 800:
-        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-s_new.csv")
+        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-s.csv")
     elif config.samples == 8000:
-        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-l_new.csv")
+        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-l.csv")
     else:
-        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}_new.csv")
+        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}.csv")
 
 
 def eval(components, model, loader_test):

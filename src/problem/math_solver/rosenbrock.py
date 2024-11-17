@@ -10,8 +10,6 @@ from src.problem.math_solver import abcParamSolver
 class rosenbrock(abcParamSolver):
     def __init__(self, steepness, num_blocks, timelimit=None):
         super().__init__(timelimit=timelimit)
-        # check value
-        assert num_blocks % 5 == 0, "num_blocks must be divisible by 5"
         # create model
         m = pe.ConcreteModel()
         # parameters
@@ -23,25 +21,23 @@ class rosenbrock(abcParamSolver):
             # integer variables
             m.x[2*i+1].domain = pe.Integers
         # objective
-        obj = sum((m.a[j] - m.x[2*j]) ** 2 + \
-                   steepness * (m.x[2*j+1] - m.x[2*j] ** 2) ** 2 for j in range(num_blocks))
+        obj = sum((m.a[i] - m.x[2*i]) ** 2 + \
+                   steepness * (m.x[2*i+1] - m.x[2*i] ** 2) ** 2 for i in range(num_blocks))
         m.obj = pe.Objective(sense=pe.minimize, expr=obj)
         # constraints
         m.cons = pe.ConstraintList()
-        m.cons.add(sum(m.x[2*j+1] for j in range(num_blocks)) >= num_blocks * m.p / 2)
-        m.cons.add(sum(m.x[2*j] ** 2 for j in range(num_blocks)) <= num_blocks * m.p)
+        m.cons.add(sum(m.x[2*i+1] for i in range(num_blocks)) >= num_blocks * m.p / 2)
+        m.cons.add(sum(m.x[2*i] ** 2 for i in range(num_blocks)) <= num_blocks * m.p)
         rng = np.random.RandomState(17)
-        b = rng.normal(scale=1, size=(num_blocks//5, 5))
+        b = rng.normal(scale=1, size=(num_blocks))
         q = rng.normal(scale=1, size=(num_blocks))
-        for i in range(num_blocks//5):
-            m.cons.add(sum(b[i,j] * m.x[10*i+2*j] for j in range(5)) <= 0)
-        m.cons.add(sum(q[j] * m.x[2*j+1] for j in range(num_blocks)) <= 0)
+        m.cons.add(sum(b[i] * m.x[2*i] for i in range(num_blocks)) <= 0)
+        m.cons.add(sum(q[i] * m.x[2*i+1] for i in range(num_blocks)) <= 0)
         # attribute
         self.model = m
         self.params ={"p":m.p, "a":m.a}
         self.vars = {"x":m.x}
         self.cons = m.cons
-
 
 if __name__ == "__main__":
 
