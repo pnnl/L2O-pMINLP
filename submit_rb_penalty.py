@@ -82,7 +82,7 @@ for size in [1000, 3000, 10000]:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.rosenbrock.rndCls, loader_train, loader_test, loader_val, config)
+    job = executor.submit(run.rosenbrock.rndCls, loader_train, loader_test, loader_val, config, True)
     print(f"Submitted job with ID: {job.job_id}")
     # learnable threshold
     executor = submitit.AutoExecutor(folder="logs")
@@ -92,7 +92,7 @@ for size in [1000, 3000, 10000]:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.rosenbrock.rndThd, loader_train, loader_test, loader_val, config)
+    job = executor.submit(run.rosenbrock.rndThd, loader_train, loader_test, loader_val, config, True)
     print(f"Submitted job with ID: {job.job_id}")
     # STE Rounding
     executor = submitit.AutoExecutor(folder="logs")
@@ -102,7 +102,7 @@ for size in [1000, 3000, 10000]:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run.rosenbrock.rndSte, loader_train, loader_test, loader_val, config)
+    job = executor.submit(run.rosenbrock.rndSte, loader_train, loader_test, loader_val, config, True)
     print(f"Submitted job with ID: {job.job_id}")
 
 for penalty in [1, 5, 10, 50, 500, 1000]:
