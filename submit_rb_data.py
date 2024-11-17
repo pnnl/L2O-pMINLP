@@ -36,7 +36,7 @@ config.lr = 1e-3                        # learning rate
 config.penalty = 100                    # penalty weight
 config.penalty = 100
 
-def run_rndCls(config):
+def run_rndCls(config, num_blocks, train_size, test_size, val_size):
     # parameters as input data
     p_low, p_high = 1.0, 8.0
     a_low, a_high = 0.5, 4.5
@@ -60,7 +60,7 @@ def run_rndCls(config):
     # run
     run.rosenbrock.rndCls(loader_train, loader_test, loader_val, config)
 
-def run_rndThd(config):
+def run_rndThd(config, num_blocks, train_size, test_size, val_size):
     # parameters as input data
     p_low, p_high = 1.0, 8.0
     a_low, a_high = 0.5, 4.5
@@ -84,7 +84,7 @@ def run_rndThd(config):
     # run
     run.rosenbrock.rndThd(loader_train, loader_test, loader_val, config)
 
-def run_rndSte(config):
+def run_rndSte(config, num_blocks, train_size, test_size, val_size):
     # parameters as input data
     p_low, p_high = 1.0, 8.0
     a_low, a_high = 0.5, 4.5
@@ -125,9 +125,9 @@ for sample in [800, 80000]:
     test_size = 100                  # number of test size
     val_size = 1000                  # number of validation size
     # submit experiments
-    #run_rndCls(config)
-    #run_rndThd(config)
-    #run_rndSte(config)
+    #run_rndCls(config, num_blocks, train_size, test_size, val_size)
+    #run_rndThd(config, num_blocks, train_size, test_size, val_size)
+    #run_rndSte(config, num_blocks, train_size, test_size, val_size)
     # rounding classification
     executor = submitit.AutoExecutor(folder="logs")
     executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
@@ -136,7 +136,7 @@ for sample in [800, 80000]:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run_rndCls, config)
+    job = executor.submit(run_rndCls, config, num_blocks, train_size, test_size, val_size)
     print(f"Submitted job with ID: {job.job_id}")
     # learnable threshold
     executor = submitit.AutoExecutor(folder="logs")
@@ -146,7 +146,7 @@ for sample in [800, 80000]:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run_rndThd, config)
+    job = executor.submit(run_rndThd, config, num_blocks, train_size, test_size, val_size)
     print(f"Submitted job with ID: {job.job_id}")
     # STE Rounding
     executor = submitit.AutoExecutor(folder="logs")
@@ -156,5 +156,5 @@ for sample in [800, 80000]:
                                mem_gb=64,
                                cpus_per_task=16,
                                gpus_per_node=1)
-    job = executor.submit(run_rndSte, config)
+    job = executor.submit(run_rndSte, config, num_blocks, train_size, test_size, val_size)
     print(f"Submitted job with ID: {job.job_id}")
