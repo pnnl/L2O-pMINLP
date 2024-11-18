@@ -71,9 +71,10 @@ for size in [1000, 3000, 10000]:
     loader_test = DataLoader(data_test, batch_size, num_workers=0, collate_fn=data_test.collate_fn, shuffle=False)
     loader_val = DataLoader(data_val, batch_size, num_workers=0, collate_fn=data_val.collate_fn, shuffle=True)
     # submit experiments
-    #run.rosenbrock.rndCls(loader_train, loader_test, loader_val, config)
-    #run.rosenbrock.rndThd(loader_train, loader_test, loader_val, config)
-    #run.rosenbrock.rndSte(loader_train, loader_test, loader_val, config)
+    #run.rosenbrock.rndCls(loader_train, loader_test, loader_val, config, True)
+    #run.rosenbrock.rndThd(loader_train, loader_test, loader_val, config, True)
+    #run.rosenbrock.rndSte(loader_train, loader_test, loader_val, config, True)
+    print(config)
     # rounding classification
     executor = submitit.AutoExecutor(folder="logs")
     executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
@@ -106,7 +107,6 @@ for size in [1000, 3000, 10000]:
     print(f"Submitted job with ID: {job.job_id}")
 
 for penalty in [1, 5, 10, 50, 500, 1000]:
-    config.penalty = penalty
     for size in [1000, 3000, 10000]:
         # random seed
         random.seed(42)
@@ -153,6 +153,7 @@ for penalty in [1, 5, 10, 50, 500, 1000]:
         #run.rosenbrock.rndCls(loader_train, loader_test, loader_val, config)
         #run.rosenbrock.rndThd(loader_train, loader_test, loader_val, config)
         #run.rosenbrock.rndSte(loader_train, loader_test, loader_val, config)
+        print(config)
         # rounding classification
         executor = submitit.AutoExecutor(folder="logs")
         executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",

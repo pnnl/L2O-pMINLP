@@ -17,6 +17,7 @@ import logging
 logging.getLogger("pyomo.core").setLevel(logging.ERROR)
 
 def exact(loader_test, config):
+    print(config)
     # random seed
     np.random.seed(42)
     torch.manual_seed(42)
@@ -71,6 +72,7 @@ def exact(loader_test, config):
 
 
 def relRnd(loader_test, config):
+    print(config)
     # random seed
     np.random.seed(42)
     torch.manual_seed(42)
@@ -128,6 +130,7 @@ def relRnd(loader_test, config):
 
 
 def root(loader_test, config):
+    print(config)
     # random seed
     np.random.seed(42)
     torch.manual_seed(42)
@@ -182,6 +185,7 @@ def root(loader_test, config):
 
 
 def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
+    print(config)
     # random seed
     np.random.seed(42)
     torch.manual_seed(42)
@@ -228,6 +232,7 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
 
 
 def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
+    print(config)
     # random seed
     np.random.seed(42)
     torch.manual_seed(42)
@@ -274,6 +279,7 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
 
 
 def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
+    print(config)
     # random seed
     np.random.seed(42)
     torch.manual_seed(42)
@@ -351,6 +357,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
 
 
 def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
+    print(config)
     # random seed
     np.random.seed(42)
     torch.manual_seed(42)

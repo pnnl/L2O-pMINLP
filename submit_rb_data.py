@@ -128,6 +128,7 @@ for sample in [800, 80000]:
     #run_rndCls(config, num_blocks, train_size, test_size, val_size)
     #run_rndThd(config, num_blocks, train_size, test_size, val_size)
     #run_rndSte(config, num_blocks, train_size, test_size, val_size)
+    print(config)
     # rounding classification
     executor = submitit.AutoExecutor(folder="logs")
     executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",

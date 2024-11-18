@@ -77,6 +77,7 @@ print("Convex Quadratic")
 #run.quadratic.rndThd(loader_train, loader_test, loader_val, config)
 #run.quadratic.lrnRnd(loader_train, loader_test, loader_val, config)
 #run.quadratic.rndSte(loader_train, loader_test, loader_val, config)
+print(config)
 if config.size <= 20:
     # exact solver
     executor = submitit.AutoExecutor(folder="logs")

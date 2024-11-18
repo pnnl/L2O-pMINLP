@@ -78,6 +78,7 @@ print("Simple Non-Convex")
 #run.nonconvex.rndThd(loader_train, loader_test, loader_val, config)
 #run.nonconvex.lrnRnd(loader_train, loader_test, loader_val, config)
 #run.nonconvex.rndSte(loader_train, loader_test, loader_val, config)
+print(config)
 if config.size <= 10:
     # exact solver
     executor = submitit.AutoExecutor(folder="logs")

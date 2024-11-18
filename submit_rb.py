@@ -82,6 +82,7 @@ print("Rosenbrock")
 #run.rosenbrock.rndThd(loader_train, loader_test, loader_val, config)
 #run.rosenbrock.lrnRnd(loader_train, loader_test, loader_val, config)
 #run.rosenbrock.rndSte(loader_train, loader_test, loader_val, config)
+print(config)
 # exact solver
 executor = submitit.AutoExecutor(folder="logs")
 executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
