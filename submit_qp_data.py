@@ -112,7 +112,7 @@ def run_rndSte(config, num_var, num_ineq, train_size, test_size, val_size):
     run.quadratic.rndSte(loader_train, loader_test, loader_val, config)
 
 # different sample size
-for sample in [800, 80000]:
+for sample in [800, 8000, 80000]:
     config.samples = sample
     # random seed
     random.seed(42)
