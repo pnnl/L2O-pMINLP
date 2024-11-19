@@ -340,7 +340,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
         # get solutions
         xval_rel, _ = model.get_val()
         xval, objval = naive_round(xval_rel, model)
-        params.append(list(b.cpu().numpy()))
+        params.append(list(b.cpu().numpy())+list(d.cpu().numpy())
         sols.append(list(list(xval.values())[0].values()))
         objvals.append(objval)
         viol = model.cal_violation()
@@ -429,7 +429,7 @@ def eval(components, model, loader_test):
             model.vars["x"][i].value = x[0,i].item()
         # get solutions
         xval, objval = model.get_val()
-        params.append(list(b.cpu().numpy()))
+        params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
         sols.append(list(list(xval.values())[0].values()))
         objvals.append(objval)
         viol = model.cal_violation()
