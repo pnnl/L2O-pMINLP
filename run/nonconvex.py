@@ -42,6 +42,7 @@ def exact(loader_test, config):
         params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
         try:
             xval, objval = model.solve("scip")
+            tock = time.time()
             # eval
             sols.append(list(list(xval.values())[0].values()))
             objvals.append(objval)
@@ -56,7 +57,7 @@ def exact(loader_test, config):
             mean_viols.append(None)
             max_viols.append(None)
             num_viols.append(None)
-        tock = time.time()
+            tock = time.time()
         elapseds.append(tock - tick)
     df = pd.DataFrame({"Param": params,
                        "Sol": sols,
@@ -102,6 +103,7 @@ def relRnd(loader_test, config):
         try:
             xval_rel, _ = model_rel.solve("scip")
             xval, objval = naive_round(xval_rel, model)
+            tock = time.time()
             # eval
             sols.append(list(list(xval.values())[0].values()))
             objvals.append(objval)
@@ -116,7 +118,7 @@ def relRnd(loader_test, config):
             mean_viols.append(None)
             max_viols.append(None)
             num_viols.append(None)
-        tock = time.time()
+            tock = time.time()
         elapseds.append(tock - tick)
     df = pd.DataFrame({"Param": params,
                        "Sol": sols,
@@ -159,6 +161,7 @@ def root(loader_test, config):
         params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
         try:
             xval, objval = model_heur.solve("scip")
+            tock = time.time()
             # eval
             sols.append(list(list(xval.values())[0].values()))
             objvals.append(objval)
@@ -173,7 +176,7 @@ def root(loader_test, config):
             mean_viols.append(None)
             max_viols.append(None)
             num_viols.append(None)
-        tock = time.time()
+            tock = time.time()
         elapseds.append(tock - tick)
     df = pd.DataFrame({"Param": params,
                        "Sol": sols,

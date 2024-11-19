@@ -40,6 +40,7 @@ def exact(loader_test, config):
         params.append(list(b.cpu().numpy()))
         try:
             xval, objval = model.solve("gurobi")
+            tock = time.time()
             # eval
             sols.append(list(list(xval.values())[0].values()))
             objvals.append(objval)
@@ -54,7 +55,7 @@ def exact(loader_test, config):
             mean_viols.append(None)
             max_viols.append(None)
             num_viols.append(None)
-        tock = time.time()
+            tock = time.time()
         elapseds.append(tock - tick)
     print(len(params), len(sols), len(objvals), len(mean_viols), len(max_viols), len(num_viols), len(elapseds))
     df = pd.DataFrame({"Param": params,
@@ -99,6 +100,7 @@ def relRnd(loader_test, config):
         try:
             xval_rel, _ = model_rel.solve("gurobi")
             xval, objval = naive_round(xval_rel, model)
+            tock = time.time()
             # eval
             sols.append(list(list(xval.values())[0].values()))
             objvals.append(objval)
@@ -113,7 +115,7 @@ def relRnd(loader_test, config):
             mean_viols.append(None)
             max_viols.append(None)
             num_viols.append(None)
-        tock = time.time()
+            tock = time.time()
         elapseds.append(tock - tick)
     df = pd.DataFrame({"Param": params,
                        "Sol": sols,
@@ -154,6 +156,7 @@ def root(loader_test, config):
         params.append(list(b.cpu().numpy()))
         try:
             xval, objval = model_heur.solve("gurobi")
+            tock = time.time()
             # eval
             sols.append(list(list(xval.values())[0].values()))
             objvals.append(objval)
@@ -168,7 +171,7 @@ def root(loader_test, config):
             mean_viols.append(None)
             max_viols.append(None)
             num_viols.append(None)
-        tock = time.time()
+            tock = time.time()
         elapseds.append(tock - tick)
     df = pd.DataFrame({"Param": params,
                        "Sol": sols,
