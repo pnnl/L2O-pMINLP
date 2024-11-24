@@ -22,7 +22,7 @@ def exact(loader_test, config):
     np.random.seed(42)
     torch.manual_seed(42)
     torch.cuda.manual_seed(42)
-    print(f"EX for size {config.size}.")
+    print(f"EX in RB for size {config.size}.")
     # config
     steepness = config.steepness
     num_blocks = config.size
@@ -79,7 +79,7 @@ def relRnd(loader_test, config):
     np.random.seed(42)
     torch.manual_seed(42)
     torch.cuda.manual_seed(42)
-    print(f"RR for size {config.size}.")
+    print(f"RR in RB for size {config.size}.")
     from src.heuristic import naive_round
     # config
     steepness = config.steepness
@@ -139,7 +139,7 @@ def root(loader_test, config):
     np.random.seed(42)
     torch.manual_seed(42)
     torch.cuda.manual_seed(42)
-    print(f"N1 for size {config.size}.")
+    print(f"N1 in RB for size {config.size}.")
     # config
     steepness = config.steepness
     num_blocks = config.size
@@ -198,7 +198,7 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     np.random.seed(42)
     torch.manual_seed(42)
     torch.cuda.manual_seed(42)
-    print(f"RC for size {config.size}.")
+    print(f"RC in RB for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmRosenbrock
     from src.func.layer import netFC
@@ -245,7 +245,7 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     np.random.seed(42)
     torch.manual_seed(42)
     torch.cuda.manual_seed(42)
-    print(f"LT for size {config.size}.")
+    print(f"LT in RB for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmRosenbrock
     from src.func.layer import netFC
@@ -291,7 +291,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     np.random.seed(42)
     torch.manual_seed(42)
     torch.cuda.manual_seed(42)
-    print(f"RL for size {config.size}.")
+    print(f"RL in RB for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmRosenbrock
     from src.func.layer import netFC
@@ -371,7 +371,7 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     np.random.seed(2)
     torch.manual_seed(2)
     torch.cuda.manual_seed(2)
-    print(f"RS for size {config.size}.")
+    print(f"RS in RB for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmRosenbrock
     from src.func.layer import netFC

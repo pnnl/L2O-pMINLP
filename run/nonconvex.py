@@ -22,7 +22,7 @@ def exact(loader_test, config):
     np.random.seed(42)
     torch.manual_seed(42)
     torch.cuda.manual_seed(42)
-    print(f"EX for size {config.size}.")
+    print(f"EX in NC for size {config.size}.")
     # config
     num_var = config.size
     num_ineq = config.size
@@ -79,7 +79,7 @@ def relRnd(loader_test, config):
     np.random.seed(42)
     torch.manual_seed(42)
     torch.cuda.manual_seed(42)
-    print(f"RR for size {config.size}.")
+    print(f"RR in NC for size {config.size}.")
     from src.heuristic import naive_round
     # config
     num_var = config.size
@@ -140,7 +140,7 @@ def root(loader_test, config):
     np.random.seed(42)
     torch.manual_seed(42)
     torch.cuda.manual_seed(42)
-    print(f"N1 for size {config.size}.")
+    print(f"N1 in NC for size {config.size}.")
     # config
     num_var = config.size
     num_ineq = config.size
@@ -198,7 +198,7 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     np.random.seed(42)
     torch.manual_seed(42)
     torch.cuda.manual_seed(42)
-    print(f"RC for size {config.size}.")
+    print(f"RC in NC for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmNonconvex
     from src.func.layer import netFC
@@ -245,7 +245,7 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     np.random.seed(42)
     torch.manual_seed(42)
     torch.cuda.manual_seed(42)
-    print(f"LT for size {config.size}.")
+    print(f"LT in NC for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmNonconvex
     from src.func.layer import netFC
@@ -292,7 +292,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     np.random.seed(42)
     torch.manual_seed(42)
     torch.cuda.manual_seed(42)
-    print(f"RL for size {config.size}.")
+    print(f"RL in NC for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmNonconvex
     from src.func.layer import netFC
@@ -373,7 +373,7 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     np.random.seed(42)
     torch.manual_seed(42)
     torch.cuda.manual_seed(42)
-    print(f"RS for size {config.size}.")
+    print(f"RS in NC for size {config.size}.")
     import neuromancer as nm
     from src.problem import nmNonconvex
     from src.func.layer import netFC
