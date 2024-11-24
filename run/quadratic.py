@@ -57,7 +57,6 @@ def exact(loader_test, config):
             num_viols.append(None)
             tock = time.time()
         elapseds.append(tock - tick)
-    print(len(params), len(sols), len(objvals), len(mean_viols), len(max_viols), len(num_viols), len(elapseds))
     df = pd.DataFrame({"Param": params,
                        "Sol": sols,
                        "Obj Val": objvals,
