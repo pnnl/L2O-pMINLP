@@ -29,12 +29,14 @@ class rosenbrock(abcParamSolver):
         m.cons.add(sum(m.x[2*i+1] for i in range(num_blocks)) >= num_blocks * m.b / 2)
         m.cons.add(sum(m.x[2*i] ** 2 for i in range(num_blocks)) <= num_blocks * m.b)
         rng = np.random.RandomState(17)
-        b = rng.normal(scale=1, size=(3, num_blocks))
-        q = rng.normal(scale=1, size=(num_blocks))
-        m.cons.add(sum(b[0,i] * m.x[2*i] for i in range(num_blocks)) == 0)
-        m.cons.add(sum(b[1,i] * m.x[2*i] for i in range(num_blocks)) == 0)
-        m.cons.add(sum(b[2,i] * m.x[2*i] for i in range(num_blocks)) == 0)
-        m.cons.add(sum(q[i] * m.x[2*i+1] for i in range(num_blocks)) <= 0)
+        P = rng.normal(scale=1, size=(3, num_blocks))
+        Q = rng.normal(scale=1, size=(3, num_blocks))
+        m.cons.add(sum(P[0,i] * m.x[2*i] for i in range(num_blocks)) == 0)
+        m.cons.add(sum(P[1,i] * m.x[2*i] for i in range(num_blocks)) == 0)
+        m.cons.add(sum(P[2,i] * m.x[2*i] for i in range(num_blocks)) == 0)
+        m.cons.add(sum(Q[0,i] * m.x[2*i+1] for i in range(num_blocks)) <= 0)
+        m.cons.add(sum(Q[1,i] * m.x[2*i+1] for i in range(num_blocks)) <= 0)
+        m.cons.add(sum(Q[2,i] * m.x[2*i+1] for i in range(num_blocks)) <= 0)
         # attribute
         self.model = m
         self.params ={"b":m.b, "a":m.a}

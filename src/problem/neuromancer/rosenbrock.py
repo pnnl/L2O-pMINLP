@@ -23,10 +23,9 @@ class penaltyLoss(nn.Module):
         # coefs
         rng = np.random.RandomState(17)
         P = rng.normal(scale=1, size=(3, num_blocks))
-        q = rng.normal(scale=1, size=(num_blocks))
+        Q = rng.normal(scale=1, size=(3, num_blocks))
         self.P = torch.from_numpy(P).float()
-        self.q = torch.from_numpy(q).float()
-
+        self.Q = torch.from_numpy(Q).float()
 
     def forward(self, input_dict):
         """
@@ -65,7 +64,7 @@ class penaltyLoss(nn.Module):
         if self.device is None:
             self.device = x.device
             self.P = self.P.to(self.device)
-            self.q = self.q.to(self.device)
+            self.Q = self.Q.to(self.device)
         # inner constraint violation
         lhs_inner = torch.sum(x[:, 1::2], dim=1)
         rhs_inner = self.num_blocks * b[:, 0] / 2
@@ -75,8 +74,12 @@ class penaltyLoss(nn.Module):
         rhs_outer = self.num_blocks * b[:, 0]
         outer_violation = torch.relu(lhs_outer - rhs_outer)
         # lear constraint violation
-        lhs = torch.matmul(x[:, 1::2], self.q)
-        linear_violation = torch.relu(lhs)
+        linear_violation = 0
+        for i in range(3):
+            lhs = torch.matmul(x[:, 0::2], self.P[i])
+            linear_violation += torch.abs(lhs)
+            lhs = torch.matmul(x[:, 1::2], self.Q[i])
+            linear_violation += torch.relu(lhs)
         return inner_violation + outer_violation + linear_violation
 
 
