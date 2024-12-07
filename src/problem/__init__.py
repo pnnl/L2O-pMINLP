@@ -4,3 +4,4 @@ from src.problem.math_solver import nonconvex as msNonconvex
 from src.problem.neuromancer import nonconvex as nmNonconvex
 from src.problem.math_solver import rosenbrock as msRosenbrock
 from src.problem.neuromancer import rosenbrock as nmRosenbrock
+from src.problem.neuromancer import rosenbrockEquality

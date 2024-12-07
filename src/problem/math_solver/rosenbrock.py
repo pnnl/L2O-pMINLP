@@ -13,7 +13,7 @@ class rosenbrock(abcParamSolver):
         # create model
         m = pe.ConcreteModel()
         # parameters
-        m.p = pe.Param(default=1, mutable=True)
+        m.b = pe.Param(default=1, mutable=True)
         m.a = pe.Param(pe.RangeSet(0, num_blocks-1), default=1, mutable=True)
         # variables
         m.x = pe.Var(pe.RangeSet(0, num_blocks*2-1), domain=pe.Reals)
@@ -26,16 +26,18 @@ class rosenbrock(abcParamSolver):
         m.obj = pe.Objective(sense=pe.minimize, expr=obj)
         # constraints
         m.cons = pe.ConstraintList()
-        m.cons.add(sum(m.x[2*i+1] for i in range(num_blocks)) >= num_blocks * m.p / 2)
-        m.cons.add(sum(m.x[2*i] ** 2 for i in range(num_blocks)) <= num_blocks * m.p)
+        m.cons.add(sum(m.x[2*i+1] for i in range(num_blocks)) >= num_blocks * m.b / 2)
+        m.cons.add(sum(m.x[2*i] ** 2 for i in range(num_blocks)) <= num_blocks * m.b)
         rng = np.random.RandomState(17)
-        b = rng.normal(scale=1, size=(num_blocks))
+        b = rng.normal(scale=1, size=(3, num_blocks))
         q = rng.normal(scale=1, size=(num_blocks))
-        m.cons.add(sum(b[i] * m.x[2*i] for i in range(num_blocks)) <= 0)
+        m.cons.add(sum(b[0,i] * m.x[2*i] for i in range(num_blocks)) == 0)
+        m.cons.add(sum(b[1,i] * m.x[2*i] for i in range(num_blocks)) == 0)
+        m.cons.add(sum(b[2,i] * m.x[2*i] for i in range(num_blocks)) == 0)
         m.cons.add(sum(q[i] * m.x[2*i+1] for i in range(num_blocks)) <= 0)
         # attribute
         self.model = m
-        self.params ={"p":m.p, "a":m.a}
+        self.params ={"b":m.b, "a":m.a}
         self.vars = {"x":m.x}
         self.cons = m.cons
 
@@ -45,11 +47,11 @@ if __name__ == "__main__":
 
     steepness = 50    # steepness factor
     num_blocks = 10   # number of expression blocks
-    timelimit = 1000    # time limit
+    timelimit = 60    # time limit
 
     # params
-    p, a = 3.2, (2.4, 1.8)
-    params = {"p":p, "a":a}
+    b, a = 3.2, (2.4, 1.8)
+    params = {"b":b, "a":a}
     # init model
     model = rosenbrock(steepness=steepness, num_blocks=num_blocks, timelimit=timelimit)
 
@@ -57,7 +59,7 @@ if __name__ == "__main__":
     print("======================================================")
     print("Solve MINLP problem:")
     model.set_param_val(params)
-    ms_test_solve(model, tee=False)
+    ms_test_solve(model, tee=True)
 
     # solve the relaxation
     print()
@@ -67,12 +69,3 @@ if __name__ == "__main__":
     model_rel.set_param_val(params)
     # scip
     ms_test_solve(model_rel, tee=False)
-
-    # solve the relaxation
-    print()
-    print("======================================================")
-    print("Solve primal heuristic:")
-    model_heur = model.primal_heuristic()
-    model_heur.set_param_val(params)
-    # scip
-    ms_test_solve(model_heur, tee=True)

@@ -32,14 +32,14 @@ def exact(loader_test, config):
     # init df
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     # go through test data
-    p_test = loader_test.dataset.datadict["p"]
+    b_test = loader_test.dataset.datadict["b"]
     a_test = loader_test.dataset.datadict["a"]
-    for p, a in tqdm(list(zip(p_test, a_test))):
+    for b, a in tqdm(list(zip(b_test, a_test))):
         # set params
-        model.set_param_val({"p":p, "a":a})
+        model.set_param_val({"b":b, "a":a})
         # solve
         tick = time.time()
-        params.append(list(p)+list(a))
+        params.append(list(b)+list(a))
         try:
             xval, objval = model.solve("scip")
             tock = time.time()
@@ -70,7 +70,7 @@ def exact(loader_test, config):
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
-    df.to_csv(f"result/rb_exact_{num_blocks}.csv")
+    df.to_csv(f"result/rb_exact_{num_blocks}_new.csv")
 
 
 def relRnd(loader_test, config):
@@ -90,15 +90,15 @@ def relRnd(loader_test, config):
     # init df
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     # go through test data
-    p_test = loader_test.dataset.datadict["p"]
+    b_test = loader_test.dataset.datadict["b"]
     a_test = loader_test.dataset.datadict["a"]
-    for p, a in tqdm(list(zip(p_test, a_test))):
+    for b, a in tqdm(list(zip(b_test, a_test))):
         # set params
-        model.set_param_val({"p":p, "a":a})
+        model.set_param_val({"b":b, "a":a})
         model_rel = model.relax()
         # solve
         tick = time.time()
-        params.append(list(p)+list(a))
+        params.append(list(b)+list(a))
         try:
             xval_rel, _ = model_rel.solve("scip")
             xval, objval = naive_round(xval_rel, model)
@@ -130,7 +130,7 @@ def relRnd(loader_test, config):
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
-    df.to_csv(f"result/rb_rel_{num_blocks}.csv")
+    df.to_csv(f"result/rb_rel_{num_blocks}_new.csv")
 
 
 def root(loader_test, config):
@@ -151,14 +151,14 @@ def root(loader_test, config):
     # init df
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     # go through test data
-    p_test = loader_test.dataset.datadict["p"]
+    b_test = loader_test.dataset.datadict["b"]
     a_test = loader_test.dataset.datadict["a"]
-    for p, a in tqdm(list(zip(p_test, a_test))):
+    for b, a in tqdm(list(zip(b_test, a_test))):
         # set params
-        model_heur.set_param_val({"p":p, "a":a})
+        model_heur.set_param_val({"b":b, "a":a})
         # solve
         tick = time.time()
-        params.append(list(p)+list(a))
+        params.append(list(b)+list(a))
         try:
             xval, objval = model_heur.solve("scip")
             tock = time.time()
@@ -189,7 +189,7 @@ def root(loader_test, config):
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
-    df.to_csv(f"result/rb_root_{num_blocks}.csv")
+    df.to_csv(f"result/rb_root_{num_blocks}_new.csv")
 
 
 def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
@@ -200,7 +200,7 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     torch.cuda.manual_seed(42)
     print(f"RC in RB for size {config.size}.")
     import neuromancer as nm
-    from src.problem import nmRosenbrock
+    from src.problem import nmRosenbrock, rosenbrockEquality
     from src.func.layer import netFC
     from src.func import roundGumbelModel
     # config
@@ -215,29 +215,31 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     from src.problem import msRosenbrock
     model = msRosenbrock(steepness, num_blocks, timelimit=1000)
     # build neural architecture for the solution map
-    func = nm.modules.blocks.MLP(insize=num_blocks+1, outsize=2*num_blocks, bias=True,
+    func = nm.modules.blocks.MLP(insize=num_blocks+1, outsize=2*num_blocks-3, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
-    smap = nm.system.Node(func, ["p", "a"], ["x"], name="smap")
+    smap = nm.system.Node(func, ["b", "a"], ["z"], name="smap")
+    # linear constraint encode
+    encoding = rosenbrockEquality(num_blocks, input_key="z", output_key="x")
     # define rounding model
-    layers_rnd = netFC(input_dim=3*num_blocks+1, hidden_dims=[hsize]*hlayers_rnd, output_dim=2*num_blocks)
-    rnd = roundGumbelModel(layers=layers_rnd, param_keys=["p", "a"], var_keys=["x"], output_keys=["x_rnd"],
-                           int_ind=model.int_ind, continuous_update=True, name="round")
+    layers_rnd = netFC(input_dim=3*num_blocks+1, hidden_dims=[hsize]*hlayers_rnd, output_dim=2*num_blocks-3)
+    rnd = roundGumbelModel(layers=layers_rnd, param_keys=["b", "a"], var_keys=["x"], output_keys=["x_rnd"],
+                           int_ind=model.int_ind, continuous_update=True, equality_encoding=encoding, name="round")
     # build neuromancer problem for rounding
-    components = nn.ModuleList([smap, rnd]).to("cuda")
-    loss_fn = nmRosenbrock(["p", "a", "x_rnd"], steepness, num_blocks, penalty_weight)
+    components = nn.ModuleList([smap, encoding, rnd]).to("cuda")
+    loss_fn = nmRosenbrock(["b", "a", "x_rnd"], steepness, num_blocks, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
     df = eval(components, model, loader_test)
     if penalty_growth:
-        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-g.csv")
+        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-g_new.csv")
     elif config.samples == 800:
-        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-s.csv")
+        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-s_new.csv")
     elif config.samples == 80000:
-        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-l.csv")
+        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-l_new.csv")
     else:
-        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}.csv")
+        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}_new.csv")
 
 def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     print(config)
@@ -247,7 +249,7 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     torch.cuda.manual_seed(42)
     print(f"LT in RB for size {config.size}.")
     import neuromancer as nm
-    from src.problem import nmRosenbrock
+    from src.problem import nmRosenbrock, rosenbrockEquality
     from src.func.layer import netFC
     from src.func import roundThresholdModel
     steepness = config.steepness
@@ -261,29 +263,31 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     from src.problem import msRosenbrock
     model = msRosenbrock(steepness, num_blocks, timelimit=1000)
     # build neural architecture for the solution map
-    func = nm.modules.blocks.MLP(insize=num_blocks+1, outsize=2*num_blocks, bias=True,
+    func = nm.modules.blocks.MLP(insize=num_blocks+1, outsize=2*num_blocks-3, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
-    smap = nm.system.Node(func, ["p", "a"], ["x"], name="smap")
+    smap = nm.system.Node(func, ["b", "a"], ["z"], name="smap")
+    # linear constraint encode
+    encoding = rosenbrockEquality(num_blocks, input_key="z", output_key="x")
     # define rounding model
-    layers_rnd = netFC(input_dim=3*num_blocks+1, hidden_dims=[hsize]*hlayers_rnd, output_dim=2*num_blocks)
-    rnd = roundThresholdModel(layers=layers_rnd, param_keys=["p", "a"], var_keys=["x"],  output_keys=["x_rnd"],
-                              int_ind=model.int_ind, continuous_update=True, name="round")
+    layers_rnd = netFC(input_dim=3*num_blocks+1, hidden_dims=[hsize]*hlayers_rnd, output_dim=2*num_blocks-3)
+    rnd = roundThresholdModel(layers=layers_rnd, param_keys=["b", "a"], var_keys=["x"],  output_keys=["x_rnd"],
+                              int_ind=model.int_ind, continuous_update=True, equality_encoding=encoding, name="round")
     # build neuromancer problem for rounding
-    components = nn.ModuleList([smap, rnd]).to("cuda")
-    loss_fn = nmRosenbrock(["p", "a", "x_rnd"], steepness, num_blocks, penalty_weight)
+    components = nn.ModuleList([smap, encoding, rnd]).to("cuda")
+    loss_fn = nmRosenbrock(["b", "a", "x_rnd"], steepness, num_blocks, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
     df = eval(components, model, loader_test)
     if penalty_growth:
-        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-g.csv")
+        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-g_new.csv")
     elif config.samples == 800:
-        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-s.csv")
+        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-s_new.csv")
     elif config.samples == 80000:
-        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-l.csv")
+        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-l_new.csv")
     else:
-        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}.csv")
+        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}_new.csv")
 
 def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     print(config)
@@ -293,9 +297,8 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     torch.cuda.manual_seed(42)
     print(f"RL in RB for size {config.size}.")
     import neuromancer as nm
-    from src.problem import nmRosenbrock
+    from src.problem import nmRosenbrock, rosenbrockEquality
     from src.func.layer import netFC
-    from src.func import roundThresholdModel
     # config
     steepness = config.steepness
     num_blocks = config.size
@@ -307,23 +310,25 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     from src.problem import msRosenbrock
     model = msRosenbrock(steepness, num_blocks, timelimit=1000)
     # build neural architecture for the solution map
-    func = nm.modules.blocks.MLP(insize=num_blocks+1, outsize=2*num_blocks, bias=True,
+    func = nm.modules.blocks.MLP(insize=num_blocks+1, outsize=2*num_blocks-3, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
-    smap = nm.system.Node(func, ["p", "a"], ["x"], name="smap")
+    smap = nm.system.Node(func, ["b", "a"], ["z"], name="smap")
+    # linear constraint encode
+    encoding = rosenbrockEquality(num_blocks, input_key="z", output_key="x")
     # build neuromancer problem for rounding
-    components = nn.ModuleList([smap]).to("cuda")
-    loss_fn = nmRosenbrock(["p", "a", "x"], steepness, num_blocks, penalty_weight)
+    components = nn.ModuleList([smap, encoding]).to("cuda")
+    loss_fn = nmRosenbrock(["b", "a", "x"], steepness, num_blocks, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
     from src.heuristic import naive_round
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
-    p_test = loader_test.dataset.datadict["p"]
+    b_test = loader_test.dataset.datadict["b"]
     a_test = loader_test.dataset.datadict["a"]
-    for p, a in tqdm(list(zip(p_test, a_test))):
+    for b, a in tqdm(list(zip(b_test, a_test))):
         # data point as tensor
-        datapoints = {"p": torch.tensor(np.array([p]), dtype=torch.float32).to("cuda"),
+        datapoints = {"b": torch.tensor(np.array([b]), dtype=torch.float32).to("cuda"),
                       "a": torch.tensor(np.array([a]), dtype=torch.float32).to("cuda"),
                       "name": "test"}
         # infer
@@ -334,7 +339,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
                 datapoints.update(comp(datapoints))
         tock = time.time()
         # assign params
-        model.set_param_val({"p":p, "a":a})
+        model.set_param_val({"b":b, "a":a})
         # assign vars
         x = datapoints["x"]
         for i in range(num_blocks*2):
@@ -342,7 +347,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
         # get solutions
         xval_rel, _ = model.get_val()
         xval, objval = naive_round(xval_rel, model)
-        params.append(list(p)+list(a))
+        params.append(list(b)+list(a))
         sols.append(list(list(xval.values())[0].values()))
         objvals.append(objval)
         viol = model.cal_violation()
@@ -361,9 +366,9 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     if penalty_growth:
-        df.to_csv(f"result/rb_lrn{penalty_weight}_{num_blocks}-g.csv")
+        df.to_csv(f"result/rb_lrn{penalty_weight}_{num_blocks}-g_new.csv")
     else:
-        df.to_csv(f"result/rb_lrn{penalty_weight}_{num_blocks}.csv")
+        df.to_csv(f"result/rb_lrn{penalty_weight}_{num_blocks}_new.csv")
 
 def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     print(config)
@@ -373,7 +378,7 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     torch.cuda.manual_seed(2)
     print(f"RS in RB for size {config.size}.")
     import neuromancer as nm
-    from src.problem import nmRosenbrock
+    from src.problem import nmRosenbrock, rosenbrockEquality
     from src.func.layer import netFC
     from src.func import roundSTEModel
     # config
@@ -387,37 +392,39 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     from src.problem import msRosenbrock
     model = msRosenbrock(steepness, num_blocks, timelimit=1000)
     # build neural architecture for the solution map
-    func = nm.modules.blocks.MLP(insize=num_blocks+1, outsize=2*num_blocks, bias=True,
+    func = nm.modules.blocks.MLP(insize=num_blocks+1, outsize=2*num_blocks-3, bias=True,
                                  linear_map=nm.slim.maps["linear"],
                                  nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
-    smap = nm.system.Node(func, ["p", "a"], ["x"], name="smap")
+    smap = nm.system.Node(func, ["b", "a"], ["z"], name="smap")
+    # linear constraint encode
+    encoding = rosenbrockEquality(num_blocks, input_key="z", output_key="x")
     # define rounding model
-    rnd = roundSTEModel(param_keys=["p", "a"], var_keys=["x"], output_keys=["x_rnd"],
+    rnd = roundSTEModel(param_keys=["b", "a"], var_keys=["x"], output_keys=["x_rnd"],
                         int_ind=model.int_ind, name="round")
     # build neuromancer problem for rounding
-    components = nn.ModuleList([smap, rnd]).to("cuda")
-    loss_fn = nmRosenbrock(["p", "a", "x_rnd"], steepness, num_blocks, penalty_weight)
+    components = nn.ModuleList([smap, encoding, rnd]).to("cuda")
+    loss_fn = nmRosenbrock(["b", "a", "x_rnd"], steepness, num_blocks, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
     df = eval(components, model, loader_test)
     if penalty_growth:
-        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-g.csv")
+        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-g_new.csv")
     elif config.samples == 800:
-        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-s.csv")
+        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-s_new.csv")
     elif config.samples == 80000:
-        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-l.csv")
+        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-l_new.csv")
     else:
-        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}.csv")
+        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}_new.csv")
 
 
 def eval(components, model, loader_test):
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
-    p_test = loader_test.dataset.datadict["p"]
+    b_test = loader_test.dataset.datadict["b"]
     a_test = loader_test.dataset.datadict["a"]
-    for p, a in tqdm(list(zip(p_test, a_test))):
+    for b, a in tqdm(list(zip(b_test, a_test))):
         # data point as tensor
-        datapoints = {"p": torch.tensor(np.array([p]), dtype=torch.float32).to("cuda"),
+        datapoints = {"b": torch.tensor(np.array([b]), dtype=torch.float32).to("cuda"),
                       "a": torch.tensor(np.array([a]), dtype=torch.float32).to("cuda"),
                       "name": "test"}
         # infer
@@ -428,14 +435,14 @@ def eval(components, model, loader_test):
                 datapoints.update(comp(datapoints))
         tock = time.time()
         # assign params
-        model.set_param_val({"p":p, "a":a})
+        model.set_param_val({"b":b, "a":a})
         # assign vars
         x = datapoints["x_rnd"]
         for i in range(len(model.vars["x"])):
             model.vars["x"][i].value = x[0,i].item()
         # get solutions
         xval, objval = model.get_val()
-        params.append(list(p)+list(a))
+        params.append(list(b)+list(a))
         sols.append(list(list(xval.values())[0].values()))
         objvals.append(objval)
         viol = model.cal_violation()

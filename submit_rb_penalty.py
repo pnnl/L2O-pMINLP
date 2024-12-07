@@ -51,19 +51,19 @@ for size in [1000, 3000, 10000]:
     config.hsize = hsize_dict[config.size]  # width of hidden layers for solution mapping
     config.lr = 1e-3                        # learning rate
     # parameters as input data
-    p_low, p_high = 1.0, 8.0
+    b_low, b_high = 1.0, 8.0
     a_low, a_high = 0.5, 4.5
-    p_train = np.random.uniform(p_low, p_high, (train_size, 1)).astype(np.float32)
-    p_test  = np.random.uniform(p_low, p_high, (test_size, 1)).astype(np.float32)
-    p_val   = np.random.uniform(p_low, p_high, (val_size, 1)).astype(np.float32)
+    b_train = np.random.uniform(b_low, b_high, (train_size, 1)).astype(np.float32)
+    b_test  = np.random.uniform(b_low, b_high, (test_size, 1)).astype(np.float32)
+    b_val   = np.random.uniform(b_low, b_high, (val_size, 1)).astype(np.float32)
     a_train = np.random.uniform(a_low, a_high, (train_size, num_blocks)).astype(np.float32)
     a_test  = np.random.uniform(a_low, a_high, (test_size, num_blocks)).astype(np.float32)
     a_val   = np.random.uniform(a_low, a_high, (val_size, num_blocks)).astype(np.float32)
     # nm datasets
     from neuromancer.dataset import DictDataset
-    data_train = DictDataset({"p":p_train, "a":a_train}, name="train")
-    data_test = DictDataset({"p":p_test, "a":a_test}, name="test")
-    data_val = DictDataset({"p":p_val, "a":a_val}, name="dev")
+    data_train = DictDataset({"b":b_train, "a":a_train}, name="train")
+    data_test = DictDataset({"b":b_test, "a":a_test}, name="test")
+    data_val = DictDataset({"b":b_val, "a":a_val}, name="dev")
     # torch dataloaders
     from torch.utils.data import DataLoader
     batch_size = 64
@@ -131,19 +131,19 @@ for penalty in [1, 5, 10, 50, 500, 1000]:
         config.hsize = hsize_dict[config.size]  # width of hidden layers for solution mapping
         config.lr = 1e-3                        # learning rate
         # parameters as input data
-        p_low, p_high = 1.0, 8.0
+        b_low, b_high = 1.0, 8.0
         a_low, a_high = 0.5, 4.5
-        p_train = np.random.uniform(p_low, p_high, (train_size, 1)).astype(np.float32)
-        p_test  = np.random.uniform(p_low, p_high, (test_size, 1)).astype(np.float32)
-        p_val   = np.random.uniform(p_low, p_high, (val_size, 1)).astype(np.float32)
+        b_train = np.random.uniform(b_low, b_high, (train_size, 1)).astype(np.float32)
+        b_test  = np.random.uniform(b_low, b_high, (test_size, 1)).astype(np.float32)
+        b_val   = np.random.uniform(b_low, b_high, (val_size, 1)).astype(np.float32)
         a_train = np.random.uniform(a_low, a_high, (train_size, num_blocks)).astype(np.float32)
         a_test  = np.random.uniform(a_low, a_high, (test_size, num_blocks)).astype(np.float32)
         a_val   = np.random.uniform(a_low, a_high, (val_size, num_blocks)).astype(np.float32)
         # nm datasets
         from neuromancer.dataset import DictDataset
-        data_train = DictDataset({"p":p_train, "a":a_train}, name="train")
-        data_test = DictDataset({"p":p_test, "a":a_test}, name="test")
-        data_val = DictDataset({"p":p_val, "a":a_val}, name="dev")
+        data_train = DictDataset({"b":b_train, "a":a_train}, name="train")
+        data_test = DictDataset({"b":b_test, "a":a_test}, name="test")
+        data_val = DictDataset({"b":b_val, "a":a_val}, name="dev")
         # torch dataloaders
         from torch.utils.data import DataLoader
         batch_size = 64
