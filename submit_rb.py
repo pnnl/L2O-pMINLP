@@ -12,7 +12,7 @@ import pandas as pd
 import torch
 from torch import nn
 from tqdm import tqdm
-#import submitit
+import submitit
 
 # random seed
 random.seed(42)
@@ -78,10 +78,10 @@ print("Rosenbrock")
 #run.rosenbrock.exact(loader_test, config)
 #run.rosenbrock.relRnd(loader_test, config)
 #run.rosenbrock.root(loader_test, config)
-run.rosenbrock.rndCls(loader_train, loader_test, loader_val, config)
-run.rosenbrock.rndThd(loader_train, loader_test, loader_val, config)
-run.rosenbrock.lrnRnd(loader_train, loader_test, loader_val, config)
-run.rosenbrock.rndSte(loader_train, loader_test, loader_val, config)
+#run.rosenbrock.rndCls(loader_train, loader_test, loader_val, config)
+#run.rosenbrock.rndThd(loader_train, loader_test, loader_val, config)
+#run.rosenbrock.lrnRnd(loader_train, loader_test, loader_val, config)
+#run.rosenbrock.rndSte(loader_train, loader_test, loader_val, config)
 print(config)
 # exact solver
 executor = submitit.AutoExecutor(folder="logs")
