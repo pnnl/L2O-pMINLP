@@ -66,11 +66,11 @@ class penaltyLoss(nn.Module):
             self.P = self.P.to(self.device)
             self.Q = self.Q.to(self.device)
         # inner constraint violation
-        lhs_inner = torch.sum(x[:, 1::2], dim=1)
+        lhs_inner = torch.sum(x[:, ::2] ** 2, dim=1)
         rhs_inner = self.num_blocks * b[:, 0] / 2
         inner_violation = torch.relu(rhs_inner - lhs_inner)
         # outer constraint violation
-        lhs_outer = torch.sum(x[:, ::2] ** 2, dim=1)
+        lhs_outer = torch.sum(x[:, 1::2], dim=1)
         rhs_outer = self.num_blocks * b[:, 0]
         outer_violation = torch.relu(lhs_outer - rhs_outer)
         # lear constraint violation

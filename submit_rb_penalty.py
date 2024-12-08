@@ -28,7 +28,7 @@ print("Rosenbrock")
 
 # weight increasing
 config.penalty = 100
-for size in [1000, 10000]:
+for size in [1000, 3000]:
     # random seed
     random.seed(42)
     np.random.seed(42)
@@ -108,7 +108,7 @@ for size in [1000, 10000]:
 
 for penalty in [1, 5, 10, 50, 200, 300, 400, 500, 1000]:
     config.penalty = penalty
-    for size in [1000, 3000, 10000]:
+    for size in [1000, 3000]:
         # random seed
         random.seed(42)
         np.random.seed(42)

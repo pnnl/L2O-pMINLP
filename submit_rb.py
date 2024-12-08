@@ -27,7 +27,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--size",
                     type=int,
                     default=1,
-                    choices=[1, 3, 10, 30, 100, 300, 1000, 3000, 10000],
+                    choices=[10, 30, 100, 300, 1000, 3000],
                     help="problem type")
 parser.add_argument("--samples",
                     type=int,

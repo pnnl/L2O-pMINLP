@@ -26,8 +26,8 @@ class rosenbrock(abcParamSolver):
         m.obj = pe.Objective(sense=pe.minimize, expr=obj)
         # constraints
         m.cons = pe.ConstraintList()
-        m.cons.add(sum(m.x[2*i+1] for i in range(num_blocks)) >= num_blocks * m.b / 2)
-        m.cons.add(sum(m.x[2*i] ** 2 for i in range(num_blocks)) <= num_blocks * m.b)
+        m.cons.add(sum(m.x[2*i] ** 2 for i in range(num_blocks)) >= num_blocks * m.b / 2)
+        m.cons.add(sum(m.x[2*i+1] for i in range(num_blocks)) <= num_blocks * m.b)
         rng = np.random.RandomState(17)
         P = rng.normal(scale=1, size=(3, num_blocks))
         Q = rng.normal(scale=1, size=(3, num_blocks))

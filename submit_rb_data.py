@@ -18,8 +18,8 @@ import submitit
 parser = argparse.ArgumentParser()
 parser.add_argument("--size",
                     type=int,
-                    default=10000,
-                    choices=[3000, 10000],
+                    default=1000,
+                    choices=[1000, 3000],
                     help="problem type")
 config = parser.parse_args()
 
