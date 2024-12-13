@@ -68,7 +68,8 @@ class roundModel(nn.Module):
     """
     def __init__(self, layers, param_keys, var_keys, output_keys=[],
                  int_ind=defaultdict(list), bin_ind=defaultdict(list),
-                 continuous_update=False, tolerance=1e-3, name="Rounding"):
+                 continuous_update=False, tolerance=1e-3,
+                 equality_encoding=None, name="Rounding"):
         super(roundModel, self).__init__()
         # data keys
         self.param_keys, self.var_keys = param_keys, var_keys
@@ -77,6 +78,7 @@ class roundModel(nn.Module):
         # index of integer and binary variables
         self.int_ind = int_ind
         self.bin_ind = bin_ind
+        self.cont_ind = None
         # update continuous or not
         self.continuous_update = continuous_update
         # numerical tolerance
@@ -85,6 +87,8 @@ class roundModel(nn.Module):
         self.floor, self.bin = diffFloor(), diffBinarize()
         # sequence
         self.layers = layers
+        # encoding
+        self.encoding = equality_encoding
         # name
         self.name = name
 
@@ -130,20 +134,30 @@ class roundModel(nn.Module):
         # floor(x)
         x_flr = self.floor(x[:,int_ind])
         # bin(h): binary 0 for floor, 1 for ceil
-        bnr = self.bin(h[:,int_ind])
+        bnr = self.bin(h[:,:len(int_ind)])
         # mask if already integer
-        bnr = self._int_mask(bnr, x[:, int_ind])
+        bnr = self._int_mask(bnr, x[:, :len(int_ind)])
         # update continuous variables or not
-        if self.continuous_update:
+        if self.encoding is None and self.continuous_update:
             x_rnd = x + h
+        elif self.encoding is not None and self.continuous_update:
+            x_rnd = x.clone()
+            z = data[self.encoding.input_key] + h[:, len(int_ind)+len(bin_ind):]
+            cont_ind = self._get_cont_ind(range(x.shape[1]), int_ind+bin_ind)
+            x_rnd[:, cont_ind] = self.encoding.x_s + torch.einsum("bj,ij->bi", z, self.encoding.N)
         else:
             x_rnd = x
         # update rounding for integer variables int(x) = floor(x) + bin(h)
         x_rnd[:, int_ind] = x_flr + bnr
         ###################### binary ######################
         # update rounding for binary variables: bin(x) = bin(h)
-        x_rnd[:, bin_ind] = self.bin(h[:, bin_ind])
+        x_rnd[:, bin_ind] = self.bin(h[:, len(int_ind):len(int_ind)+len(bin_ind)])
         return x_rnd
+
+    def _get_cont_ind(self, all_ind, not_ind):
+        if self.cont_ind is None:
+            self.cont_ind = [i for i in all_ind if i not in not_ind]
+        return self.cont_ind
 
     def _int_mask(self, bnr, x):
         # difference
@@ -175,10 +189,12 @@ class roundGumbelModel(roundModel):
     """
     def __init__(self, layers, param_keys, var_keys, output_keys=[],
                  int_ind=defaultdict(list), bin_ind=defaultdict(list),
-                 continuous_update=False, temperature=1.0, tolerance=1e-3, name="Rounding"):
+                 continuous_update=False, temperature=1.0, tolerance=1e-3,
+                 equality_encoding=None, name="Rounding"):
         super(roundGumbelModel, self).__init__(layers, param_keys, var_keys,
                                                output_keys, int_ind, bin_ind,
-                                               continuous_update, tolerance, name)
+                                               continuous_update, tolerance,
+                                               equality_encoding, name)
         # random temperature
         self.temperature = temperature
         # binarize
@@ -191,11 +207,12 @@ class roundThresholdModel(roundModel):
     """
     def __init__(self, layers, param_keys, var_keys,output_keys=[],
                  int_ind=defaultdict(list), bin_ind=defaultdict(list),
-                 continuous_update=False, slope=10, name="Rounding"):
+                 continuous_update=False, slope=10, tolerance=None,
+                 equality_encoding=None, name="Rounding"):
         super(roundThresholdModel, self).__init__(layers, param_keys, var_keys,
                                                   output_keys, int_ind, bin_ind,
-                                                  continuous_update,
-                                                  tolerance=None, name=name)
+                                                  continuous_update, tolerance,
+                                                  equality_encoding, name=name)
         # slope
         self.slope= slope
         # binarize
@@ -215,27 +232,30 @@ class roundThresholdModel(roundModel):
         # extract fractional part
         x_frc = x[:,int_ind] - x_flr
         # get threshold
-        v = threshold[:,int_ind]
+        v = threshold[:,:len(int_ind)]
         # bin(x, v): binary 0 for floor, 1 for ceil
         bnr = self.bin(x_frc, v)
         # update continuous variables or not
-        if self.continuous_update:
+        if self.encoding is None and self.continuous_update:
             x_rnd = x + h
+        elif self.encoding is not None and self.continuous_update:
+            x_rnd = x.clone()
+            z = data[self.encoding.input_key] + h[:, len(int_ind)+len(bin_ind):]
+            cont_ind = self._get_cont_ind(range(x.shape[1]), int_ind+bin_ind)
+            x_rnd[:, cont_ind] = self.encoding.x_s + torch.einsum("bj,ij->bi", z, self.encoding.N)
         else:
             x_rnd = x
         # update rounding for integer variables int(x) = floor(x) + bin(h)
         x_rnd[:, int_ind] = x_flr + bnr
         ###################### binary ######################
-        # floor(x) = 0 with grad
-        x_flr = self.floor(x[:,bin_ind])
         # get threshold
-        v = threshold[:,bin_ind]
+        v = threshold[:,len(int_ind):len(int_ind)+len(bin_ind)]
         # fractional part is itself
         x_frc = x[:,bin_ind]
         # bin(x, v): binary 0 for floor, 1 for ceil
         bnr = self.bin(x_frc, v)
         # update rounding for binary variables int(x) = bin(x, v)
-        x_rnd[:, bin_ind] = x_flr + bnr
+        x_rnd[:, bin_ind] = bnr
         return x_rnd
 
 

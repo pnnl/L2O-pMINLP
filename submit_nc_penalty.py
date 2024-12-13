@@ -53,7 +53,8 @@ for size in [100, 200, 500, 1000]:
     config.lr = 1e-3                        # learning rate
     # data sample from uniform distribution
     b_samples = torch.from_numpy(np.random.uniform(-1, 1, size=(num_data, num_ineq))).float()
-    data = {"b":b_samples}
+    d_samples = torch.from_numpy(np.random.uniform(-0.1, 0.1, size=(num_data, num_ineq))).float()
+    data = {"b":b_samples, "d":d_samples}
     # data split
     from src.utlis import data_split
     data_train, data_test, data_val = data_split(data, test_size=test_size, val_size=val_size)
@@ -69,6 +70,7 @@ for size in [100, 200, 500, 1000]:
     #run.nonconvex.rndCls(loader_train, loader_test, loader_val, config, penalty_growth=True)
     #run.nonconvex.rndThd(loader_train, loader_test, loader_val, config, penalty_growth=True)
     #run.nonconvex.rndSte(loader_train, loader_test, loader_val, config, penalty_growth=True)
+    print(config)
     # rounding classification
     executor = submitit.AutoExecutor(folder="logs")
     executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
@@ -128,7 +130,8 @@ for penalty in [1, 5, 10, 50, 500, 1000]:
         config.lr = 1e-3                        # learning rate
         # data sample from uniform distribution
         b_samples = torch.from_numpy(np.random.uniform(-1, 1, size=(num_data, num_ineq))).float()
-        data = {"b":b_samples}
+        d_samples = torch.from_numpy(np.random.uniform(-0.1, 0.1, size=(num_data, num_ineq))).float()
+        data = {"b":b_samples, "d":d_samples}
         # data split
         from src.utlis import data_split
         data_train, data_test, data_val = data_split(data, test_size=test_size, val_size=val_size)
@@ -144,6 +147,7 @@ for penalty in [1, 5, 10, 50, 500, 1000]:
         #run.nonconvex.rndCls(loader_train, loader_test, loader_val, config)
         #run.nonconvex.rndThd(loader_train, loader_test, loader_val, config)
         #run.nonconvex.rndSte(loader_train, loader_test, loader_val, config)
+        print(config)
         # rounding classification
         executor = submitit.AutoExecutor(folder="logs")
         executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",

@@ -32,7 +32,7 @@ parser.add_argument("--size",
 parser.add_argument("--samples",
                     type=int,
                     default=8000,
-                    choices=[800, 8000, 80000],
+                    choices=[8000],
                     help="problem type")
 config = parser.parse_args()
 
@@ -55,7 +55,8 @@ config.penalty = 100                    # penalty weight
 
 # data sample from uniform distribution
 b_samples = torch.from_numpy(np.random.uniform(-1, 1, size=(num_data, num_ineq))).float()
-data = {"b":b_samples}
+d_samples = torch.from_numpy(np.random.uniform(-0.1, 0.1, size=(num_data, num_ineq))).float()
+data = {"b":b_samples, "d":d_samples}
 # data split
 from src.utlis import data_split
 data_train, data_test, data_val = data_split(data, test_size=test_size, val_size=val_size)
@@ -77,6 +78,7 @@ print("Simple Non-Convex")
 #run.nonconvex.rndThd(loader_train, loader_test, loader_val, config)
 #run.nonconvex.lrnRnd(loader_train, loader_test, loader_val, config)
 #run.nonconvex.rndSte(loader_train, loader_test, loader_val, config)
+print(config)
 if config.size <= 10:
     # exact solver
     executor = submitit.AutoExecutor(folder="logs")

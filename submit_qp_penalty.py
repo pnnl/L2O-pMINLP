@@ -69,6 +69,7 @@ for size in [100, 200, 500, 1000]:
     #run.quadratic.rndCls(loader_train, loader_test, loader_val, config, penalty_growth=True)
     #run.quadratic.rndThd(loader_train, loader_test, loader_val, config, penalty_growth=True)
     #run.quadratic.rndSte(loader_train, loader_test, loader_val, config, penalty_growth=True)
+    print(config)
     # rounding classification
     executor = submitit.AutoExecutor(folder="logs")
     executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",
@@ -144,6 +145,7 @@ for penalty in [1, 5, 10, 50, 500, 1000]:
         #run.quadratic.rndCls(loader_train, loader_test, loader_val, config)
         #run.quadratic.rndThd(loader_train, loader_test, loader_val, config)
         #run.quadratic.rndSte(loader_train, loader_test, loader_val, config)
+        print(config)
         # rounding classification
         executor = submitit.AutoExecutor(folder="logs")
         executor.update_parameters(slurm_additional_parameters={"account": "def-khalile2",

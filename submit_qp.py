@@ -32,7 +32,7 @@ parser.add_argument("--size",
 parser.add_argument("--samples",
                     type=int,
                     default=8000,
-                    choices=[800, 8000, 80000],
+                    choices=[8000],
                     help="problem type")
 config = parser.parse_args()
 
@@ -77,6 +77,7 @@ print("Convex Quadratic")
 #run.quadratic.rndThd(loader_train, loader_test, loader_val, config)
 #run.quadratic.lrnRnd(loader_train, loader_test, loader_val, config)
 #run.quadratic.rndSte(loader_train, loader_test, loader_val, config)
+print(config)
 if config.size <= 20:
     # exact solver
     executor = submitit.AutoExecutor(folder="logs")

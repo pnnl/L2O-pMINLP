@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable
 import copy
 
+import numpy as np
 from pyomo import environ as pe
 from pyomo import opt as po
 from pyomo.core import TransformationFactory
@@ -112,19 +113,21 @@ class abcParamSolver(ABC):
         """
         Calculate the magnitude of violations for each constraint
         """
-        return [self._constraint_violation(constr) for constr in self.model.cons.values()]
+        return np.array([self._constraint_violation(constr) for constr in self.model.cons.values()])
 
     def _constraint_violation(self, constr):
         """
         Helper method to compute the violation of a single constraint
         """
         lhs = pe.value(constr.body)
+        lower_bound = pe.value(constr.lower) if constr.lower is not None else None
+        upper_bound = pe.value(constr.upper) if constr.upper is not None else None
         # check if LHS is below the lower bound
-        if constr.lower is not None and lhs < pe.value(constr.lower) - 1e-5:
-            return float(pe.value(constr.lower)) - lhs
+        if lower_bound is not None and lhs < lower_bound - 1e-5:
+            return lower_bound - lhs
         # check if LHS is above the upper bound
-        elif constr.upper is not None and lhs > pe.value(constr.upper) + 1e-5:
-            return lhs - float(pe.value(constr.upper))
+        elif upper_bound is not None and lhs > upper_bound + 1e-5:
+            return lhs - upper_bound
         return 0.0
 
     def clone(self):

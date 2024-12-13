@@ -12,8 +12,6 @@ from src.problem.math_solver import abcParamSolver
 class nonconvex(abcParamSolver):
     def __init__(self, num_var, num_ineq, timelimit=None):
         super().__init__(timelimit=timelimit, solver="scip")
-        # quite mode
-        self.opt.options["quiet"] = True
         # fixed params
         rng = np.random.RandomState(17)
         Q = 0.01 * np.diag(rng.random(size=num_var))
@@ -25,6 +23,7 @@ class nonconvex(abcParamSolver):
         m = pe.ConcreteModel()
         # mutable parameters (parametric part of the problem)
         m.b = pe.Param(pe.RangeSet(0, num_ineq-1), default=0, mutable=True)
+        m.d = pe.Param(pe.RangeSet(0, num_ineq-1), default=0, mutable=True)
         # decision variables
         m.x = pe.Var(range(num_var), domain=pe.Integers)
         # objective function 1/2 x^T Q x + p^T sin(x)
@@ -33,10 +32,10 @@ class nonconvex(abcParamSolver):
         # constraints A x <= b
         m.cons = pe.ConstraintList()
         for i in range(num_ineq):
-            m.cons.add(sum(A[i,j] * m.x[j] for j in range(num_var)) <= m.b[i])
+            m.cons.add(sum(A[i,j] * m.x[j] for j in range(num_var)) <= m.b[i] - m.d[i] * (m.x[0] - m.x[1]))
         # set attributes
         self.model = m
-        self.params ={"b":m.b}
+        self.params ={"b":m.b, "d":m.d}
         self.vars = {"x":m.x}
         self.cons = m.cons
 
@@ -50,8 +49,9 @@ if __name__ == "__main__":
 
     # generate parameters
     b = np.random.uniform(-1, 1, size=(num_data, num_ineq))
+    d = np.random.uniform(-0.01, 0.01, size=(num_data, num_ineq))
     # set params
-    params = {"b":b[0]}
+    params = {"b":b[0], "d":d[0]}
     # init model
     model = nonconvex(num_var, num_ineq)
 
