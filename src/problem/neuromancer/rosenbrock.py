@@ -191,7 +191,7 @@ if __name__ == "__main__":
                            int_ind=model.int_ind, continuous_update=True, equality_encoding=encoding, name="round")
 
     # build neuromancer problem for rounding
-    components = nn.ModuleList([smap, encoding, rnd]).to("cuda")
+    components = nn.ModuleList([smap, encoding, rnd])
     loss_fn = penaltyLoss(["b", "a", "x_rnd"], steepness, num_blocks, penalty_weight)
 
     # training
@@ -203,7 +203,7 @@ if __name__ == "__main__":
     optimizer = torch.optim.AdamW(components.parameters(), lr=lr)
     # create a trainer for the problem
     my_trainer = trainer(components, loss_fn, optimizer, epochs=epochs,
-                         patience=patience, warmup=warmup, device="cuda")
+                         patience=patience, warmup=warmup)
     # training for the rounding problem
     my_trainer.train(loader_train, loader_val)
 
