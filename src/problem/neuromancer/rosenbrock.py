@@ -196,8 +196,8 @@ if __name__ == "__main__":
 
     # training
     from src.problem.neuromancer.trainer import trainer
-    epochs = 200                    # number of training epochs
-    patience = 20                   # number of epochs with no improvement in eval metric to allow before early stopping
+    epochs = 400                    # number of training epochs
+    patience = 40                   # number of epochs with no improvement in eval metric to allow before early stopping
     growth_rate = 1             # growth rate of penalty weight
     warmup = 20                 # number of epochs to wait before enacting early stopping policies
     optimizer = torch.optim.AdamW(components.parameters(), lr=lr)
