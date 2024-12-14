@@ -103,9 +103,9 @@ for size in [100, 200, 500, 1000]:
     print(f"Submitted job with ID: {job.job_id}")
 
 # changes penalty
-for penalty in [1, 5, 10, 50, 500, 1000]:
+for penalty in [1, 5, 10, 50, 200, 300, 500, 1000]:
     config.penalty = penalty
-    for size in [100, 200, 500, 1000]:
+    for size in [10, 20, 50, 100, 200, 500, 1000]:
         # random seed
         random.seed(42)
         np.random.seed(42)

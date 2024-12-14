@@ -28,7 +28,7 @@ print("Rosenbrock")
 
 # weight increasing
 config.penalty = 100
-for size in [1000, 3000]:
+for size in [100, 300, 1000]:
     # random seed
     random.seed(42)
     np.random.seed(42)
@@ -106,9 +106,9 @@ for size in [1000, 3000]:
     job = executor.submit(run.rosenbrock.rndSte, loader_train, loader_test, loader_val, config, True)
     print(f"Submitted job with ID: {job.job_id}")
 
-for penalty in [1, 5, 10, 50, 200, 300, 400, 500, 1000]:
+for penalty in [1, 5, 10, 50, 200, 300, 500, 1000]:
     config.penalty = penalty
-    for size in [1000, 3000]:
+    for size in [10, 30, 100, 300, 1000]:
         # random seed
         random.seed(42)
         np.random.seed(42)
