@@ -136,72 +136,76 @@ if __name__ == "__main__":
     torch.manual_seed(42)
 
     # init
-    steepness = 50    # steepness factor
-    num_blocks = 10   # number of expression blocks
-    num_data = 5000   # number of data
-    test_size = 1000  # number of test size
-    val_size = 1000   # number of validation size
+    steepness = 50
+    num_blocks = 10
+    hlayers_sol = 5
+    hlayers_rnd = 4
+    hsize = 16
+    lr = 1e-3
+    penalty_weight = 100
+    num_data = 5000
+    test_size = 1000
+    val_size = 1000
+    train_size = num_data - test_size - val_size
 
-    # data sample from uniform distribution
+    # init model
+    from src.problem import msRosenbrock
+    model = msRosenbrock(steepness, num_blocks, timelimit=1000)
+
+    # parameters as input data
     b_low, b_high = 1.0, 8.0
     a_low, a_high = 0.5, 4.5
-    b_samples = torch.FloatTensor(num_data, 1).uniform_(b_low, b_high)
-    a_samples = torch.FloatTensor(num_data, num_blocks).uniform_(a_low, a_high)
-    data = {"b":b_samples, "a":a_samples}
-    # data split
-    from src.utlis import data_split
-    data_train, data_test, data_dev = data_split(data, test_size=test_size, val_size=val_size)
+    b_train = np.random.uniform(b_low, b_high, (train_size, 1)).astype(np.float32)
+    b_test  = np.random.uniform(b_low, b_high, (test_size, 1)).astype(np.float32)
+    b_val   = np.random.uniform(b_low, b_high, (val_size, 1)).astype(np.float32)
+    a_train = np.random.uniform(a_low, a_high, (train_size, num_blocks)).astype(np.float32)
+    a_test  = np.random.uniform(a_low, a_high, (test_size, num_blocks)).astype(np.float32)
+    a_val   = np.random.uniform(a_low, a_high, (val_size, num_blocks)).astype(np.float32)
+    # nm datasets
+    from neuromancer.dataset import DictDataset
+    data_train = DictDataset({"b":b_train, "a":a_train}, name="train")
+    data_test = DictDataset({"b":b_test, "a":a_test}, name="test")
+    data_val = DictDataset({"b":b_val, "a":a_val}, name="dev")
     # torch dataloaders
     from torch.utils.data import DataLoader
-    loader_train = DataLoader(data_train, batch_size=32, num_workers=0,
-                              collate_fn=data_train.collate_fn, shuffle=True)
-    loader_test  = DataLoader(data_test, batch_size=32, num_workers=0,
-                              collate_fn=data_test.collate_fn, shuffle=True)
-    loader_dev   = DataLoader(data_dev, batch_size=32, num_workers=0,
-                              collate_fn=data_dev.collate_fn, shuffle=True)
+    batch_size = 64
+    loader_train = DataLoader(data_train, batch_size, num_workers=0, collate_fn=data_train.collate_fn, shuffle=True)
+    loader_test = DataLoader(data_test, batch_size, num_workers=0, collate_fn=data_test.collate_fn, shuffle=False)
+    loader_val = DataLoader(data_val, batch_size, num_workers=0, collate_fn=data_val.collate_fn, shuffle=True)
 
     # define neural architecture for the solution map smap(p, a) -> x
     import neuromancer as nm
     func = nm.modules.blocks.MLP(insize=num_blocks+1, outsize=2*num_blocks-3, bias=True,
                                  linear_map=nm.slim.maps["linear"],
-                                 nonlin=nn.ReLU, hsizes=[64]*4)
+                                 nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
     smap = nm.system.Node(func, ["b", "a"], ["z"], name="smap")
 
     # linear constraint encode
     encoding = equalityEncoding(num_blocks, input_key="z", output_key="x")
 
-    # build neuromancer components
-    components = nn.ModuleList([smap, encoding])
+    # define rounding model
+    from src.func.layer import netFC
+    from src.func import roundGumbelModel
+    layers_rnd = netFC(input_dim=3*num_blocks+1, hidden_dims=[hsize]*hlayers_rnd, output_dim=2*num_blocks-3)
+    rnd = roundGumbelModel(layers=layers_rnd, param_keys=["b", "a"], var_keys=["x"], output_keys=["x_rnd"],
+                           int_ind=model.int_ind, continuous_update=True, equality_encoding=encoding, name="round")
 
-    #loss = PenaltyLoss(["p", "a", "x"], steepness, num_blocks)
-    #for data_dict in loader_train:
-        # add x to dict
-    #    data_dict.update(components(data_dict))
-        # calculate loss
-    #    print(loss(data_dict))
-    #    break
+    # build neuromancer problem for rounding
+    components = nn.ModuleList([smap, encoding, rnd]).to("cuda")
+    loss_fn = penaltyLoss(["b", "a", "x_rnd"], steepness, num_blocks, penalty_weight)
 
-    # build neuromancer problems
-    #loss = nm.loss.PenaltyLoss(obj, constrs)
-    # problem = nm.problem.Problem([components], loss)
-    loss_fn = penaltyLoss(["b", "a", "x"], steepness, num_blocks)
-
-    # training
-    lr = 0.0001    # step size for gradient descent
-    epochs = 400  # number of training epochs
-    warmup = 40   # number of epochs to wait before enacting early stopping policy
-    patience = 40 # number of epochs with no improvement in eval metric to allow before early stopping
-    # set adamW as optimizer
-    optimizer = torch.optim.AdamW(components.parameters(), lr=lr)
     # training
     from src.problem.neuromancer.trainer import trainer
-    my_trainer = trainer(components, loss_fn, optimizer, epochs, patience, warmup)
-    my_trainer.train(loader_train, loader_dev)
-    print()
-
-    # init mathmatic model
-    from src.problem.math_solver.rosenbrock import rosenbrock
-    model = rosenbrock(steepness=steepness, num_blocks=num_blocks)
+    epochs = 200                    # number of training epochs
+    patience = 20                   # number of epochs with no improvement in eval metric to allow before early stopping
+    growth_rate = 1             # growth rate of penalty weight
+    warmup = 20                 # number of epochs to wait before enacting early stopping policies
+    optimizer = torch.optim.AdamW(components.parameters(), lr=lr)
+    # create a trainer for the problem
+    my_trainer = trainer(components, loss_fn, optimizer, epochs=epochs,
+                         patience=patience, warmup=warmup, device="cuda")
+    # training for the rounding problem
+    my_trainer.train(loader_train, loader_val)
 
     # test neuroMANCER
     from src.utlis import nm_test_solve
