@@ -1,3 +1,5 @@
+# https://www.minlplib.org/tln7.html
+
 # MINLP written by GAMS Convert at 02/17/22 17:23:25
 #
 # Equation counts
@@ -357,9 +359,7 @@ m.e72 = Constraint(expr= -m.i13 * m.i157 - m.i14 * m.i158 - m.i15 * m.i159 -
     * m.i164 - m.i21 * m.i165 - m.i22 * m.i166 - m.i23 * m.i167 - m.i24 *
     m.i168 <= -8)
 
-
 from pyomo import opt as po
 solver = po.SolverFactory("scip")
-solver.options['numerics/feastol'] = 1e-6
 result = solver.solve(m, tee=True)
 print(result)
