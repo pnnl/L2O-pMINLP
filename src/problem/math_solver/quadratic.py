@@ -51,12 +51,12 @@ if __name__ == "__main__":
     from src.utlis import ms_test_solve
 
     num_var = 10
-    num_ineq = 5
-    num_eq = 5
+    num_ineq = 9
+    num_eq = 1
     num_data = 5000
 
     # generate parameters
-    b = np.random.uniform(0, 1, size=(num_data, num_ineq))
+    b = np.random.uniform(-1, 1, size=(num_data, num_ineq))
     # set params
     params = {"b":b[0]}
     # init model

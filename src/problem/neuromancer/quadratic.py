@@ -134,12 +134,12 @@ if __name__ == "__main__":
     torch.manual_seed(42)
 
     # init
-    num_var = 20
+    num_var = 100
     num_eq = 10
-    num_ineq = 10
+    num_ineq = 90
     hlayers_sol = 5
     hlayers_rnd = 4
-    hsize = 64
+    hsize = 128
     lr = 1e-3
     penalty_weight = 100
     num_data = 10000
@@ -152,7 +152,7 @@ if __name__ == "__main__":
     model = quadratic(num_var, num_eq, num_ineq, timelimit=60)
 
     # data sample from uniform distribution
-    b_samples = torch.from_numpy(np.random.uniform(0, 1, size=(num_data, num_ineq))).float()
+    b_samples = torch.from_numpy(np.random.uniform(-1, 1, size=(num_data, num_ineq))).float()
     data = {"b":b_samples}
     # data split
     from src.utlis import data_split

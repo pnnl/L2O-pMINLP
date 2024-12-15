@@ -51,8 +51,8 @@ if __name__ == "__main__":
     from src.utlis import ms_test_solve
 
     num_var = 10
-    num_ineq = 5
-    num_eq = 5
+    num_ineq = 9
+    num_eq = 1
     num_data = 5000
 
     # generate parameters
