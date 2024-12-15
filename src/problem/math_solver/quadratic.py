@@ -14,12 +14,13 @@ class quadratic(abcParamSolver):
         super().__init__(timelimit=timelimit, solver="gurobi")
         # fixed params
         rng = np.random.RandomState(17)
-        Q = 0.01 * np.diag(rng.random(size=num_var))
-        p = 0.1 * rng.random(num_var)
-        G = rng.normal(scale=0.1, size=(num_eq, num_var))
-        A = rng.normal(scale=0.1, size=(num_ineq, num_var))
+        self.Q = 0.01 * np.diag(rng.random(size=num_var))
+        self.p = 0.1 * rng.random(num_var)
+        self.A = rng.normal(scale=0.1, size=(num_eq, num_var))
+        self.G = rng.normal(scale=0.1, size=(num_ineq, num_var))
+        self.h = np.sum(np.abs(self.G @ np.linalg.pinv(self.A)), axis=1)
         # size
-        num_ineq, num_var = A.shape
+        num_ineq, num_var = self.A.shape
         # create model
         m = pe.ConcreteModel()
         # mutable parameters (parametric part of the problem)
@@ -29,16 +30,16 @@ class quadratic(abcParamSolver):
         for j in range(num_var // 2):
             m.x[j].domain = pe.Integers
         # objective function 1/2 x^T Q x + p^T x
-        obj = sum(m.x[j] * Q[j,j] * m.x[j] / 2 + p[j] * m.x[j] for j in range(num_var))
+        obj = sum(m.x[j] * self.Q[j,j] * m.x[j] / 2 + self.p[j] * m.x[j] for j in range(num_var))
         m.obj = pe.Objective(sense=pe.minimize, expr=obj)
         # constraints
         m.cons = pe.ConstraintList()
-        # constraints G x == 0
+        # constraints A x == b
         for i in range(num_eq):
-            m.cons.add(sum(G[i,j] * m.x[j] for j in range(num_var)) == 0)
-        # constraints A x <= b
+            m.cons.add(sum(self.A[i,j] * m.x[j] for j in range(num_var)) == m.b[i])
+        # constraints G x <= h
         for i in range(num_ineq):
-            m.cons.add(sum(A[i,j] * m.x[j] for j in range(num_var)) <= m.b[i])
+            m.cons.add(sum(self.G[i,j] * m.x[j] for j in range(num_var)) <= self.h[i])
         # set attributes
         self.model = m
         self.params ={"b":m.b}
@@ -50,9 +51,9 @@ if __name__ == "__main__":
 
     from src.utlis import ms_test_solve
 
-    num_var = 10
-    num_ineq = 9
-    num_eq = 1
+    num_var = 100
+    num_ineq = 50
+    num_eq = 50
     num_data = 5000
 
     # generate parameters
@@ -60,7 +61,7 @@ if __name__ == "__main__":
     # set params
     params = {"b":b[0]}
     # init model
-    model = quadratic(num_var, num_eq, num_ineq, timelimit=600)
+    model = quadratic(num_var, num_eq, num_ineq, timelimit=60)
 
     # solve the MIQP
     print("======================================================")
