@@ -135,21 +135,21 @@ if __name__ == "__main__":
 
     # init
     num_var = 20
-    num_eq = 4
-    num_ineq = 16
+    num_eq = 10
+    num_ineq = 10
     hlayers_sol = 5
     hlayers_rnd = 4
     hsize = 64
     lr = 1e-3
     penalty_weight = 100
-    num_data = 5000
+    num_data = 10000
     test_size = 1000
     val_size = 1000
     train_size = num_data - test_size - val_size
 
     # init mathmatic model
     from src.problem.math_solver.quadratic import quadratic
-    model = quadratic(num_var, num_eq, num_ineq)
+    model = quadratic(num_var, num_eq, num_ineq, timelimit=60)
 
     # data sample from uniform distribution
     b_samples = torch.from_numpy(np.random.uniform(0, 1, size=(num_data, num_ineq))).float()
@@ -196,8 +196,8 @@ if __name__ == "__main__":
 
     # training
     from src.problem.neuromancer.trainer import trainer
-    epochs = 400                    # number of training epochs
-    patience = 40                   # number of epochs with no improvement in eval metric to allow before early stopping
+    epochs = 200                    # number of training epochs
+    patience = 20                   # number of epochs with no improvement in eval metric to allow before early stopping
     growth_rate = 1             # growth rate of penalty weight
     warmup = 20                 # number of epochs to wait before enacting early stopping policies
     optimizer = torch.optim.AdamW(components.parameters(), lr=lr)
