@@ -10,12 +10,13 @@ from pyomo import environ as pe
 from src.problem.math_solver import abcParamSolver
 
 class nonconvex(abcParamSolver):
-    def __init__(self, num_var, num_ineq, timelimit=None):
+    def __init__(self, num_var, num_eq, num_ineq, timelimit=None):
         super().__init__(timelimit=timelimit, solver="scip")
         # fixed params
         rng = np.random.RandomState(17)
         Q = 0.01 * np.diag(rng.random(size=num_var))
         p = 0.1 * rng.random(num_var)
+        G = rng.normal(scale=0.1, size=(num_eq, num_var))
         A = rng.normal(scale=0.1, size=(num_ineq, num_var))
         # size
         num_ineq, num_var = A.shape
@@ -25,17 +26,23 @@ class nonconvex(abcParamSolver):
         m.b = pe.Param(pe.RangeSet(0, num_ineq-1), default=0, mutable=True)
         m.d = pe.Param(pe.RangeSet(0, num_ineq-1), default=0, mutable=True)
         # decision variables
-        m.x = pe.Var(range(num_var), domain=pe.Integers)
+        m.x = pe.Var(range(num_var), domain=pe.Reals)
+        for j in range(num_var // 2):
+            m.x[j].domain = pe.Integers
         # objective function 1/2 x^T Q x + p^T sin(x)
         obj = sum(m.x[j] * Q[j,j] * m.x[j] / 2 + p[j] * pe.sin(m.x[j]) for j in range(num_var))
         m.obj = pe.Objective(sense=pe.minimize, expr=obj)
-        # constraints A x <= b
+        # constraints
         m.cons = pe.ConstraintList()
+        # constraints G x == 0
+        for i in range(num_eq):
+            m.cons.add(sum(G[i,j] * m.x[j] for j in range(num_var)) == 0)
+        # constraints A x <= b
         for i in range(num_ineq):
-            m.cons.add(sum(A[i,j] * m.x[j] for j in range(num_var)) <= m.b[i] - m.d[i] * (m.x[0] - m.x[1]))
+            m.cons.add(sum(A[i,j] * m.x[j] for j in range(num_var)) <= m.b[i])
         # set attributes
         self.model = m
-        self.params ={"b":m.b, "d":m.d}
+        self.params ={"b":m.b}
         self.vars = {"x":m.x}
         self.cons = m.cons
 
@@ -44,18 +51,18 @@ if __name__ == "__main__":
     from src.utlis import ms_test_solve
 
     num_var = 10
-    num_ineq = 10
+    num_ineq = 5
+    num_eq = 5
     num_data = 5000
 
     # generate parameters
     b = np.random.uniform(-1, 1, size=(num_data, num_ineq))
-    d = np.random.uniform(-0.01, 0.01, size=(num_data, num_ineq))
     # set params
-    params = {"b":b[0], "d":d[0]}
+    params = {"b":b[0]}
     # init model
-    model = nonconvex(num_var, num_ineq)
+    model = nonconvex(num_var, num_eq, num_ineq)
 
-    # solve the MIQP
+    # solve the nonconvex
     print("======================================================")
     print("Solve MINLP problem:")
     model.set_param_val(params)
