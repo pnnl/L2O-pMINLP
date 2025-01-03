@@ -128,7 +128,7 @@ if __name__ == "__main__":
     import neuromancer as nm
     func = nm.modules.blocks.MLP(insize=num_eq, outsize=num_var//2, bias=True,
                                  linear_map=nm.slim.maps["linear"],
-                                 nonlin=nn.ReLU, hsizes=[10]*4)
+                                 nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
     smap = nm.system.Node(func, ["b"], ["x"], name="smap")
 
     # define rounding model

@@ -91,12 +91,12 @@ if __name__ == "__main__":
     torch.manual_seed(42)
 
     # init
-    num_var = 10
-    num_eq = 5
-    num_ineq = 5
+    num_var = 100
+    num_eq = 50
+    num_ineq = 50
     hlayers_sol = 5
     hlayers_rnd = 4
-    hsize = 32
+    hsize = 128
     lr = 1e-3
     penalty_weight = 100
     num_data = 10000
@@ -128,7 +128,7 @@ if __name__ == "__main__":
     import neuromancer as nm
     func = nm.modules.blocks.MLP(insize=num_eq, outsize=num_var//2, bias=True,
                                  linear_map=nm.slim.maps["linear"],
-                                 nonlin=nn.ReLU, hsizes=[10]*4)
+                                 nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
     smap = nm.system.Node(func, ["b"], ["x"], name="smap")
 
     # define rounding model
@@ -138,7 +138,7 @@ if __name__ == "__main__":
                        output_dim=num_var//2)
     rnd = roundGumbelModel(layers=layers_rnd, param_keys=["b"], var_keys=["x"],
                            output_keys=["x_rnd"], int_ind=model.int_ind,
-                           continuous_update=True, name="round")
+                           continuous_update=False, name="round")
 
     # complete solution
     from src.func import completePartial
