@@ -62,6 +62,9 @@ class trainer:
                 data_dict = self.loss_fn(data_dict)
                 # backward pass
                 data_dict[self.loss_key].backward()
+                #for name, module in self.components.named_modules():
+                #    if name == "0.callable.layers.5":
+                #        print(module.weight.grad)
                 torch.nn.utils.clip_grad_norm_(self.components.parameters(), self.clip)
                 self.optimizer.step()
                 self.optimizer.zero_grad()
