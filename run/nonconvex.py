@@ -25,21 +25,21 @@ def exact(loader_test, config):
     print(f"EX in NC for size {config.size}.")
     # config
     num_var = config.size
-    num_ineq = config.size
+    num_eq = config.size // 2
+    num_ineq = config.size // 2
     # init model
     from src.problem import msNonconvex
-    model = msNonconvex(num_var, num_ineq, timelimit=1000)
+    model = msNonconvex(num_var, num_eq, num_ineq, timelimit=1000)
     # init df
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     # go through test data
     b_test = loader_test.dataset.datadict["b"][:100]
-    d_test = loader_test.dataset.datadict["d"][:100]
-    for b, d in tqdm(list(zip(b_test, d_test))):
+    for b in tqdm(list(b_test)):
         # set params
-        model.set_param_val({"b":b.cpu().numpy(), "d":d.cpu().numpy()})
+        model.set_param_val({"b":b.cpu().numpy()})
         # solve
         tick = time.time()
-        params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
+        params.append(list(b.cpu().numpy()))
         try:
             xval, objval = model.solve("scip")
             tock = time.time()
@@ -83,23 +83,23 @@ def relRnd(loader_test, config):
     from src.heuristic import naive_round
     # config
     num_var = config.size
-    num_ineq = config.size
+    num_eq = config.size // 2
+    num_ineq = config.size // 2
     # init model
     from src.problem import msNonconvex
-    model = msNonconvex(num_var, num_ineq, timelimit=1000)
+    model = msNonconvex(num_var, num_eq, num_ineq, timelimit=1000)
     # init df
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     # go through test data
     b_test = loader_test.dataset.datadict["b"][:100]
-    d_test = loader_test.dataset.datadict["d"][:100]
-    for b, d in tqdm(list(zip(b_test, d_test))):
+    for b in tqdm(list(b_test)):
         # set params
         model.set_param_val({"b":b.cpu().numpy()})
         # relax
         model_rel = model.relax()
         # solve
         tick = time.time()
-        params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
+        params.append(list(b.cpu().numpy()))
         try:
             xval_rel, _ = model_rel.solve("scip")
             xval, objval = naive_round(xval_rel, model)
@@ -143,22 +143,22 @@ def root(loader_test, config):
     print(f"N1 in NC for size {config.size}.")
     # config
     num_var = config.size
-    num_ineq = config.size
+    num_eq = config.size // 2
+    num_ineq = config.size // 2
     # init model
     from src.problem import msNonconvex
-    model = msNonconvex(num_var, num_ineq, timelimit=1000)
+    model = msNonconvex(num_var, num_eq, num_ineq, timelimit=1000)
     model_heur = model.first_solution_heuristic(nodes_limit=1)
     # init df
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     # go through test data
     b_test = loader_test.dataset.datadict["b"][:100]
-    d_test = loader_test.dataset.datadict["d"][:100]
-    for b, d in tqdm(list(zip(b_test, d_test))):
+    for b in tqdm(list(b_test)):
         # set params
-        model_heur.set_param_val({"b":b.cpu().numpy(), "d":d.cpu().numpy()})
+        model_heur.set_param_val({"b":b.cpu().numpy()})
         # solve
         tick = time.time()
-        params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
+        params.append(list(b.cpu().numpy()))
         try:
             xval, objval = model_heur.solve("scip")
             tock = time.time()
@@ -202,10 +202,11 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     import neuromancer as nm
     from src.problem import nmNonconvex
     from src.func.layer import netFC
-    from src.func import roundGumbelModel
+    from src.func import roundGumbelModel, completePartial
     # config
     num_var = config.size
-    num_ineq = config.size
+    num_eq = config.size // 2
+    num_ineq = config.size // 2
     hlayers_sol = config.hlayers_sol
     hlayers_rnd = config.hlayers_rnd
     hsize = config.hsize
@@ -213,22 +214,24 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     penalty_weight = config.penalty
     # init model
     from src.problem import msNonconvex
-    model = msNonconvex(num_var, num_ineq, timelimit=1000)
+    model = msNonconvex(num_var, num_eq, num_ineq, timelimit=1000)
     # build neural architecture for the solution map
-    func = nm.modules.blocks.MLP(insize=num_ineq*2, outsize=num_var, bias=True,
-                                 linear_map=nm.slim.maps["linear"],
-                                 nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
-    smap = nm.system.Node(func, ["b", "d"], ["x"], name="smap")
+    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var//2)
+    smap = nm.system.Node(func, ["b"], ["x"], name="smap")
     # define rounding model
-    layers_rnd = netFC(input_dim=num_ineq*2+num_var,
+    layers_rnd = netFC(input_dim=num_var,
                        hidden_dims=[hsize]*hlayers_rnd,
-                       output_dim=num_var)
-    rnd = roundGumbelModel(layers=layers_rnd, param_keys=["b", "d"], var_keys=["x"],
+                       output_dim=num_var-num_eq)
+    rnd = roundGumbelModel(layers=layers_rnd, param_keys=["b"], var_keys=["x"],
                            output_keys=["x_rnd"], int_ind=model.int_ind,
                            continuous_update=True, name="round")
+    # fill variables from linear system
+    complete = completePartial(A=model.A, num_var=num_var,
+                               partial_ind=model.int_ind["x"], var_key="x_rnd",
+                               rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
-    components = nn.ModuleList([smap, rnd]).to("cuda")
-    loss_fn = nmNonconvex(["b", "d", "x_rnd"], num_var, num_ineq, penalty_weight)
+    components = nn.ModuleList([smap, rnd, complete]).to("cuda")
+    loss_fn = nmNonconvex(["b", "x_comp"], num_var, num_ineq, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
@@ -249,10 +252,11 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     import neuromancer as nm
     from src.problem import nmNonconvex
     from src.func.layer import netFC
-    from src.func import roundThresholdModel
+    from src.func import roundThresholdModel, completePartial
     # config
     num_var = config.size
-    num_ineq = config.size
+    num_eq = config.size // 2
+    num_ineq = config.size // 2
     hlayers_sol = config.hlayers_sol
     hlayers_rnd = config.hlayers_rnd
     hsize = config.hsize
@@ -260,22 +264,24 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     penalty_weight = config.penalty
     # init model
     from src.problem import msNonconvex
-    model = msNonconvex(num_var, num_ineq, timelimit=1000)
+    model = msNonconvex(num_var, num_eq, num_ineq, timelimit=1000)
     # build neural architecture for the solution map
-    func = nm.modules.blocks.MLP(insize=num_ineq*2, outsize=num_var, bias=True,
-                                 linear_map=nm.slim.maps["linear"],
-                                 nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
-    smap = nm.system.Node(func, ["b", "d"], ["x"], name="smap")
+    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var//2)
+    smap = nm.system.Node(func, ["b"], ["x"], name="smap")
     # define rounding model
-    layers_rnd = netFC(input_dim=num_ineq*2+num_var,
+    layers_rnd = netFC(input_dim=num_var,
                        hidden_dims=[hsize]*hlayers_rnd,
-                       output_dim=num_var)
-    rnd = roundThresholdModel(layers=layers_rnd, param_keys=["b", "d"], var_keys=["x"],
+                       output_dim=num_var-num_eq)
+    rnd = roundThresholdModel(layers=layers_rnd, param_keys=["b"], var_keys=["x"],
                               output_keys=["x_rnd"], int_ind=model.int_ind,
                               continuous_update=True, name="round")
+    # fill variables from linear system
+    complete = completePartial(A=model.A, num_var=num_var,
+                               partial_ind=model.int_ind["x"], var_key="x_rnd",
+                               rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
-    components = nn.ModuleList([smap, rnd]).to("cuda")
-    loss_fn = nmNonconvex(["b", "d", "x_rnd"], num_var, num_ineq, penalty_weight)
+    components = nn.ModuleList([smap, rnd, complete]).to("cuda")
+    loss_fn = nmNonconvex(["b", "x_comp"], num_var, num_ineq, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
@@ -296,36 +302,33 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     import neuromancer as nm
     from src.problem import nmNonconvex
     from src.func.layer import netFC
-    from src.func import roundThresholdModel
+    from src.func import roundThresholdModel, completePartial
     # config
     num_var = config.size
-    num_ineq = config.size
+    num_eq = config.size // 2
+    num_ineq = config.size // 2
     hlayers_sol = config.hlayers_sol
     hsize = config.hsize
     lr = config.lr
     penalty_weight = config.penalty
     # init model
     from src.problem import msNonconvex
-    model = msNonconvex(num_var, num_ineq, timelimit=1000)
+    model = msNonconvex(num_var, num_eq, num_ineq, timelimit=1000)
     # build neural architecture for the solution map
-    func = nm.modules.blocks.MLP(insize=num_ineq*2, outsize=num_var, bias=True,
-                                 linear_map=nm.slim.maps["linear"],
-                                 nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
-    smap = nm.system.Node(func, ["b", "d"], ["x"], name="smap")
+    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var)
+    smap = nm.system.Node(func, ["b"], ["x"], name="smap")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap]).to("cuda")
-    loss_fn = nmNonconvex(["b", "d", "x"], num_var, num_ineq, penalty_weight)
+    loss_fn = nmNonconvex(["b", "x"], num_var, num_ineq, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
     from src.heuristic import naive_round
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     b_test = loader_test.dataset.datadict["b"][:100]
-    d_test = loader_test.dataset.datadict["d"][:100]
-    for b, d in tqdm(list(zip(b_test, d_test))):
+    for b in tqdm(list(b_test)):
         # data point as tensor
         datapoints = {"b": torch.unsqueeze(b, 0).to("cuda"),
-                      "d": torch.unsqueeze(d, 0).to("cuda"),
                       "name": "test"}
         # infer
         components.eval()
@@ -335,7 +338,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
                 datapoints.update(comp(datapoints))
         tock = time.time()
         # assign params
-        model.set_param_val({"b":b.cpu().numpy(), "d":d.cpu().numpy()})
+        model.set_param_val({"b":b.cpu().numpy()})
         # assign vars
         x = datapoints["x"]
         for i in range(num_var):
@@ -343,7 +346,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
         # get solutions
         xval_rel, _ = model.get_val()
         xval, objval = naive_round(xval_rel, model)
-        params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
+        params.append(list(b.cpu().numpy()))
         sols.append(list(list(xval.values())[0].values()))
         objvals.append(objval)
         viol = model.cal_violation()
@@ -377,27 +380,30 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     import neuromancer as nm
     from src.problem import nmNonconvex
     from src.func.layer import netFC
-    from src.func import roundSTEModel
+    from src.func import roundSTEModel, completePartial
     # config
     num_var = config.size
-    num_ineq = config.size
+    num_eq = config.size // 2
+    num_ineq = config.size // 2
     hlayers_sol = config.hlayers_sol
     hsize = config.hsize
     lr = config.lr
     penalty_weight = config.penalty
     # init model
     from src.problem import msNonconvex
-    model = msNonconvex(num_var, num_ineq, timelimit=1000)
+    model = msNonconvex(num_var, num_eq, num_ineq, timelimit=1000)
     # build neural architecture for the solution map
-    func = nm.modules.blocks.MLP(insize=num_ineq*2, outsize=num_var, bias=True,
-                                 linear_map=nm.slim.maps["linear"],
-                                 nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
-    smap = nm.system.Node(func, ["b", "d"], ["x"], name="smap")
+    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var//2)
+    smap = nm.system.Node(func, ["b"], ["x"], name="smap")
     # define rounding model
-    rnd = roundSTEModel(param_keys=["b", "d"], var_keys=["x"], output_keys=["x_rnd"], int_ind=model.int_ind, name="round")
+    rnd = roundSTEModel(param_keys=["b"], var_keys=["x"], output_keys=["x_rnd"], int_ind=model.int_ind, name="round")
+    # fill variables from linear system
+    complete = completePartial(A=model.A, num_var=num_var,
+                               partial_ind=model.int_ind["x"], var_key="x_rnd",
+                               rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
-    components = nn.ModuleList([smap, rnd]).to("cuda")
-    loss_fn = nmNonconvex(["b", "d", "x_rnd"], num_var, num_ineq, penalty_weight)
+    components = nn.ModuleList([smap, rnd, complete]).to("cuda")
+    loss_fn = nmNonconvex(["b", "x_comp"], num_var, num_ineq, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
@@ -411,11 +417,9 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
 def eval(components, model, loader_test):
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     b_test = loader_test.dataset.datadict["b"][:100]
-    d_test = loader_test.dataset.datadict["d"][:100]
-    for b, d in tqdm(list(zip(b_test, d_test))):
+    for b in tqdm(list(b_test)):
         # data point as tensor
         datapoints = {"b": torch.unsqueeze(b, 0).to("cuda"),
-                      "d": torch.unsqueeze(d, 0).to("cuda"),
                       "name": "test"}
         # infer
         components.eval()
@@ -425,14 +429,14 @@ def eval(components, model, loader_test):
                 datapoints.update(comp(datapoints))
         tock = time.time()
         # assign params
-        model.set_param_val({"b":b.cpu().numpy(), "d":d.cpu().numpy()})
+        model.set_param_val({"b":b.cpu().numpy()})
         # assign vars
-        x = datapoints["x_rnd"]
+        x = datapoints["x_comp"]
         for i in range(len(model.vars["x"])):
             model.vars["x"][i].value = x[0,i].item()
         # get solutions
         xval, objval = model.get_val()
-        params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
+        params.append(list(b.cpu().numpy()))
         sols.append(list(list(xval.values())[0].values()))
         objvals.append(objval)
         viol = model.cal_violation()

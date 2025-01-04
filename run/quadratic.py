@@ -25,10 +25,11 @@ def exact(loader_test, config):
     print(f"Ex in CQ for size {config.size}.")
     # config
     num_var = config.size
-    num_ineq = config.size
+    num_eq = config.size // 2
+    num_ineq = config.size // 2
     # init model
     from src.problem import msQuadratic
-    model = msQuadratic(num_var, num_ineq, timelimit=1000)
+    model = msQuadratic(num_var, num_eq, num_ineq, timelimit=1000)
     # init df
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     # go through test data
@@ -81,10 +82,11 @@ def relRnd(loader_test, config):
     from src.heuristic import naive_round
     # config
     num_var = config.size
-    num_ineq = config.size
+    num_eq = config.size // 2
+    num_ineq = config.size // 2
     # init model
     from src.problem import msQuadratic
-    model = msQuadratic(num_var, num_ineq, timelimit=1000)
+    model = msQuadratic(num_var, num_eq, num_ineq, timelimit=1000)
     # init df
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     # go through test data
@@ -139,10 +141,11 @@ def root(loader_test, config):
     print(f"N1 in CQ for size {config.size}.")
     # config
     num_var = config.size
-    num_ineq = config.size
+    num_eq = config.size // 2
+    num_ineq = config.size // 2
     # init model
     from src.problem import msQuadratic
-    model = msQuadratic(num_var, num_ineq, timelimit=1000)
+    model = msQuadratic(num_var, num_eq, num_ineq, timelimit=1000)
     model_heur = model.first_solution_heuristic(nodes_limit=1)
     # init df
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
@@ -196,10 +199,11 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     import neuromancer as nm
     from src.problem import nmQuadratic
     from src.func.layer import netFC
-    from src.func import roundGumbelModel
+    from src.func import roundGumbelModel, completePartial
     # config
     num_var = config.size
-    num_ineq = config.size
+    num_eq = config.size // 2
+    num_ineq = config.size // 2
     hlayers_sol = config.hlayers_sol
     hlayers_rnd = config.hlayers_rnd
     hsize = config.hsize
@@ -207,22 +211,24 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     penalty_weight = config.penalty
     # init model
     from src.problem import msQuadratic
-    model = msQuadratic(num_var, num_ineq, timelimit=1000)
+    model = msQuadratic(num_var, num_eq, num_ineq, timelimit=1000)
     # build neural architecture for the solution map
-    func = nm.modules.blocks.MLP(insize=num_ineq, outsize=num_var, bias=True,
-                                 linear_map=nm.slim.maps["linear"],
-                                 nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
+    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var//2)
     smap = nm.system.Node(func, ["b"], ["x"], name="smap")
     # define rounding model
-    layers_rnd = netFC(input_dim=num_ineq+num_var,
+    layers_rnd = netFC(input_dim=num_eq+num_var//2,
                        hidden_dims=[hsize]*hlayers_rnd,
-                       output_dim=num_var)
+                       output_dim=num_var-num_eq)
     rnd = roundGumbelModel(layers=layers_rnd, param_keys=["b"], var_keys=["x"],
                            output_keys=["x_rnd"], int_ind=model.int_ind,
                            continuous_update=True, name="round")
+    # fill variables from linear system
+    complete = completePartial(A=model.A, num_var=num_var,
+                               partial_ind=model.int_ind["x"], var_key="x_rnd",
+                               rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
-    components = nn.ModuleList([smap, rnd]).to("cuda")
-    loss_fn = nmQuadratic(["b", "x_rnd"], num_var, num_ineq, penalty_weight)
+    components = nn.ModuleList([smap, rnd, complete]).to("cuda")
+    loss_fn = nmQuadratic(["b", "x_comp"], num_var, num_ineq, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
@@ -247,10 +253,11 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     import neuromancer as nm
     from src.problem import nmQuadratic
     from src.func.layer import netFC
-    from src.func import roundThresholdModel
+    from src.func import roundThresholdModel, completePartial
     # config
     num_var = config.size
-    num_ineq = config.size
+    num_eq = config.size // 2
+    num_ineq = config.size // 2
     hlayers_sol = config.hlayers_sol
     hlayers_rnd = config.hlayers_rnd
     hsize = config.hsize
@@ -258,22 +265,24 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     penalty_weight = config.penalty
     # init model
     from src.problem import msQuadratic
-    model = msQuadratic(num_var, num_ineq, timelimit=1000)
+    model = msQuadratic(num_var, num_eq, num_ineq, timelimit=1000)
     # build neural architecture for the solution map
-    func = nm.modules.blocks.MLP(insize=num_ineq, outsize=num_var, bias=True,
-                                 linear_map=nm.slim.maps["linear"],
-                                 nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
+    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var//2)
     smap = nm.system.Node(func, ["b"], ["x"], name="smap")
     # define rounding model
-    layers_rnd = netFC(input_dim=num_ineq+num_var,
+    layers_rnd = netFC(input_dim=num_var,
                        hidden_dims=[hsize]*hlayers_rnd,
-                       output_dim=num_var)
+                       output_dim=num_var-num_eq)
     rnd = roundThresholdModel(layers=layers_rnd, param_keys=["b"], var_keys=["x"],
                               output_keys=["x_rnd"], int_ind=model.int_ind,
                               continuous_update=True, name="round")
+    # fill variables from linear system
+    complete = completePartial(A=model.A, num_var=num_var,
+                               partial_ind=model.int_ind["x"], var_key="x_rnd",
+                               rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
-    components = nn.ModuleList([smap, rnd]).to("cuda")
-    loss_fn = nmQuadratic(["b", "x_rnd"], num_var, num_ineq, penalty_weight)
+    components = nn.ModuleList([smap, rnd, complete]).to("cuda")
+    loss_fn = nmQuadratic(["b", "x_comp"], num_var, num_ineq, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
@@ -298,21 +307,20 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     import neuromancer as nm
     from src.problem import nmQuadratic
     from src.func.layer import netFC
-    from src.func import roundThresholdModel
+    from src.func import roundThresholdModel, completePartial
     # config
     num_var = config.size
-    num_ineq = config.size
+    num_eq = config.size // 2
+    num_ineq = config.size // 2
     hlayers_sol = config.hlayers_sol
     hsize = config.hsize
     lr = config.lr
     penalty_weight = config.penalty
     # init model
     from src.problem import msQuadratic
-    model = msQuadratic(num_var, num_ineq, timelimit=1000)
+    model = msQuadratic(num_var, num_eq, num_ineq, timelimit=1000)
     # build neural architecture for the solution map
-    func = nm.modules.blocks.MLP(insize=num_ineq, outsize=num_var, bias=True,
-                                 linear_map=nm.slim.maps["linear"],
-                                 nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
+    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var)
     smap = nm.system.Node(func, ["b"], ["x"], name="smap")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap]).to("cuda")
@@ -380,27 +388,30 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     import neuromancer as nm
     from src.problem import nmQuadratic
     from src.func.layer import netFC
-    from src.func import roundSTEModel
+    from src.func import roundSTEModel, completePartial
     # config
     num_var = config.size
-    num_ineq = config.size
+    num_eq = config.size // 2
+    num_ineq = config.size // 2
     hlayers_sol = config.hlayers_sol
     hsize = config.hsize
     lr = config.lr
     penalty_weight = config.penalty
     # init model
     from src.problem import msQuadratic
-    model = msQuadratic(num_var, num_ineq, timelimit=1000)
+    model = msQuadratic(num_var, num_eq, num_ineq, timelimit=1000)
     # build neural architecture for the solution map
-    func = nm.modules.blocks.MLP(insize=num_ineq, outsize=num_var, bias=True,
-                                 linear_map=nm.slim.maps["linear"],
-                                 nonlin=nn.ReLU, hsizes=[hsize]*hlayers_sol)
+    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var//2)
     smap = nm.system.Node(func, ["b"], ["x"], name="smap")
     # define rounding model
-    rnd = roundSTEModel(param_keys=["b"], var_keys=["x"],  output_keys=["x_rnd"], int_ind=model.int_ind, name="round")
+    rnd = roundSTEModel(param_keys=["b"], var_keys=["x"], output_keys=["x_rnd"], int_ind=model.int_ind, name="round")
+    # fill variables from linear system
+    complete = completePartial(A=model.A, num_var=num_var,
+                               partial_ind=model.int_ind["x"], var_key="x_rnd",
+                               rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
-    components = nn.ModuleList([smap, rnd]).to("cuda")
-    loss_fn = nmQuadratic(["b", "x_rnd"], num_var, num_ineq, penalty_weight)
+    components = nn.ModuleList([smap, rnd, complete]).to("cuda")
+    loss_fn = nmQuadratic(["b", "x_comp"], num_var, num_ineq, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
@@ -431,7 +442,7 @@ def eval(components, model, loader_test):
         # assign params
         model.set_param_val({"b":b.cpu().numpy()})
         # assign vars
-        x = datapoints["x_rnd"]
+        x = datapoints["x_comp"]
         for i in range(len(model.vars["x"])):
             model.vars["x"][i].value = x[0,i].item()
         # get solutions

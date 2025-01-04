@@ -26,8 +26,8 @@ torch.backends.cudnn.benchmark = False
 parser = argparse.ArgumentParser()
 parser.add_argument("--size",
                     type=int,
-                    default=5,
-                    choices=[5, 10, 20, 50, 100, 200, 500, 1000],
+                    default=10,
+                    choices=[10, 20, 50, 100, 200, 500, 1000],
                     help="problem type")
 parser.add_argument("--samples",
                     type=int,
@@ -38,7 +38,8 @@ config = parser.parse_args()
 
 # init problem
 num_var = config.size            # number of variables
-num_ineq = config.size           # number of constraints
+num_eq = config.size // 2        # number of equality constraints
+num_ineq = config.size // 2      # number of inequality constraints
 train_size = config.samples      # number of train
 test_size = 1000                 # number of test size
 val_size = 1000                  # number of validation size
@@ -54,7 +55,7 @@ config.lr = 1e-3                        # learning rate
 config.penalty = 100                    # penalty weight
 
 # data sample from uniform distribution
-b_samples = torch.from_numpy(np.random.uniform(-1, 1, size=(num_data, num_ineq))).float()
+b_samples = torch.from_numpy(np.random.uniform(-1, 1, size=(num_data, num_eq))).float()
 data = {"b":b_samples}
 # data split
 from src.utlis import data_split
