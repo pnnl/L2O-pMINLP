@@ -30,6 +30,9 @@ class completePartial(nn.Module):
         """
         # get values
         x, b = data[self.x_key], data[self.b_key]
+        # to device
+        self._A_partial = self._A_partial.to(x.device)
+        self._A_other_inv = self._A_other_inv.to(x.device)
         # complete vars
         x_comp = torch.zeros(x.shape[0], self.num_var, device=x.device)
         x_comp[:, self.partial_ind] = x
