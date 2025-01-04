@@ -17,7 +17,7 @@ def ms_test_solve(model, tee=False):
     for k, v in solvals.items():
         for i, val in v.items():
             print("{}[{}]: {:.2f}".format(k, i, val), end=" ")
-    print("\nObjective Value: {:.2f}".format(objval))
+    print("\nObjective Value: {:.4f}".format(objval))
     print("Constraint Violations: {:.4f}".format(sum(model.cal_violation())))
     print("Elapsed Time: {:.4f} sec".format(tock - tick))
     print()
@@ -44,7 +44,7 @@ def nm_test_solve(var_key, components, datapoint, model):
     print("Integer Variables:", model.int_ind)
     for i, val in solvals["x"].items():
         print("{}[{}]: {:.2f}".format(var_key, i, val), end=" ")
-    print("\nObjective Value: {:.2f}".format(objval))
+    print("\nObjective Value: {:.4f}".format(objval))
     print("Constraint Violations: {:.4f}".format(sum(model.cal_violation())))
     print("Elapsed Time: {:.4f} sec".format(tock - tick))
     print()
