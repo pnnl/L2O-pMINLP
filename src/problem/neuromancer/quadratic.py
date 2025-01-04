@@ -8,8 +8,6 @@ import torch
 from torch import nn
 import neuromancer as nm
 
-from src.utlis import identityTransform
-
 class penaltyLoss(nn.Module):
     """
     Penalty loss function for quadratic problem
@@ -73,15 +71,15 @@ class penaltyLoss(nn.Module):
         """
         # get values
         x, b = input_dict[self.x_key], input_dict[self.b_key]
-        # eq constraints
+        # eq constraints A x == b
+        #lhs = torch.einsum("mn,bn->bm", self.A, x) # Ax
+        #rhs = b
+        #eq_violation = (torch.abs(lhs - rhs)).sum(dim=1)
+        # ineq constraints G x <= h
         lhs = torch.einsum("mn,bn->bm", self.G, x) # Gx
-        rhs = 0
-        eq_violation = (torch.abs(lhs - rhs)).sum(dim=1) # Ax<=b
-        # ineq constraints
-        lhs = torch.einsum("mn,bn->bm", self.A, x) # Ax
-        rhs = b # b
-        ineq_violation = (torch.relu(lhs - rhs)).sum(dim=1) # Ax<=b
-        return eq_violation + ineq_violation
+        rhs = self.h
+        ineq_violation = (torch.relu(lhs - rhs)).sum(dim=1)
+        return ineq_violation
 
 
 if __name__ == "__main__":
@@ -96,7 +94,7 @@ if __name__ == "__main__":
     num_ineq = 50
     hlayers_sol = 5
     hlayers_rnd = 4
-    hsize = 128
+    hsize = 256
     lr = 1e-3
     penalty_weight = 100
     num_data = 10000
@@ -134,8 +132,8 @@ if __name__ == "__main__":
     # define rounding model
     from src.func.layer import netFC
     from src.func import roundGumbelModel
-    layers_rnd = netFC(input_dim=num_eq+num_var//2, hidden_dims=[hsize]*hlayers_rnd,
-                       output_dim=num_var//2)
+    layers_rnd = netFC(input_dim=num_var, hidden_dims=[hsize]*hlayers_rnd,
+                       output_dim=num_var-num_eq)
     rnd = roundGumbelModel(layers=layers_rnd, param_keys=["b"], var_keys=["x"],
                            output_keys=["x_rnd"], int_ind=model.int_ind,
                            continuous_update=False, name="round")

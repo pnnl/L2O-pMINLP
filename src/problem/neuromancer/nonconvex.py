@@ -73,15 +73,15 @@ class penaltyLoss(nn.Module):
         """
         # get values
         x, b = input_dict[self.x_key], input_dict[self.b_key]
-        # eq constraints
+        # eq constraints A x == b
+        #lhs = torch.einsum("mn,bn->bm", self.A, x) # Ax
+        #rhs = b
+        #eq_violation = (torch.abs(lhs - rhs)).sum(dim=1)
+        # ineq constraints G x <= h
         lhs = torch.einsum("mn,bn->bm", self.G, x) # Gx
-        rhs = 0
-        eq_violation = (torch.abs(lhs - rhs)).sum(dim=1) # Ax<=b
-        # ineq constraints
-        lhs = torch.einsum("mn,bn->bm", self.A, x) # Ax
-        rhs = b # b
-        ineq_violation = (torch.relu(lhs - rhs)).sum(dim=1) # Ax<=b
-        return eq_violation + ineq_violation
+        rhs = self.h
+        ineq_violation = (torch.relu(lhs - rhs)).sum(dim=1)
+        return ineq_violation
 
 
 if __name__ == "__main__":
@@ -91,12 +91,12 @@ if __name__ == "__main__":
     torch.manual_seed(42)
 
     # init
-    num_var = 10
-    num_eq = 5
-    num_ineq = 5
+    num_var = 100
+    num_eq = 50
+    num_ineq = 50
     hlayers_sol = 5
     hlayers_rnd = 4
-    hsize = 32
+    hsize = 256
     lr = 1e-3
     penalty_weight = 100
     num_data = 10000
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     from src.func.layer import netFC
     from src.func import roundGumbelModel
     layers_rnd = netFC(input_dim=num_eq+num_var//2, hidden_dims=[hsize]*hlayers_rnd,
-                       output_dim=num_var//2)
+                       output_dim=num_var-num_eq)
     rnd = roundGumbelModel(layers=layers_rnd, param_keys=["b"], var_keys=["x"],
                            output_keys=["x_rnd"], int_ind=model.int_ind,
                            continuous_update=True, name="round")
