@@ -8,8 +8,6 @@ import torch
 from torch import nn
 import neuromancer as nm
 
-from src.utlis import identityTransform
-
 class penaltyLoss(nn.Module):
     """
     Penalty loss function for simple nonconvex problem
