@@ -7,25 +7,20 @@ import torch
 from torch import nn
 from torch.autograd import Function
 
-class thresholdBinarize(nn.Module):
-    """
-    An autograd function smoothly rounds the elements in `x` based on the
-    corresponding values in `threshold` using a sigmoid function.
-    """
-    def __init__(self, slope=10):
-        super(thresholdBinarize, self).__init__()
-        self.slope = slope
 
-    def forward(self, x, threshold):
-        # ensure the threshold_tensor values are between 0 and 1
-        threshold = torch.clamp(threshold, 0, 1)
-        # hard rounding
-        hard_round = (x >= threshold).float()
-        # calculate the difference and apply the sigmoid function
-        diff = x - threshold
-        smoothed_round = torch.sigmoid(self.slope * diff)
+class diffFloor(nn.Module):
+    """
+    An autograd model to floor numbers that applies a straight-through estimator
+    for the backward pass.
+    """
+    def __init__(self):
+        super(diffFloor, self).__init__()
+
+    def forward(self, x):
+        # floor
+        x_floor = torch.floor(x).float()
         # apply the STE trick to keep the gradient
-        return hard_round + (smoothed_round - smoothed_round.detach())
+        return x_floor + (x - x.detach())
 
 
 class diffGumbelBinarize(nn.Module):
@@ -33,7 +28,7 @@ class diffGumbelBinarize(nn.Module):
     An autograd function to binarize numbers using the Gumbel-Softmax trick,
     allowing gradients to be backpropagated through discrete variables.
     """
-    def __init__(self, temperature=10.0, eps=1e-9):
+    def __init__(self, temperature=10, eps=1e-9):
         super(diffGumbelBinarize, self).__init__()
         self.cur_step = 0
         self.temperature = self.temp_init = temperature
@@ -109,19 +104,47 @@ class _binarizeFuncSTE(Function):
         return grad_input
 
 
-class diffFloor(nn.Module):
+class thresholdBinarize(nn.Module):
     """
-    An autograd model to floor numbers that applies a straight-through estimator
-    for the backward pass.
+    An autograd function smoothly rounds the elements in `x` based on the
+    corresponding values in `threshold` using a sigmoid function.
     """
-    def __init__(self):
-        super(diffFloor, self).__init__()
+    def __init__(self, slope=10):
+        super(thresholdBinarize, self).__init__()
+        self.slope = slope
 
-    def forward(self, x):
-        # floor
-        x_floor = torch.floor(x).float()
+    def forward(self, x, threshold):
+        # ensure the threshold_tensor values are between 0 and 1
+        threshold = torch.clamp(threshold, 0, 1)
+        # hard rounding
+        hard_round = (x >= threshold).float()
+        # calculate the difference and apply the sigmoid function
+        diff = x - threshold
+        smoothed_round = torch.sigmoid(self.slope * diff)
         # apply the STE trick to keep the gradient
-        return x_floor + (x - x.detach())
+        return hard_round + (smoothed_round - smoothed_round.detach())
+
+
+class thresholdGumbelBinarize(nn.Module):
+    """
+    An autograd function smoothly rounds the elements in `x` based on the
+    corresponding values in `threshold` using the Gumbel-Sigmoid trick.
+    """
+    def __init__(self, temperature=10, slope=10, eps=1e-9):
+        super(thresholdGumbelBinarize, self).__init__()
+        self.slope = slope
+        self.temperature = temperature
+        self.eps = eps
+        self.gumbel_sigmoid = diffGumbelBinarize(temperature=self.temperature, eps=self.eps)
+
+    def forward(self, x, threshold):
+        # ensure the threshold_tensor values are between 0 and 1
+        threshold = torch.clamp(threshold, 0, 1)
+        # calculate the difference and apply the sigmoid function
+        diff = x - threshold
+        round = self.gumbel_sigmoid(self.slope * diff)
+        # apply the STE trick to keep the gradient
+        return round
 
 
 if __name__ == "__main__":

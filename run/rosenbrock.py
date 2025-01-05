@@ -251,7 +251,7 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     import neuromancer as nm
     from src.problem import nmRosenbrock, rosenbrockEquality
     from src.func.layer import netFC
-    from src.func import roundThresholdModel
+    from src.func import thresholdGumbelModel
     steepness = config.steepness
     num_blocks = config.size
     hlayers_sol = config.hlayers_sol
@@ -271,8 +271,8 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     encoding = rosenbrockEquality(num_blocks, input_key="z", output_key="x")
     # define rounding model
     layers_rnd = netFC(input_dim=3*num_blocks+1, hidden_dims=[hsize]*hlayers_rnd, output_dim=2*num_blocks-3)
-    rnd = roundThresholdModel(layers=layers_rnd, param_keys=["b", "a"], var_keys=["x"],  output_keys=["x_rnd"],
-                              int_ind=model.int_ind, continuous_update=True, equality_encoding=encoding, name="round")
+    rnd = thresholdGumbelModel(layers=layers_rnd, param_keys=["b", "a"], var_keys=["x"],  output_keys=["x_rnd"],
+                               int_ind=model.int_ind, continuous_update=True, equality_encoding=encoding, name="round")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, encoding, rnd]).to("cuda")
     loss_fn = nmRosenbrock(["b", "a", "x_rnd"], steepness, num_blocks, penalty_weight)

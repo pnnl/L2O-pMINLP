@@ -253,7 +253,7 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     import neuromancer as nm
     from src.problem import nmQuadratic
     from src.func.layer import netFC
-    from src.func import roundThresholdModel, completePartial
+    from src.func import thresholdGumbelModel, completePartial
     # config
     num_var = config.size
     num_eq = config.size // 2
@@ -273,9 +273,9 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     layers_rnd = netFC(input_dim=num_var,
                        hidden_dims=[hsize]*hlayers_rnd,
                        output_dim=num_var-num_eq)
-    rnd = roundThresholdModel(layers=layers_rnd, param_keys=["b"], var_keys=["x"],
-                              output_keys=["x_rnd"], int_ind=model.int_ind,
-                              continuous_update=True, name="round")
+    rnd = thresholdGumbelModel(layers=layers_rnd, param_keys=["b"], var_keys=["x"],
+                               output_keys=["x_rnd"], int_ind=model.int_ind,
+                               continuous_update=True, name="round")
     # fill variables from linear system
     complete = completePartial(A=model.A, num_var=num_var,
                                partial_ind=model.int_ind["x"], var_key="x_rnd",

@@ -6,7 +6,7 @@ from collections import defaultdict
 import torch
 from torch import nn
 
-from src.func.ste import diffFloor, diffBinarize, diffGumbelBinarize, thresholdBinarize
+from src.func.ste import diffFloor, diffBinarize, diffGumbelBinarize, thresholdBinarize, thresholdGumbelBinarize
 
 class roundSTEModel(nn.Module):
     """
@@ -189,7 +189,7 @@ class roundGumbelModel(roundModel):
     """
     def __init__(self, layers, param_keys, var_keys, output_keys=[],
                  int_ind=defaultdict(list), bin_ind=defaultdict(list),
-                 continuous_update=False, temperature=1.0, tolerance=1e-3,
+                 continuous_update=False, temperature=10.0, tolerance=1e-3,
                  equality_encoding=None, name="Rounding"):
         super(roundGumbelModel, self).__init__(layers, param_keys, var_keys,
                                                output_keys, int_ind, bin_ind,
@@ -201,7 +201,7 @@ class roundGumbelModel(roundModel):
         self.bin = diffGumbelBinarize(temperature=self.temperature)
 
 
-class roundThresholdModel(roundModel):
+class thresholdModel(roundModel):
     """
     Learnable model to round integer variables with variable threshold
     """
@@ -209,10 +209,10 @@ class roundThresholdModel(roundModel):
                  int_ind=defaultdict(list), bin_ind=defaultdict(list),
                  continuous_update=False, slope=10, tolerance=None,
                  equality_encoding=None, name="Rounding"):
-        super(roundThresholdModel, self).__init__(layers, param_keys, var_keys,
-                                                  output_keys, int_ind, bin_ind,
-                                                  continuous_update, tolerance,
-                                                  equality_encoding, name=name)
+        super(thresholdModel, self).__init__(layers, param_keys, var_keys,
+                                             output_keys, int_ind, bin_ind,
+                                             continuous_update, tolerance,
+                                             equality_encoding, name=name)
         # slope
         self.slope= slope
         # binarize
@@ -257,6 +257,26 @@ class roundThresholdModel(roundModel):
         # update rounding for binary variables int(x) = bin(x, v)
         x_rnd[:, bin_ind] = bnr
         return x_rnd
+
+
+class thresholdGumbelModel(thresholdModel):
+    """
+    Learnable model to round integer variables with variable threshold
+    """
+    def __init__(self, layers, param_keys, var_keys,output_keys=[],
+                 int_ind=defaultdict(list), bin_ind=defaultdict(list),
+                 continuous_update=False, temperature=10.0, slope=10, tolerance=1e-3,
+                 equality_encoding=None, name="Rounding"):
+        super(thresholdGumbelModel, self).__init__(layers, param_keys, var_keys,
+                                                   output_keys, int_ind, bin_ind,
+                                                   continuous_update, tolerance,
+                                                   equality_encoding, name=name)
+        # slope
+        self.slope= slope
+        # random temperature
+        self.temperature = temperature
+        # binarize
+        self.bin = thresholdGumbelBinarize(temperature=self.temperature, slope=self.slope)
 
 
 if __name__ == "__main__":
