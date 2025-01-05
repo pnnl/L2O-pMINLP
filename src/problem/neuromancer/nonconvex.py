@@ -74,12 +74,13 @@ class penaltyLoss(nn.Module):
         # eq constraints A x == b
         lhs = torch.einsum("mn,bn->bm", self.A, x) # Ax
         rhs = b
-        eq_violation = (torch.abs(lhs - rhs)).sum(dim=1)
+        eq_violation = torch.clamp(torch.abs(lhs - rhs) - 1e-5, min=0)
+        # tolerance
         # ineq constraints G x <= h
         lhs = torch.einsum("mn,bn->bm", self.G, x) # Gx
         rhs = self.h
-        ineq_violation = (torch.relu(lhs - rhs)).sum(dim=1)
-        return eq_violation + ineq_violation
+        ineq_violation = torch.clamp(torch.relu(lhs - rhs) - 1e-5, min=0)
+        return eq_violation.sum(dim=1) + ineq_violation.sum(dim=1)
 
 
 if __name__ == "__main__":
@@ -95,6 +96,7 @@ if __name__ == "__main__":
     hlayers_sol = 5
     hlayers_rnd = 4
     hsize = 256
+    batch_size = 64
     lr = 1e-3
     penalty_weight = 100
     num_data = 10000
@@ -114,7 +116,6 @@ if __name__ == "__main__":
     data_train, data_test, data_val = data_split(data, test_size=test_size, val_size=val_size)
     # torch dataloaders
     from torch.utils.data import DataLoader
-    batch_size = 64
     loader_train = DataLoader(data_train, batch_size, num_workers=0,
                               collate_fn=data_train.collate_fn, shuffle=True)
     loader_test  = DataLoader(data_test, batch_size, num_workers=0,
@@ -147,7 +148,7 @@ if __name__ == "__main__":
     components = nn.ModuleList([smap, rnd, complete])
 
     # build neuromancer problem
-    loss_fn = penaltyLoss(["b", "x_comp"], num_var, num_eq, num_ineq)
+    loss_fn = penaltyLoss(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
 
     # training
     from src.problem.neuromancer.trainer import trainer
