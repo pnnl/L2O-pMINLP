@@ -2,6 +2,7 @@
 Straight-through estimators for nondifferentiable operators
 """
 
+import numpy as np
 import torch
 from torch import nn
 from torch.autograd import Function
@@ -32,17 +33,20 @@ class diffGumbelBinarize(nn.Module):
     An autograd function to binarize numbers using the Gumbel-Softmax trick,
     allowing gradients to be backpropagated through discrete variables.
     """
-    def __init__(self, temperature=1.0, eps=1e-9):
+    def __init__(self, temperature=10.0, eps=1e-9):
         super(diffGumbelBinarize, self).__init__()
-        self.temperature = temperature
+        self.cur_step = 0
+        self.temperature = self.temp_init = temperature
         self.eps = eps
 
     def forward(self, x):
+        # get temperature
+        self.update_temperature()
         # train mode
         if self.training:
             # Gumbel sampling
-            gumbel_noise0 = self._gumbelSample(x)
-            gumbel_noise1 = self._gumbelSample(x)
+            gumbel_noise0 = self._gumbel_sample(x)
+            gumbel_noise1 = self._gumbel_sample(x)
             # sigmoid with Gumbel
             noisy_diff = x + gumbel_noise1 - gumbel_noise0
             soft_sample = torch.sigmoid(noisy_diff / self.temperature)
@@ -53,9 +57,16 @@ class diffGumbelBinarize(nn.Module):
         # eval mode
         else:
             # use a temperature-scaled sigmoid in evaluation mode for consistency
-            return (torch.sigmoid(x / self.temperature) > 0.5).float()
+            return (torch.sigmoid(x) > 0.5).float()
 
-    def _gumbelSample(self, x):
+    def update_temperature(self):
+            """
+            Updates the temperature dynamically based on training step
+            """
+            self.cur_step += 1
+            self.temperature = 0.1 + (self.temp_init - 0.1) * np.exp(- self.cur_step / 5e3)
+
+    def _gumbel_sample(self, x):
         """
         Generates Gumbel noise based on the input shape and device
         """
