@@ -228,7 +228,7 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
                                rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd, complete]).to("cuda")
-    loss_fn = nmQuadratic(["b", "x_comp"], num_var, num_ineq, penalty_weight)
+    loss_fn = nmQuadratic(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
@@ -282,7 +282,7 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
                                rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd, complete]).to("cuda")
-    loss_fn = nmQuadratic(["b", "x_comp"], num_var, num_ineq, penalty_weight)
+    loss_fn = nmQuadratic(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
@@ -324,7 +324,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     smap = nm.system.Node(func, ["b"], ["x"], name="smap")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap]).to("cuda")
-    loss_fn = nmQuadratic(["b", "x"], num_var, num_ineq, penalty_weight)
+    loss_fn = nmQuadratic(["b", "x"], num_var, num_eq, num_ineq, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
@@ -411,7 +411,7 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
                                rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd, complete]).to("cuda")
-    loss_fn = nmQuadratic(["b", "x_comp"], num_var, num_ineq, penalty_weight)
+    loss_fn = nmQuadratic(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
