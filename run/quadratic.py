@@ -223,7 +223,7 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
                            output_keys=["x_rnd"], int_ind=model.int_ind,
                            continuous_update=True, name="round")
     # fill variables from linear system
-    complete = completePartial(A=model.A, num_var=num_var,
+    complete = completePartial(A=torch.from_numpy(model.A).float().cuda(), num_var=num_var,
                                partial_ind=model.int_ind["x"], var_key="x_rnd",
                                rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
@@ -277,7 +277,7 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
                                output_keys=["x_rnd"], int_ind=model.int_ind,
                                continuous_update=True, name="round")
     # fill variables from linear system
-    complete = completePartial(A=model.A, num_var=num_var,
+    complete = completePartial(A=torch.from_numpy(model.A).float().cuda(), num_var=num_var,
                                partial_ind=model.int_ind["x"], var_key="x_rnd",
                                rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
@@ -307,7 +307,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     import neuromancer as nm
     from src.problem import nmQuadratic
     from src.func.layer import netFC
-    from src.func import roundThresholdModel, completePartial
+    from src.func import completePartial
     # config
     num_var = config.size
     num_eq = config.size // 2
@@ -320,11 +320,15 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     from src.problem import msQuadratic
     model = msQuadratic(num_var, num_eq, num_ineq, timelimit=1000)
     # build neural architecture for the solution map
-    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var)
+    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var//2)
     smap = nm.system.Node(func, ["b"], ["x"], name="smap")
+    # fill variables from linear system
+    complete = completePartial(A=torch.from_numpy(model.A).float().cuda(), num_var=num_var,
+                               partial_ind=model.int_ind["x"], var_key="x",
+                               rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
-    components = nn.ModuleList([smap]).to("cuda")
-    loss_fn = nmQuadratic(["b", "x"], num_var, num_eq, num_ineq, penalty_weight)
+    components = nn.ModuleList([smap, complete]).to("cuda")
+    loss_fn = nmQuadratic(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
@@ -344,7 +348,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
         # assign params
         model.set_param_val({"b":b.cpu().numpy()})
         # assign vars
-        x = datapoints["x"]
+        x = datapoints["x_comp"]
         for i in range(num_var):
             model.vars["x"][i].value = x[0,i].item()
         # get solutions
@@ -406,7 +410,7 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # define rounding model
     rnd = roundSTEModel(param_keys=["b"], var_keys=["x"], output_keys=["x_rnd"], int_ind=model.int_ind, name="round")
     # fill variables from linear system
-    complete = completePartial(A=model.A, num_var=num_var,
+    complete = completePartial(A=torch.from_numpy(model.A).float().cuda(), num_var=num_var,
                                partial_ind=model.int_ind["x"], var_key="x_rnd",
                                rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding

@@ -72,15 +72,14 @@ class penaltyLoss(nn.Module):
         # get values
         x, b = input_dict[self.x_key], input_dict[self.b_key]
         # eq constraints A x == b
-        lhs = torch.einsum("mn,bn->bm", self.A, x) # Ax
-        rhs = b
-        eq_violation = torch.clamp(torch.abs(lhs - rhs) - 1e-5, min=0)
-        # tolerance
+        #lhs = torch.einsum("mn,bn->bm", self.A, x) # Ax
+        #rhs = b
+        #eq_violation = torch.clamp(torch.abs(lhs - rhs) - 1e-5, min=0)
         # ineq constraints G x <= h
         lhs = torch.einsum("mn,bn->bm", self.G, x) # Gx
         rhs = self.h
         ineq_violation = torch.clamp(torch.relu(lhs - rhs) - 1e-5, min=0)
-        return eq_violation.sum(dim=1) + ineq_violation.sum(dim=1)
+        return ineq_violation.sum(dim=1)
 
 
 if __name__ == "__main__":
@@ -126,7 +125,7 @@ if __name__ == "__main__":
     # define neural architecture for the solution map smap(p) -> x
     import neuromancer as nm
     from src.func.layer import netFC
-    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var//2)
+    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var-num_eq)
     smap = nm.system.Node(func, ["b"], ["x"], name="smap")
 
     # define rounding model
@@ -140,7 +139,7 @@ if __name__ == "__main__":
 
     # complete solution
     from src.func import completePartial
-    complete = completePartial(A=model.A, num_var=num_var,
+    complete = completePartial(A=torch.from_numpy(model.A).float(), num_var=num_var,
                                partial_ind=model.int_ind["x"], var_key="x_rnd",
                                rhs_key="b", output_key="x_comp", name="Complete")
 
