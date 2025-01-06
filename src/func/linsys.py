@@ -3,6 +3,7 @@ Linear system solver to complete solution
 """
 import torch
 from torch import nn
+from torch.linalg import lu_factor, lu_solve
 
 class completePartial(nn.Module):
     """
@@ -13,12 +14,11 @@ class completePartial(nn.Module):
         # size
         self.num_var = num_var
         # index
+        self.A = A
         self.partial_ind = partial_ind
         self.other_ind = [i for i in range(num_var) if i not in partial_ind]
-        # necessary computation
-        self.A = torch.from_numpy(A).float()
-        self._A_partial = self.A[:, self.partial_ind]
-        self._A_other_inv = torch.inverse(self.A[:, self.other_ind])
+        # precompute LU decomposition
+        self.lu, self.pivots = lu_factor(A[:, self.other_ind])
         # keys
         self.x_key = var_key
         self.b_key = rhs_key
@@ -30,12 +30,10 @@ class completePartial(nn.Module):
         """
         # get values
         x, b = data[self.x_key], data[self.b_key]
-        # to device
-        self._A_partial = self._A_partial.to(x.device)
-        self._A_other_inv = self._A_other_inv.to(x.device)
+        rhs = b - (x @ self.A[:, self.partial_ind].T)
         # complete vars
         x_comp = torch.zeros(x.shape[0], self.num_var, device=x.device)
         x_comp[:, self.partial_ind] = x
-        x_comp[:, self.other_ind] = (b - x @ self._A_partial.T) @ self._A_other_inv.T
+        x_comp[:, self.other_ind] = lu_solve(self.lu, self.pivots, rhs.T).T
         data[self.out_key] = x_comp
         return data
