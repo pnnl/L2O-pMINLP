@@ -3,7 +3,6 @@ Parametric Simple Nonconvex Problem
 """
 
 import numpy as np
-from scipy.linalg import null_space
 import torch
 from torch import nn
 import neuromancer as nm
@@ -74,11 +73,11 @@ class penaltyLoss(nn.Module):
         # eq constraints A x == b
         #lhs = torch.einsum("mn,bn->bm", self.A, x) # Ax
         #rhs = b
-        #eq_violation = torch.clamp(torch.abs(lhs - rhs) - 1e-5, min=0)
+        #eq_violation = torch.relu(torch.abs(lhs - rhs) - 1e-5)
         # ineq constraints G x <= h
         lhs = torch.einsum("mn,bn->bm", self.G, x) # Gx
         rhs = self.h
-        ineq_violation = torch.clamp(torch.relu(lhs - rhs) - 1e-5, min=0)
+        ineq_violation = torch.relu(lhs - rhs - 1e-5)
         return ineq_violation.sum(dim=1)
 
 
@@ -153,8 +152,7 @@ if __name__ == "__main__":
     from src.problem.neuromancer.trainer import trainer
     epochs = 200                    # number of training epochs
     patience = 20                   # number of epochs with no improvement in eval metric to allow before early stopping
-    growth_rate = 1             # growth rate of penalty weight
-    warmup = 20                 # number of epochs to wait before enacting early stopping policies
+    warmup = 40                     # number of epochs to wait before enacting early stopping policies
     optimizer = torch.optim.AdamW(components.parameters(), lr=lr)
     # create a trainer for the problem
     my_trainer = trainer(components, loss_fn, optimizer, epochs=epochs,

@@ -3,7 +3,6 @@ Parametric Mixed Integer Quadratic Programming
 """
 
 import numpy as np
-from scipy.linalg import null_space
 import torch
 from torch import nn
 import neuromancer as nm
@@ -12,7 +11,7 @@ class penaltyLoss(nn.Module):
     """
     Penalty loss function for quadratic problem
     """
-    def __init__(self, input_keys, num_var, num_eq, num_ineq, penalty_weight=50, output_key="loss"):
+    def __init__(self, input_keys, num_var, num_eq, num_ineq, penalty_weight=100, output_key="loss"):
         super().__init__()
         self.num_var = num_var
         self.b_key, self.x_key = input_keys
@@ -74,12 +73,64 @@ class penaltyLoss(nn.Module):
         # eq constraints A x == b
         #lhs = torch.einsum("mn,bn->bm", self.A, x) # Ax
         #rhs = b
-        #eq_violation = torch.clamp(torch.abs(lhs - rhs) - 1e-5, min=0)
+        #eq_violation = torch.relu(torch.abs(lhs - rhs) - 1e-5)
         # ineq constraints G x <= h
         lhs = torch.einsum("mn,bn->bm", self.G, x) # Gx
         rhs = self.h
-        ineq_violation = torch.clamp(torch.relu(lhs - rhs) - 1e-5, min=0)
+        ineq_violation = torch.relu(lhs - rhs - 1e-5)
         return ineq_violation.sum(dim=1)
+
+
+class augmentedLagrangianLoss(penaltyLoss):
+    """
+    Augmented Lagrangian loss function for quadratic problem
+    """
+    def __init__(self, input_keys, num_var, num_eq, num_ineq, penalty_weight=10, growth_rate=1.0005, output_key="loss"):
+        super().__init__(input_keys, num_var, num_eq, num_ineq, penalty_weight, output_key)
+        # Lagrangian multiplier
+        self.multiplier = nn.Parameter(torch.zeros(num_ineq), requires_grad=False)
+        # penalty growth rate
+        self.growth_rate = growth_rate
+
+    def forward(self, input_dict):
+        """
+        forward pass
+        """
+        # objective function
+        obj = self.cal_obj(input_dict)
+        # constraints loss
+        constr = self.cal_constr(input_dict)
+        # penalized loss
+        loss = obj + constr
+        input_dict[self.output_key] = torch.mean(loss)
+        return input_dict
+
+    def cal_constr(self, input_dict):
+        """
+        calculate inequality constraints loss
+        """
+        if self.multiplier.device != self.device:
+            self.multiplier = self.multiplier.to(self.device)
+        # get values
+        x, b = input_dict[self.x_key], input_dict[self.b_key]
+        # ineq constraints G x <= h
+        lhs = torch.einsum("mn,bn->bm", self.G, x) # Gx
+        rhs = self.h
+        val = lhs - rhs
+        # lagrangian term: λ * g_+(x)
+        lagrangian_term = self.multiplier * val
+        # penalty term: ρ / 2 * g_+(x)^2
+        penalty_term = 0.5 * self.penalty_weight * torch.relu(val - 1e-5) ** 2
+        with torch.no_grad():
+            self.update_penalty_weight(val)
+        return (lagrangian_term + penalty_term).sum(dim=1)
+
+    @torch.no_grad()
+    def update_penalty_weight(self, val):
+        # update lagrangian multiplier
+        self.multiplier.data = torch.relu(self.multiplier.data + self.penalty_weight * val.sum(dim=0))
+        # update penalty weight
+        self.penalty_weight *= self.growth_rate
 
 
 if __name__ == "__main__":
@@ -89,15 +140,15 @@ if __name__ == "__main__":
     torch.manual_seed(42)
 
     # init
-    num_var = 100
-    num_eq = 50
-    num_ineq = 50
+    num_var = 50
+    num_eq = 25
+    num_ineq = 25
     hlayers_sol = 5
     hlayers_rnd = 4
-    hsize = 256
+    hsize = 128
     batch_size = 64
     lr = 1e-3
-    penalty_weight = 100
+    penalty_weight = 10
     num_data = 10000
     test_size = 1000
     val_size = 1000
@@ -147,14 +198,13 @@ if __name__ == "__main__":
     components = nn.ModuleList([smap, rnd, complete])
 
     # build neuromancer problem
-    loss_fn = penaltyLoss(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
+    loss_fn = augmentedLagrangianLoss(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
 
     # training
     from src.problem.neuromancer.trainer import trainer
     epochs = 200                    # number of training epochs
     patience = 20                   # number of epochs with no improvement in eval metric to allow before early stopping
-    growth_rate = 1             # growth rate of penalty weight
-    warmup = 20                 # number of epochs to wait before enacting early stopping policies
+    warmup = 40                 # number of epochs to wait before enacting early stopping policies
     optimizer = torch.optim.AdamW(components.parameters(), lr=lr)
     # create a trainer for the problem
     my_trainer = trainer(components, loss_fn, optimizer, epochs=epochs,

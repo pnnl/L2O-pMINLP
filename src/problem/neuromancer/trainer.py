@@ -8,7 +8,7 @@ import copy
 import torch
 
 class trainer:
-    def __init__(self, components, loss_fn, optimizer, epochs=100, growth_rate=1,
+    def __init__(self, components, loss_fn, optimizer, epochs=100,
                  patience=5, warmup=0, clip=100, loss_key="loss", device="cpu"):
         """
         Initialize the Trainer class.
@@ -18,7 +18,6 @@ class trainer:
         self.orig_weight = self.loss_fn.penalty_weight
         self.optimizer = optimizer
         self.epochs = epochs
-        self.growth_rate = growth_rate
         self.patience = patience
         self.warmup = warmup
         self.clip = clip
@@ -73,8 +72,6 @@ class trainer:
                 iters += 1
                 if iters % 125 == 0:
                     stop_training = self.validate(epoch, iters, loader_dev, train_loss_total/125)
-                    # update penalty weight
-                    self.loss_fn.penalty_weight *= self.growth_rate
                     # reset accumulated train loss
                     train_loss_total = 0
                     # early stop
