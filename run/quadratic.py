@@ -228,14 +228,12 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
                                rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd, complete]).to("cuda")
-    loss_fn = nmQuadratic(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
+    loss_fn = nmQuadratic.penaltyLoss(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
     # train
-    utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
+    utils.train(components, loss_fn, loader_train, loader_val, lr)
     # eval
     df = eval(components, model, loader_test)
-    if penalty_growth:
-        df.to_csv(f"result/cq_cls{penalty_weight}_{num_var}-{num_ineq}-g.csv")
-    elif config.samples == 800:
+    if config.samples == 800:
         df.to_csv(f"result/cq_cls{penalty_weight}_{num_var}-{num_ineq}-s.csv")
     elif config.samples == 80000:
         df.to_csv(f"result/cq_cls{penalty_weight}_{num_var}-{num_ineq}-l.csv")
@@ -282,14 +280,12 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
                                rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd, complete]).to("cuda")
-    loss_fn = nmQuadratic(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
+    loss_fn = nmQuadratic.penaltyLoss(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
     # train
-    utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
+    utils.train(components, loss_fn, loader_train, loader_val, lr)
     # eval
     df = eval(components, model, loader_test)
-    if penalty_growth:
-        df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}-g.csv")
-    elif config.samples == 800:
+    if config.samples == 800:
         df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}-s.csv")
     elif config.samples == 80000:
         df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}-l.csv")
@@ -297,7 +293,7 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
         df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}.csv")
 
 
-def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
+def lrnRnd(loader_train, loader_test, loader_val, config):
     print(config)
     # random seed
     np.random.seed(42)
@@ -328,9 +324,9 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
                                rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, complete]).to("cuda")
-    loss_fn = nmQuadratic(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
+    loss_fn = nmQuadratic.penaltyLoss(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
     # train
-    utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
+    utils.train(components, loss_fn, loader_train, loader_val, lr)
     # eval
     from src.heuristic import naive_round
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
@@ -372,9 +368,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     time.sleep(1)
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
-    if penalty_growth:
-        df.to_csv(f"result/cq_lrn{penalty_weight}_{num_var}-{num_ineq}-g.csv")
-    elif config.samples == 800:
+    if config.samples == 800:
         df.to_csv(f"result/cq_lrn{penalty_weight}_{num_var}-{num_ineq}-s.csv")
     elif config.samples == 80000:
         df.to_csv(f"result/cq_lrn{penalty_weight}_{num_var}-{num_ineq}-l.csv")
@@ -382,7 +376,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
         df.to_csv(f"result/cq_lrn{penalty_weight}_{num_var}-{num_ineq}.csv")
 
 
-def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
+def rndSte(loader_train, loader_test, loader_val, config):
     print(config)
     # random seed
     np.random.seed(42)
@@ -415,14 +409,12 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
                                rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd, complete]).to("cuda")
-    loss_fn = nmQuadratic(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
+    loss_fn = nmQuadratic.penaltyLoss(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
     # train
-    utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
+    utils.train(components, loss_fn, loader_train, loader_val, lr)
     # eval
     df = eval(components, model, loader_test)
-    if penalty_growth:
-        df.to_csv(f"result/cq_ste{penalty_weight}_{num_var}-{num_ineq}-g.csv")
-    elif config.samples == 800:
+    if config.samples == 800:
         df.to_csv(f"result/cq_ste{penalty_weight}_{num_var}-{num_ineq}-s.csv")
     elif config.samples == 80000:
         df.to_csv(f"result/cq_ste{penalty_weight}_{num_var}-{num_ineq}-l.csv")
