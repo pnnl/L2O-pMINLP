@@ -70,7 +70,7 @@ def exact(loader_test, config):
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
-    df.to_csv(f"result/nc_exact_{num_var}-{num_ineq}_new.csv")
+    df.to_csv(f"result/nc_exact_{num_var}-{num_ineq}.csv")
 
 
 def relRnd(loader_test, config):
@@ -131,7 +131,7 @@ def relRnd(loader_test, config):
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
-    df.to_csv(f"result/nc_rel_{num_var}-{num_ineq}_new.csv")
+    df.to_csv(f"result/nc_rel_{num_var}-{num_ineq}.csv")
 
 
 def root(loader_test, config):
@@ -189,10 +189,10 @@ def root(loader_test, config):
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
-    df.to_csv(f"result/nc_root_{num_var}-{num_ineq}_new.csv")
+    df.to_csv(f"result/nc_root_{num_var}-{num_ineq}.csv")
 
 
-def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
+def rndCls(loader_train, loader_test, loader_val, config):
     print(config)
     # random seed
     np.random.seed(42)
@@ -231,18 +231,15 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
                                rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd, complete]).to("cuda")
-    loss_fn = nmNonconvex(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
+    loss_fn = nmNonconvex.penaltyLoss(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
     # train
-    utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
+    utils.train(components, loss_fn, loader_train, loader_val, lr)
     # eval
     df = eval(components, model, loader_test)
-    if penalty_growth:
-        df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}-g_new.csv")
-    else:
-        df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}_new.csv")
+    df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}.csv")
 
 
-def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
+def rndThd(loader_train, loader_test, loader_val, config):
     print(config)
     # random seed
     np.random.seed(42)
@@ -281,18 +278,15 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
                                rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd, complete]).to("cuda")
-    loss_fn = nmNonconvex(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
+    loss_fn = nmNonconvex.penaltyLoss(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
     # train
-    utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
+    utils.train(components, loss_fn, loader_train, loader_val, lr)
     # eval
     df = eval(components, model, loader_test)
-    if penalty_growth:
-        df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}-g_new.csv")
-    else:
-        df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}_new.csv")
+    df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}.csv")
 
 
-def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
+def lrnRnd(loader_train, loader_test, loader_val, config):
     print(config)
     # random seed
     np.random.seed(42)
@@ -323,9 +317,9 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
                                rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, complete]).to("cuda")
-    loss_fn = nmNonconvex(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
+    loss_fn = nmNonconvex.penaltyLoss(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
     # train
-    utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
+    utils.train(components, loss_fn, loader_train, loader_val, lr)
     # eval
     from src.heuristic import naive_round
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
@@ -367,13 +361,10 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     time.sleep(1)
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
-    if penalty_growth:
-        df.to_csv(f"result/nc_lrn{penalty_weight}_{num_var}-{num_ineq}-g_new.csv")
-    else:
-        df.to_csv(f"result/nc_lrn{penalty_weight}_{num_var}-{num_ineq}_new.csv")
+    df.to_csv(f"result/nc_lrn{penalty_weight}_{num_var}-{num_ineq}.csv")
 
 
-def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
+def rndSte(loader_train, loader_test, loader_val, config):
     print(config)
     # random seed
     np.random.seed(42)
@@ -406,15 +397,12 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
                                rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd, complete]).to("cuda")
-    loss_fn = nmNonconvex(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
+    loss_fn = nmNonconvex.penaltyLoss(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
     # train
-    utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
+    utils.train(components, loss_fn, loader_train, loader_val, lr)
     # eval
     df = eval(components, model, loader_test)
-    if penalty_growth:
-        df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}-g_new.csv")
-    else:
-        df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}_new.csv")
+    df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}.csv")
 
 
 def eval(components, model, loader_test):
