@@ -189,7 +189,7 @@ class roundGumbelModel(roundModel):
     """
     def __init__(self, layers, param_keys, var_keys, output_keys=[],
                  int_ind=defaultdict(list), bin_ind=defaultdict(list),
-                 continuous_update=False, temperature=10.0, tolerance=1e-3,
+                 continuous_update=False, temperature=1.0, tolerance=1e-3,
                  equality_encoding=None, name="Rounding"):
         super(roundGumbelModel, self).__init__(layers, param_keys, var_keys,
                                                output_keys, int_ind, bin_ind,
@@ -207,7 +207,7 @@ class thresholdModel(roundModel):
     """
     def __init__(self, layers, param_keys, var_keys,output_keys=[],
                  int_ind=defaultdict(list), bin_ind=defaultdict(list),
-                 continuous_update=False, slope=10, tolerance=None,
+                 continuous_update=False, slope=1, tolerance=None,
                  equality_encoding=None, name="Rounding"):
         super(thresholdModel, self).__init__(layers, param_keys, var_keys,
                                              output_keys, int_ind, bin_ind,
@@ -265,7 +265,7 @@ class thresholdGumbelModel(thresholdModel):
     """
     def __init__(self, layers, param_keys, var_keys,output_keys=[],
                  int_ind=defaultdict(list), bin_ind=defaultdict(list),
-                 continuous_update=False, temperature=10.0, slope=10, tolerance=1e-3,
+                 continuous_update=False, temperature=1, slope=1, tolerance=1e-3,
                  equality_encoding=None, name="Rounding"):
         super(thresholdGumbelModel, self).__init__(layers, param_keys, var_keys,
                                                    output_keys, int_ind, bin_ind,

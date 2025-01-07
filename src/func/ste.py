@@ -28,7 +28,7 @@ class diffGumbelBinarize(nn.Module):
     An autograd function to binarize numbers using the Gumbel-Softmax trick,
     allowing gradients to be backpropagated through discrete variables.
     """
-    def __init__(self, temperature=10, eps=1e-9):
+    def __init__(self, temperature=1, eps=1e-9):
         super(diffGumbelBinarize, self).__init__()
         self.cur_step = 0
         self.temperature = self.temp_init = temperature
@@ -36,7 +36,7 @@ class diffGumbelBinarize(nn.Module):
 
     def forward(self, x):
         # get temperature
-        self.update_temperature()
+        #self.update_temperature()
         # train mode
         if self.training:
             # Gumbel sampling
@@ -54,12 +54,12 @@ class diffGumbelBinarize(nn.Module):
             # use a temperature-scaled sigmoid in evaluation mode for consistency
             return (torch.sigmoid(x) > 0.5).float()
 
-    def update_temperature(self):
-            """
-            Updates the temperature dynamically based on training step
-            """
-            self.cur_step += 1
-            self.temperature = 0.1 + (self.temp_init - 0.1) * np.exp(- self.cur_step / 5e3)
+    #def update_temperature(self):
+    #        """
+    #        Updates the temperature dynamically based on training step
+    #        """
+    #        self.cur_step += 1
+    #        self.temperature = 0.1 + (self.temp_init - 0.1) * np.exp(- self.cur_step / 5e3)
 
     def _gumbel_sample(self, x):
         """
