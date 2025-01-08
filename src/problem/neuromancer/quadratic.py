@@ -85,7 +85,7 @@ class augmentedLagrangianLoss(penaltyLoss):
     """
     Augmented Lagrangian loss function for quadratic problem
     """
-    def __init__(self, input_keys, num_var, num_eq, num_ineq, penalty_weight=10, growth_rate=1.0005, output_key="loss"):
+    def __init__(self, input_keys, num_var, num_eq, num_ineq, penalty_weight=100, growth_rate=1.0005, output_key="loss"):
         super().__init__(input_keys, num_var, num_eq, num_ineq, penalty_weight, output_key)
         # Lagrangian multiplier
         self.multiplier = nn.Parameter(torch.zeros(num_ineq), requires_grad=False)
@@ -140,15 +140,15 @@ if __name__ == "__main__":
     torch.manual_seed(42)
 
     # init
-    num_var = 50
-    num_eq = 25
-    num_ineq = 25
+    num_var = 200
+    num_eq = 100
+    num_ineq = 100
     hlayers_sol = 5
     hlayers_rnd = 4
-    hsize = 128
+    hsize = 512
     batch_size = 64
     lr = 1e-3
-    penalty_weight = 10
+    penalty_weight = 100
     num_data = 10000
     test_size = 1000
     val_size = 1000
@@ -198,13 +198,13 @@ if __name__ == "__main__":
     components = nn.ModuleList([smap, rnd, complete])
 
     # build neuromancer problem
-    loss_fn = augmentedLagrangianLoss(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
+    loss_fn = penaltyLoss(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
 
     # training
     from src.problem.neuromancer.trainer import trainer
     epochs = 200                    # number of training epochs
     patience = 20                   # number of epochs with no improvement in eval metric to allow before early stopping
-    warmup = 40                 # number of epochs to wait before enacting early stopping policies
+    warmup = 40                     # number of epochs to wait before enacting early stopping policies
     optimizer = torch.optim.AdamW(components.parameters(), lr=lr)
     # create a trainer for the problem
     my_trainer = trainer(components, loss_fn, optimizer, epochs=epochs,
@@ -219,7 +219,7 @@ if __name__ == "__main__":
     datapoint = {"b": b_samples[:1],
                  "name":"test"}
     model.set_param_val({"b":b_samples[0].cpu().numpy()})
-    nm_test_solve("x_comp", components, datapoint, model)
+    nm_test_solve("x_comp", components, datapoint, model, tee=True)
 
     # solve the MIQP
     from src.utlis import ms_test_solve

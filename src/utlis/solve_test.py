@@ -24,7 +24,7 @@ def ms_test_solve(model, tee=False):
     return solvals, objval
 
 
-def nm_test_solve(var_key, components, datapoint, model):
+def nm_test_solve(var_key, components, datapoint, model, tee=False):
     """
     Test function for neuroMANCER
     """
@@ -46,6 +46,14 @@ def nm_test_solve(var_key, components, datapoint, model):
         print("{}[{}]: {:.2f}".format(var_key, i, val), end=" ")
     print("\nObjective Value: {:.4f}".format(objval))
     print("Constraint Violations: {:.4f}".format(sum(model.cal_violation())))
+    print("Elapsed Time: {:.4f} sec".format(tock - tick))
+    print()
+    # repair
+    print("Repairing")
+    tick = time.time()
+    solvals, objval = model.repair(solvals, tee=tee)
+    tock = time.time()
+    print("\nObjective Value: {:.4f}".format(objval))
     print("Elapsed Time: {:.4f} sec".format(tock - tick))
     print()
     return solvals, objval

@@ -88,12 +88,12 @@ if __name__ == "__main__":
     torch.manual_seed(42)
 
     # init
-    num_var = 100
-    num_eq = 50
-    num_ineq = 50
+    num_var = 200
+    num_eq = 100
+    num_ineq = 100
     hlayers_sol = 5
     hlayers_rnd = 4
-    hsize = 256
+    hsize = 512
     batch_size = 64
     lr = 1e-3
     penalty_weight = 100
@@ -138,7 +138,7 @@ if __name__ == "__main__":
 
     # complete solution
     from src.func import completePartial
-    complete = completePartial(A=model.A, num_var=num_var,
+    complete = completePartial(A=torch.from_numpy(model.A).float(), num_var=num_var,
                                partial_ind=model.int_ind["x"], var_key="x_rnd",
                                rhs_key="b", output_key="x_comp", name="Complete")
 
@@ -167,7 +167,7 @@ if __name__ == "__main__":
     datapoint = {"b": b_samples[:1],
                  "name":"test"}
     model.set_param_val({"b":b_samples[0].cpu().numpy()})
-    nm_test_solve("x_comp", components, datapoint, model)
+    nm_test_solve("x_comp", components, datapoint, model, tee=True)
 
     # solve the MIQP
     from src.utlis import ms_test_solve

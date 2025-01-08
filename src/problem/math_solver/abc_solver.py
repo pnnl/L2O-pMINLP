@@ -95,7 +95,7 @@ class abcParamSolver(ABC):
         # get variable values as dict
         try:
             for key, vars in self.vars.items():
-                solvals[key] = {i:vars[i].value for i in vars}
+                solvals[key] = {i:pe.value(vars[i]) for i in vars}
             # get the objective value
             objval = pe.value(self.model.obj)
         except:
@@ -138,6 +138,8 @@ class abcParamSolver(ABC):
         model_new = copy.deepcopy(self)
         # clone pyomo model
         model_new.model = model_new.model.clone()
+        # clone solver
+        model_new.opt = po.SolverFactory(self.solver)
         # clone variables
         model_new.vars = {var: getattr(model_new.model, var) for var in self.vars}
         # clone constraints
@@ -205,10 +207,49 @@ class abcParamSolver(ABC):
         # clone pyomo model
         model_heur = self.clone()
         # set solution limit
-        if self.solver == "scip":
+        if model_heur.solver == "scip":
             model_heur.opt.options["limits/solutions"] = nodes_limit
-        elif self.solver == "gurobi":
+        elif model_heur.solver == "gurobi":
             model_heur.opt.options["SolutionLimit"] = nodes_limit
         else:
-            raise ValueError("Solver '{}' does not support setting a solution limit.".format(solver))
+            raise ValueError("Solver '{}' does not support setting a solution limit.".format(model_heur.solver))
         return model_heur
+
+    def repair(self, x_init, tee=False, keepfiles=False):
+        """
+        Repair a feasible / near-feasible solution x_init using the solver's built-in MIP
+        start functionality. Once the solver finds a single feasible solution,
+        it stops immediately (no further branching or optimizing).
+        """
+        # clone pyomo model
+        model_repair = self.clone()
+        # get solution value
+        for k, vals in x_init.items():
+            # assign initial solution
+            for i in vals:
+                if (i in self.int_ind[k]) or (i in self.bin_ind[k]):
+                    model_repair.vars[k][i].value = round(vals[i])
+                else:
+                    model_repair.vars[k][i].value = vals[i]
+        # params
+        if model_repair.solver == "scip":
+            # set solution limit
+            model_repair.opt.options["limits/solutions"] = 1
+            # focus on feasibility pump
+            model_repair.opt.options["heuristics/feaspump/freq"] = 10
+            # focus on rens
+            model_repair.opt.options["heuristics/rens/freq"] = 10
+            # solve
+            model_repair.res = model_repair.opt.solve(model_repair.model, tee=tee, keepfiles=keepfiles)
+        elif model_repair.solver == "gurobi":
+            # set solution limit
+            model_repair.opt.options["SolutionLimit"] = 1
+            # focus on feasibility
+            model_repair.opt.options["MIPFocus"] = 2
+            # solve
+            model_repair.res = model_repair.opt.solve(model_repair.model, tee=tee, keepfiles=keepfiles, warmstart=True)
+        else:
+            raise ValueError("Solver '{}' does not support setting a solution limit.".format(model_repair.solver))
+        # solve
+        solvals, objval = model_repair.get_val()
+        return solvals, objval
