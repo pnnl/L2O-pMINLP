@@ -73,11 +73,11 @@ class penaltyLoss(nn.Module):
         # eq constraints A x == b
         #lhs = torch.einsum("mn,bn->bm", self.A, x) # Ax
         #rhs = b
-        #eq_violation = torch.relu(torch.abs(lhs - rhs) - 1e-5)
+        #eq_violation = torch.relu(torch.abs(lhs - rhs) - 1e-6)
         # ineq constraints G x <= h
         lhs = torch.einsum("mn,bn->bm", self.G, x) # Gx
         rhs = self.h
-        ineq_violation = torch.relu(lhs - rhs - 1e-5)
+        ineq_violation = torch.relu(lhs - rhs)
         return ineq_violation.sum(dim=1)
 
 

@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from torch import nn
 import neuromancer as nm
+from neuromancer.modules.solvers import GradientProjection
 
 class penaltyLoss(nn.Module):
     """
@@ -73,11 +74,11 @@ class penaltyLoss(nn.Module):
         # eq constraints A x == b
         #lhs = torch.einsum("mn,bn->bm", self.A, x) # Ax
         #rhs = b
-        #eq_violation = torch.relu(torch.abs(lhs - rhs) - 1e-5)
+        #eq_violation = torch.relu(torch.abs(lhs - rhs) - 1e-6)
         # ineq constraints G x <= h
         lhs = torch.einsum("mn,bn->bm", self.G, x) # Gx
         rhs = self.h
-        ineq_violation = torch.relu(lhs - rhs - 1e-5)
+        ineq_violation = torch.relu(lhs - rhs)
         return ineq_violation.sum(dim=1)
 
 
@@ -120,7 +121,7 @@ class augmentedLagrangianLoss(penaltyLoss):
         # lagrangian term: λ * g_+(x)
         lagrangian_term = self.multiplier * val
         # penalty term: ρ / 2 * g_+(x)^2
-        penalty_term = 0.5 * self.penalty_weight * torch.relu(val - 1e-5) ** 2
+        penalty_term = 0.5 * self.penalty_weight * torch.relu(val) ** 2
         with torch.no_grad():
             self.update_penalty_weight(val)
         return (lagrangian_term + penalty_term).sum(dim=1)
@@ -192,7 +193,7 @@ if __name__ == "__main__":
     from src.func import completePartial
     complete = completePartial(A=torch.from_numpy(model.A).float(), num_var=num_var,
                                partial_ind=model.int_ind["x"], var_key="x_rnd",
-                               rhs_key="b", output_key="x_comp", name="Complete")
+                               rhs_key="b", output_key="x_comp", name="comp")
 
     # build neuromancer components
     components = nn.ModuleList([smap, rnd, complete])
