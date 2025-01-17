@@ -142,7 +142,7 @@ if __name__ == "__main__":
 
     # init
     num_var = 200
-    num_eq = 100
+    num_eq = 20
     num_ineq = 100
     hlayers_sol = 5
     hlayers_rnd = 4
@@ -192,7 +192,7 @@ if __name__ == "__main__":
     # complete solution
     from src.func import completePartial
     complete = completePartial(A=torch.from_numpy(model.A).float(), num_var=num_var,
-                               partial_ind=model.int_ind["x"], var_key="x_rnd",
+                               partial_ind=range(num_var-num_eq), var_key="x_rnd",
                                rhs_key="b", output_key="x_comp", name="comp")
 
     # build neuromancer components
