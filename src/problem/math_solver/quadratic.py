@@ -57,7 +57,7 @@ if __name__ == "__main__":
     num_data = 5000
 
     # generate parameters
-    b = np.random.uniform(-1, 1, size=(num_data, num_ineq))
+    b = np.random.uniform(-1, 1, size=(num_data, num_eq))
     # set params
     params = {"b":b[0]}
     # init model
