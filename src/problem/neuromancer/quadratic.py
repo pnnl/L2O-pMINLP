@@ -187,7 +187,7 @@ if __name__ == "__main__":
                        output_dim=num_var-num_eq)
     rnd = roundGumbelModel(layers=layers_rnd, param_keys=["b"], var_keys=["x"],
                            output_keys=["x_rnd"], int_ind=model.int_ind,
-                           continuous_update=False, name="round")
+                           continuous_update=True, name="round")
 
     # complete solution
     from src.func import completePartial

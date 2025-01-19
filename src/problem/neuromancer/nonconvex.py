@@ -130,7 +130,7 @@ if __name__ == "__main__":
     # define rounding model
     from src.func.layer import netFC
     from src.func import roundGumbelModel
-    layers_rnd = netFC(input_dim=num_eq+num_var//2, hidden_dims=[hsize]*hlayers_rnd,
+    layers_rnd = netFC(input_dim=num_var, hidden_dims=[hsize]*hlayers_rnd,
                        output_dim=num_var-num_eq)
     rnd = roundGumbelModel(layers=layers_rnd, param_keys=["b"], var_keys=["x"],
                            output_keys=["x_rnd"], int_ind=model.int_ind,
@@ -140,13 +140,14 @@ if __name__ == "__main__":
     from src.func import completePartial
     complete = completePartial(A=torch.from_numpy(model.A).float(), num_var=num_var,
                                partial_ind=range(num_var-num_eq), var_key="x_rnd",
-                               rhs_key="b", output_key="x_comp", name="Complete")
+                               rhs_key="b", output_key="x_comp", name="comp")
 
     # build neuromancer components
     components = nn.ModuleList([smap, rnd, complete])
 
     # build neuromancer problem
     loss_fn = penaltyLoss(["b", "x_comp"], num_var, num_eq, num_ineq, penalty_weight)
+
 
     # training
     from src.problem.neuromancer.trainer import trainer

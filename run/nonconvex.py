@@ -25,7 +25,7 @@ def exact(loader_test, config):
     print(f"EX in NC for size {config.size}.")
     # config
     num_var = config.size
-    num_eq = config.size // 2
+    num_eq = config.size // 10
     num_ineq = config.size // 2
     # init model
     from src.problem import msNonconvex
@@ -83,7 +83,7 @@ def relRnd(loader_test, config):
     from src.heuristic import naive_round
     # config
     num_var = config.size
-    num_eq = config.size // 2
+    num_eq = config.size // 10
     num_ineq = config.size // 2
     # init model
     from src.problem import msNonconvex
@@ -143,7 +143,7 @@ def root(loader_test, config):
     print(f"N1 in NC for size {config.size}.")
     # config
     num_var = config.size
-    num_eq = config.size // 2
+    num_eq = config.size // 10
     num_ineq = config.size // 2
     # init model
     from src.problem import msNonconvex
@@ -205,7 +205,7 @@ def rndCls(loader_train, loader_test, loader_val, config):
     from src.func import roundGumbelModel, completePartial
     # config
     num_var = config.size
-    num_eq = config.size // 2
+    num_eq = config.size // 10
     num_ineq = config.size // 2
     hlayers_sol = config.hlayers_sol
     hlayers_rnd = config.hlayers_rnd
@@ -216,18 +216,17 @@ def rndCls(loader_train, loader_test, loader_val, config):
     from src.problem import msNonconvex
     model = msNonconvex(num_var, num_eq, num_ineq, timelimit=1000)
     # build neural architecture for the solution map
-    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var//2)
+    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var-num_eq)
     smap = nm.system.Node(func, ["b"], ["x"], name="smap")
     # define rounding model
-    layers_rnd = netFC(input_dim=num_var,
-                       hidden_dims=[hsize]*hlayers_rnd,
+    layers_rnd = netFC(input_dim=num_var, hidden_dims=[hsize]*hlayers_rnd,
                        output_dim=num_var-num_eq)
     rnd = roundGumbelModel(layers=layers_rnd, param_keys=["b"], var_keys=["x"],
                            output_keys=["x_rnd"], int_ind=model.int_ind,
                            continuous_update=True, name="round")
     # fill variables from linear system
     complete = completePartial(A=torch.from_numpy(model.A).float().cuda(), num_var=num_var,
-                               partial_ind=model.int_ind["x"], var_key="x_rnd",
+                               partial_ind=range(num_var-num_eq), var_key="x_rnd",
                                rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd, complete]).to("cuda")
@@ -252,7 +251,7 @@ def rndThd(loader_train, loader_test, loader_val, config):
     from src.func import thresholdModel, completePartial
     # config
     num_var = config.size
-    num_eq = config.size // 2
+    num_eq = config.size // 10
     num_ineq = config.size // 2
     hlayers_sol = config.hlayers_sol
     hlayers_rnd = config.hlayers_rnd
@@ -263,18 +262,17 @@ def rndThd(loader_train, loader_test, loader_val, config):
     from src.problem import msNonconvex
     model = msNonconvex(num_var, num_eq, num_ineq, timelimit=1000)
     # build neural architecture for the solution map
-    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var//2)
+    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var-num_eq)
     smap = nm.system.Node(func, ["b"], ["x"], name="smap")
     # define rounding model
-    layers_rnd = netFC(input_dim=num_var,
-                       hidden_dims=[hsize]*hlayers_rnd,
+    layers_rnd = netFC(input_dim=num_var, hidden_dims=[hsize]*hlayers_rnd,
                        output_dim=num_var-num_eq)
     rnd = thresholdModel(layers=layers_rnd, param_keys=["b"], var_keys=["x"],
                          output_keys=["x_rnd"], int_ind=model.int_ind,
                          continuous_update=True, name="round")
     # fill variables from linear system
     complete = completePartial(A=torch.from_numpy(model.A).float().cuda(), num_var=num_var,
-                               partial_ind=model.int_ind["x"], var_key="x_rnd",
+                               partial_ind=range(num_var-num_eq), var_key="x_rnd",
                                rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd, complete]).to("cuda")
@@ -299,7 +297,7 @@ def lrnRnd(loader_train, loader_test, loader_val, config):
     from src.func import completePartial
     # config
     num_var = config.size
-    num_eq = config.size // 2
+    num_eq = config.size // 10
     num_ineq = config.size // 2
     hlayers_sol = config.hlayers_sol
     hsize = config.hsize
@@ -309,11 +307,11 @@ def lrnRnd(loader_train, loader_test, loader_val, config):
     from src.problem import msNonconvex
     model = msNonconvex(num_var, num_eq, num_ineq, timelimit=1000)
     # build neural architecture for the solution map
-    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var//2)
+    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var-num_eq)
     smap = nm.system.Node(func, ["b"], ["x"], name="smap")
     # fill variables from linear system
     complete = completePartial(A=torch.from_numpy(model.A).float().cuda(), num_var=num_var,
-                               partial_ind=model.int_ind["x"], var_key="x",
+                               partial_ind=range(num_var-num_eq), var_key="x",
                                rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, complete]).to("cuda")
@@ -377,7 +375,7 @@ def rndSte(loader_train, loader_test, loader_val, config):
     from src.func import roundSTEModel, completePartial
     # config
     num_var = config.size
-    num_eq = config.size // 2
+    num_eq = config.size // 10
     num_ineq = config.size // 2
     hlayers_sol = config.hlayers_sol
     hsize = config.hsize
@@ -387,13 +385,13 @@ def rndSte(loader_train, loader_test, loader_val, config):
     from src.problem import msNonconvex
     model = msNonconvex(num_var, num_eq, num_ineq, timelimit=1000)
     # build neural architecture for the solution map
-    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var//2)
+    func = netFC(input_dim=num_eq, hidden_dims=[hsize]*hlayers_sol, output_dim=num_var-num_eq)
     smap = nm.system.Node(func, ["b"], ["x"], name="smap")
     # define rounding model
     rnd = roundSTEModel(param_keys=["b"], var_keys=["x"], output_keys=["x_rnd"], int_ind=model.int_ind, name="round")
     # fill variables from linear system
     complete = completePartial(A=torch.from_numpy(model.A).float().cuda(), num_var=num_var,
-                               partial_ind=model.int_ind["x"], var_key="x_rnd",
+                               partial_ind=range(num_var-num_eq), var_key="x_rnd",
                                rhs_key="b", output_key="x_comp", name="Complete")
     # build neuromancer problem for rounding
     components = nn.ModuleList([smap, rnd, complete]).to("cuda")

@@ -12,7 +12,7 @@ import pandas as pd
 import torch
 from torch import nn
 from tqdm import tqdm
-import submitit
+#import submitit
 
 # random seed
 random.seed(42)
@@ -38,7 +38,7 @@ config = parser.parse_args()
 
 # init problem
 num_var = config.size            # number of variables
-num_eq = config.size // 2        # number of equality constraints
+num_eq = config.size // 10       # number of equality constraints
 num_ineq = config.size // 2      # number of inequality constraints
 train_size = config.samples      # number of train
 test_size = 1000                 # number of test size
@@ -46,7 +46,8 @@ val_size = 1000                  # number of validation size
 num_data = train_size + test_size + val_size
 
 # hyperparameters
-hsize_dict = {5:16, 10:32, 20:64, 50:128, 100:256, 200:512, 500:1024, 1000:2048}
+hsize_dict = {10:32, 20:64, 50:128, 100:256, 200:512, 500:1024, 1000:2048}
+hsize_dict = {10:4, 20:16, 50:32, 100:128, 200:256, 500:512, 1000:1024}
 config.batch_size = 64                  # batch size
 config.hlayers_sol = 5                  # number of hidden layers for solution mapping
 config.hlayers_rnd = 4                  # number of hidden layers for solution mapping
@@ -71,11 +72,11 @@ loader_val   = DataLoader(data_val, config.batch_size, num_workers=0,
 
 import run
 print("Convex Quadratic")
-#run.quadratic.exact(loader_test, config)
+run.quadratic.exact(loader_test, config)
 #run.quadratic.relRnd(loader_test, config)
-#run.quadratic.root(loader_test, config)
-#run.quadratic.rndCls(loader_train, loader_test, loader_val, config)
-#run.quadratic.rndThd(loader_train, loader_test, loader_val, config)
+run.quadratic.root(loader_test, config)
+run.quadratic.rndCls(loader_train, loader_test, loader_val, config)
+run.quadratic.rndThd(loader_train, loader_test, loader_val, config)
 #run.quadratic.lrnRnd(loader_train, loader_test, loader_val, config)
 #run.quadratic.rndSte(loader_train, loader_test, loader_val, config)
 print(config)
