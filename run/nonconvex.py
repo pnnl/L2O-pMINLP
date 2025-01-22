@@ -211,6 +211,7 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     hsize = config.hsize
     lr = config.lr
     penalty_weight = config.penalty
+    project = config.project
     # init model
     from src.problem import msNonconvex
     model = msNonconvex(num_var, num_ineq, timelimit=1000)
@@ -232,9 +233,11 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
-    df = eval(components, model, loader_test)
+    df = evaluate(components, loss_fn, model, loader_test, project)
     if penalty_growth:
         df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}-g_new.csv")
+    elif config.project:
+        df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}-p_new.csv")
     else:
         df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}_new.csv")
 
@@ -258,6 +261,7 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     hsize = config.hsize
     lr = config.lr
     penalty_weight = config.penalty
+    project = config.project
     # init model
     from src.problem import msNonconvex
     model = msNonconvex(num_var, num_ineq, timelimit=1000)
@@ -279,9 +283,11 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
-    df = eval(components, model, loader_test)
+    df = evaluate(components, loss_fn, model, loader_test, project)
     if penalty_growth:
         df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}-g_new.csv")
+    elif config.project:
+        df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}-p_new.csv")
     else:
         df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}_new.csv")
 
@@ -385,6 +391,7 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     hsize = config.hsize
     lr = config.lr
     penalty_weight = config.penalty
+    project = config.project
     # init model
     from src.problem import msNonconvex
     model = msNonconvex(num_var, num_ineq, timelimit=1000)
@@ -401,14 +408,22 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
-    df = eval(components, model, loader_test)
+    df = evaluate(components, loss_fn, model, loader_test, project)
     if penalty_growth:
         df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}-g_new.csv")
+    elif config.project:
+        df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}-p_new.csv")
     else:
         df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}_new.csv")
 
 
-def eval(components, model, loader_test):
+def evaluate(components, loss_fn, model, loader_test, project):
+    # postprocessing
+    if project:
+        from src.postprocess.project import gradientProjection
+        # project
+        proj = gradientProjection([components[0]], [components[1]], loss_fn, "x")
+    # init res
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     b_test = loader_test.dataset.datadict["b"][:100]
     d_test = loader_test.dataset.datadict["d"][:100]

@@ -34,6 +34,9 @@ parser.add_argument("--samples",
                     default=8000,
                     choices=[8000],
                     help="problem type")
+parser.add_argument("--project",
+                    action="store_true",
+                    help="project gradient")
 config = parser.parse_args()
 
 # init problem

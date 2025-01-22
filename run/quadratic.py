@@ -205,6 +205,7 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     hsize = config.hsize
     lr = config.lr
     penalty_weight = config.penalty
+    project = config.project
     # init model
     from src.problem import msQuadratic
     model = msQuadratic(num_var, num_ineq, timelimit=1000)
@@ -226,13 +227,15 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
-    df = eval(components, model, loader_test)
+    df = evaluate(components, loss_fn, model, loader_test, project)
     if penalty_growth:
         df.to_csv(f"result/cq_cls{penalty_weight}_{num_var}-{num_ineq}-g.csv")
     elif config.samples == 800:
         df.to_csv(f"result/cq_cls{penalty_weight}_{num_var}-{num_ineq}-s.csv")
     elif config.samples == 80000:
         df.to_csv(f"result/cq_cls{penalty_weight}_{num_var}-{num_ineq}-l.csv")
+    elif config.project:
+        df.to_csv(f"result/cq_cls{penalty_weight}_{num_var}-{num_ineq}-p.csv")
     else:
         df.to_csv(f"result/cq_cls{penalty_weight}_{num_var}-{num_ineq}.csv")
 
@@ -256,6 +259,7 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     hsize = config.hsize
     lr = config.lr
     penalty_weight = config.penalty
+    project = config.project
     # init model
     from src.problem import msQuadratic
     model = msQuadratic(num_var, num_ineq, timelimit=1000)
@@ -277,13 +281,15 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
-    df = eval(components, model, loader_test)
+    df = evaluate(components, loss_fn, model, loader_test, project)
     if penalty_growth:
         df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}-g.csv")
     elif config.samples == 800:
         df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}-s.csv")
     elif config.samples == 80000:
         df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}-l.csv")
+    elif config.project:
+        df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}-p.csv")
     else:
         df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}.csv")
 
@@ -388,6 +394,7 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     hsize = config.hsize
     lr = config.lr
     penalty_weight = config.penalty
+    project = config.project
     # init model
     from src.problem import msQuadratic
     model = msQuadratic(num_var, num_ineq, timelimit=1000)
@@ -404,18 +411,26 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
-    df = eval(components, model, loader_test)
+    df = evaluate(components, loss_fn, model, loader_test, project)
     if penalty_growth:
         df.to_csv(f"result/cq_ste{penalty_weight}_{num_var}-{num_ineq}-g.csv")
     elif config.samples == 800:
         df.to_csv(f"result/cq_ste{penalty_weight}_{num_var}-{num_ineq}-s.csv")
     elif config.samples == 80000:
         df.to_csv(f"result/cq_ste{penalty_weight}_{num_var}-{num_ineq}-l.csv")
+    elif config.project:
+        df.to_csv(f"result/cq_ste{penalty_weight}_{num_var}-{num_ineq}-p.csv")
     else:
         df.to_csv(f"result/cq_ste{penalty_weight}_{num_var}-{num_ineq}.csv")
 
 
-def eval(components, model, loader_test):
+def evaluate(components, loss_fn, model, loader_test, project):
+    # postprocessing
+    if project:
+        from src.postprocess.project import gradientProjection
+        # project
+        proj = gradientProjection([components[0]], [components[1]], loss_fn, "x")
+    # init res
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     for b in tqdm(loader_test.dataset.datadict["b"][:100]):
         # data point as tensor
@@ -427,6 +442,8 @@ def eval(components, model, loader_test):
         with torch.no_grad():
             for comp in components:
                 datapoints.update(comp(datapoints))
+        if project:
+            proj(datapoints)
         tock = time.time()
         # assign params
         model.set_param_val({"b":b.cpu().numpy()})

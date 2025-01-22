@@ -211,6 +211,7 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     hsize = config.hsize
     lr = config.lr
     penalty_weight = config.penalty
+    project = config.project
     # init model
     from src.problem import msRosenbrock
     model = msRosenbrock(steepness, num_blocks, timelimit=1000)
@@ -229,13 +230,15 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
-    df = eval(components, model, loader_test)
+    df = evaluate(components, loss_fn, model, loader_test, project)
     if penalty_growth:
         df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-g.csv")
     elif config.samples == 800:
         df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-s.csv")
     elif config.samples == 80000:
         df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-l.csv")
+    elif config.project:
+        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-p.csv")
     else:
         df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}.csv")
 
@@ -257,6 +260,7 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     hsize = config.hsize
     lr = config.lr
     penalty_weight = config.penalty
+    project = config.project
     # init model
     from src.problem import msRosenbrock
     model = msRosenbrock(steepness, num_blocks, timelimit=1000)
@@ -275,13 +279,15 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
-    df = eval(components, model, loader_test)
+    df = evaluate(components, loss_fn, model, loader_test, project)
     if penalty_growth:
         df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-g.csv")
     elif config.samples == 800:
         df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-s.csv")
     elif config.samples == 80000:
         df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-l.csv")
+    elif config.project:
+        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-p.csv")
     else:
         df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}.csv")
 
@@ -383,6 +389,7 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     hsize = config.hsize
     lr = config.lr
     penalty_weight = config.penalty
+    project = config.project
     # init model
     from src.problem import msRosenbrock
     model = msRosenbrock(steepness, num_blocks, timelimit=1000)
@@ -400,18 +407,16 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     # train
     utils.train(components, loss_fn, loader_train, loader_val, lr, penalty_growth)
     # eval
-    df = eval(components, model, loader_test)
+    df = evaluate(components, loss_fn, model, loader_test, project)
     if penalty_growth:
         df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-g.csv")
-    elif config.samples == 800:
-        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-s.csv")
-    elif config.samples == 80000:
-        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-l.csv")
+    elif config.project:
+        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-p.csv")
     else:
         df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}.csv")
 
 
-def eval(components, model, loader_test):
+def evaluate(components, loss_fn, model, loader_test, project):
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     p_test = loader_test.dataset.datadict["p"]
     a_test = loader_test.dataset.datadict["a"]
