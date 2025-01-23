@@ -8,7 +8,7 @@ from torch import nn
 import neuromancer as nm
 
 class gradientProjection(nn.Module):
-    def __init__(self, pre_components, post_components, loss_fn, target_key, max_iters=100, step_size=0.01, decay=1.0):
+    def __init__(self, pre_components, post_components, loss_fn, target_key, max_iters=1000, step_size=0.01, decay=1.0):
         super().__init__()
         self.pre_components = pre_components
         self.post_components = post_components
