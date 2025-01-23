@@ -433,6 +433,12 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
 
 
 def evaluate(components, loss_fn, model, loader_test, project):
+    # postprocessing
+    if project:
+        from src.postprocess.project import gradientProjection
+        # project
+        proj = gradientProjection([components[0]], [components[1]], loss_fn, "x")
+    # init res
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     p_test = loader_test.dataset.datadict["p"]
     a_test = loader_test.dataset.datadict["a"]
