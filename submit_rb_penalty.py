@@ -31,7 +31,7 @@ print("Rosenbrock")
 
 for penalty in [1, 5, 10, 50, 100, 500, 1000]:
     config.penalty = penalty
-    for size in [10, 30, 100, 300, 1000, 3000, 10000]:
+    for size in [1, 10, 100, 1000, 10000]:
         # random seed
         random.seed(42)
         np.random.seed(42)
@@ -47,7 +47,7 @@ for penalty in [1, 5, 10, 50, 100, 500, 1000]:
         test_size = 100                  # number of test size
         val_size = 1000                  # number of validation size
         # hyperparameters
-        hsize_dict = {10:16, 30:32, 100:64, 300:128, 1000:256, 3000:512, 10000:1024}
+        hsize_dict = {1:4, 3:8, 10:16, 30:32, 100:64, 300:128, 1000:256, 3000:512, 10000:1024}
         config.batch_size = 64                  # batch size
         config.hlayers_sol = 5                  # number of hidden layers for solution mapping
         config.hlayers_rnd = 4                  # number of hidden layers for solution mapping
