@@ -239,6 +239,10 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
         df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-l.csv")
     elif config.project:
         df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-p.csv")
+    elif config.project and config.samples == 800:
+        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-s-p.csv")
+    elif config.project and config.samples == 80000:
+        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-l-p.csv")
     else:
         df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}.csv")
 
@@ -288,6 +292,10 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
         df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-l.csv")
     elif config.project:
         df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-p.csv")
+    elif config.project and config.samples == 800:
+        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-s-p.csv")
+    elif config.project and config.samples == 80000:
+        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-l-p.csv")
     else:
         df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}.csv")
 
@@ -412,6 +420,14 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
         df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-g.csv")
     elif config.project:
         df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-p.csv")
+    elif config.samples == 80000:
+        df.to_csv(f"result/ste{penalty_weight}_{num_blocks}-l.csv")
+    elif config.project:
+        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-p.csv")
+    elif config.project and config.samples == 800:
+        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-s-p.csv")
+    elif config.project and config.samples == 80000:
+        df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}-l-p.csv")
     else:
         df.to_csv(f"result/rb_ste{penalty_weight}_{num_blocks}.csv")
 
