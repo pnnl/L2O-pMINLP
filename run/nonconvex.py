@@ -438,6 +438,8 @@ def evaluate(components, loss_fn, model, loader_test, project):
         with torch.no_grad():
             for comp in components:
                 datapoints.update(comp(datapoints))
+        if project:
+            proj(datapoints)
         tock = time.time()
         # assign params
         model.set_param_val({"b":b.cpu().numpy(), "d":d.cpu().numpy()})
