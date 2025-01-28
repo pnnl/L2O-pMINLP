@@ -29,7 +29,7 @@ config = parser.parse_args()
 import run
 print("Rosenbrock")
 
-for penalty in [1, 5, 10, 50, 100, 500, 1000]:
+for penalty in [0.1, 0.5, 1, 5, 10, 50, 100, 500, 1000]:
     config.penalty = penalty
     for size in [1, 10, 100, 1000, 10000]:
         # random seed

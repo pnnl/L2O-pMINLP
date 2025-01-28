@@ -30,7 +30,7 @@ import run
 print("Convex Quadratic")
 
 # changes penalty
-for penalty in [1, 5, 10, 50, 100, 500, 1000]:
+for penalty in [0.1, 0.5, 1, 5, 10, 50, 100, 500, 1000]:
     config.penalty = penalty
     for size in [5, 10, 20, 50, 100, 200, 500, 1000]:
         # random seed
