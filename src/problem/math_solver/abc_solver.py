@@ -210,3 +210,47 @@ class abcParamSolver(ABC):
         else:
             raise ValueError("Solver '{}' does not support setting a solution limit.".format(solver))
         return model_heur
+
+    def primal_heuristic(self, heuristic_name="rens"):
+        """
+        Create a model for primal heuristic
+        """
+        # clone pyomo model
+        model_heur = self.clone()
+        if self.solver == "scip":
+            # set solution limit
+            model_heur.opt.options["limits/nodes"] = 1
+            # disable presolve
+            model_heur.opt.options["presolving/maxrounds"] = 0
+            # disable seperation
+            model_heur.opt.options["separating/maxrounds"] = 0
+            # emphasize heuristic usage
+            model_heur.opt.options["heuristics/emphasis"] = 3
+            # diasable other heuristic
+            all_heuristics = [# rounding
+                              "rounding", "simplerounding", "randrounding", "zirounding",
+                              # shifting
+                              "shifting", "intshifting", "shiftandpropagate",
+                              # flip
+                              "oneopt", "twoopt",
+                              # indicator
+                              "indicator",
+                              # diving
+                              "indicatordiving", "farkasdiving", "conflictdiving",
+                              "nlpdiving", "guideddiving", "adaptivediving",
+                              "coefdiving", "pscostdiving", "objpscostdiving",
+                              "fracdiving", "veclendiving", "distributiondiving",
+                              "rootsoldiving", "linesearchdiving",
+                              # search
+                              "alns", "localbranching", "rins", "rens", "gins", "dins", "lpface",
+                              # subsolve
+                              "feaspump", "subnlp"]
+            if heuristic_name not in all_heuristics:
+                raise ValueError(f"Unknown heuristic '{heuristic_name}'. Choose from {all_heuristics}.")
+            for heur in all_heuristics:
+                model_heur.opt.options[f"heuristics/{heur}/freq"] = -1
+            model_heur.opt.options[f"heuristics/{heuristic_name}/freq"] = 1
+            model_heur.opt.options[f"heuristics/{heuristic_name}/priority"] = 536870911
+        else:
+            raise ValueError("Solver '{}' does not support setting a solution limit.".format(solver))
+        return model_heur
