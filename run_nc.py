@@ -27,12 +27,11 @@ parser.add_argument("--size",
                     type=int,
                     default=5,
                     choices=[5, 10, 20, 50, 100, 200, 500, 1000],
-                    help="problem type")
-parser.add_argument("--samples",
-                    type=int,
-                    default=8000,
-                    choices=[8000],
-                    help="problem type")
+                    help="problem size")
+parser.add_argument("--penalty",
+                    type=float,
+                    default=100,
+                    help="penalty weight")
 parser.add_argument("--project",
                     action="store_true",
                     help="project gradient")
@@ -41,7 +40,7 @@ config = parser.parse_args()
 # init problem
 num_var = config.size            # number of variables
 num_ineq = config.size           # number of constraints
-train_size = config.samples      # number of train
+train_size = 8000                # number of train
 test_size = 1000                 # number of test size
 val_size = 1000                  # number of validation size
 num_data = train_size + test_size + val_size
@@ -53,7 +52,6 @@ config.hlayers_sol = 5                  # number of hidden layers for solution m
 config.hlayers_rnd = 4                  # number of hidden layers for solution mapping
 config.hsize = hsize_dict[config.size]  # width of hidden layers for solution mapping
 config.lr = 1e-3                        # learning rate
-config.penalty = 100                    # penalty weight
 
 # data sample from uniform distribution
 b_samples = torch.from_numpy(np.random.uniform(-1, 1, size=(num_data, num_ineq))).float()

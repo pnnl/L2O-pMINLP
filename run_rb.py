@@ -27,12 +27,11 @@ parser.add_argument("--size",
                     type=int,
                     default=1,
                     choices=[1, 3, 10, 30, 100, 300, 1000, 3000, 10000],
-                    help="problem type")
-parser.add_argument("--samples",
-                    type=int,
-                    default=8000,
-                    choices=[8000],
-                    help="problem type")
+                    help="problem size")
+parser.add_argument("--penalty",
+                    type=float,
+                    default=100,
+                    help="penalty weight")
 parser.add_argument("--project",
                     action="store_true",
                     help="project gradient")
@@ -41,7 +40,7 @@ config = parser.parse_args()
 # init problem
 config.steepness = 50            # steepness factor
 num_blocks = config.size         # number of blocks
-train_size = config.samples      # number of train
+train_size = 8000                # number of train
 test_size = 100                  # number of test size
 val_size = 1000                  # number of validation size
 
@@ -52,7 +51,6 @@ config.hlayers_sol = 5                  # number of hidden layers for solution m
 config.hlayers_rnd = 4                  # number of hidden layers for solution mapping
 config.hsize = hsize_dict[config.size]  # width of hidden layers for solution mapping
 config.lr = 1e-3                        # learning rate
-config.penalty = 100                    # penalty weight
 
 # parameters as input data
 p_low, p_high = 1.0, 8.0
