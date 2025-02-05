@@ -120,3 +120,14 @@ python run_rb.py --size 100 --penalty 10 --project
 - `--size`: Specifies the problem size. Larger values correspond to more decision variables.
 - `--penalty`: Sets the penalty weight for constraint violations (default: 100).
 - `--project:` Enables feasibility projection as a post-processing step.
+
+## Performance Comparison
+
+Our learning-based methods (RC & LT) achieve comparable or even superior performance to exact solvers (EX) while being orders of magnitude faster. The figures below illustrate the impact of penalty weights on feasibility and objective values for smaller-scale problems:
+
+<div align="center">
+    <img src="img/cq_s100_penalty.png" alt="Penalty Effect on IQP" width="40%"/>
+    <img src="img/rb_s100_penalty.png" alt="Penalty Effect on MIRB" width="40%"/>
+</div>
+
+The top plots show the proportion of feasible solutions, while the bottom plots display objective values. For these instances, EX finds the best feasible solutions within **1000 seconds** (leftmost boxplot in the bottom plots), serving as a benchmark. With properly tuned penalty weights, our approach attains **comparable or better objective values within just subsecond**, demonstrating its efficiency and effectiveness.
