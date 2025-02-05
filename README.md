@@ -9,7 +9,7 @@ This repository provides the official implementation of our paper: **"[Learning 
 
 Our approach introduces the first general Learning-to-Optimize (L2O) framework designed for Mixed-Integer Nonlinear Programming (MINLP). As illustrated above, the approach consists of two core components: **integer correction layers** and a **feasibility projection heuristic**. 
 
-Traditional solvers struggle with large-scale MINLPs due to combinatorial complexity and non-convexity. With up to tens of thousands of variables, traditional solvers and heuristics even fail to find any feasible solution. Our framework leverages deep learning to predict high-quality solutions with orders-of-magnitude speedup, enabling optimization in scenarios where exact solvers fail.
+Traditional solvers struggle with large-scale MINLPs due to combinatorial complexity and non-convexity. With up to **tens of thousands of discrete variables**, traditional solvers and heuristics even fail to find any feasible solution. Our framework leverages deep learning to predict high-quality solutions with orders-of-magnitude speedup, enabling optimization in scenarios where exact solvers fail.
 
 
 ## Key Features
