@@ -4,13 +4,19 @@ This repository provides the official implementation of our paper: **"[Learning 
 
 ![Framework](img/pipeline.png)
 
+
 ## Overview
 
-Our approach introduces the first general Learning-to-Optimize (L2O) framework designed for Mixed-Integer Nonlinear Programming (MINLP). As illustrated above, the approach consists of two core components: **integer correction layers** and a **feasibility projection heuristic**. Our experiments show that our methods efficiently solve MINLPs with up to tens of thousands of variables, providing high-quality solutions within milliseconds, even for problems where traditional solvers and heuristics fail. 
+Our approach introduces the first general Learning-to-Optimize (L2O) framework designed for Mixed-Integer Nonlinear Programming (MINLP). As illustrated above, the approach consists of two core components: **integer correction layers** and a **feasibility projection heuristic**. Our experiments show that our methods efficiently solve MINLPs with up to tens of thousands of variables, providing high-quality solutions within milliseconds, even for problems where traditional solvers and heuristics fail.
 
-- We employ a self-supervised learning approach that eliminates the need for labeled data, ensuring scalability and efficiency even for large problem instances.
-- We propose computationally efficient learnable correction layers that transform neural network outputs into the integer domain.
-- We incorporate a projection step that post-processes an infeasible neural network output by gradient descent towards a feasible integer solution.
+
+## Key Features
+
+- **Self-supervised learning**: Eliminates the need for optimal solutions as labels.
+- **Efficient integer correction**: Ensures integer feasibility through a learnable correction layer.
+- **Efficient feasibility correction**: Refine constraints violation via a gradient-based post-processing.
+- **Scalability**: Handles problems with up to **20,000 variables** within subsecond inference.  
+
 
 ## Citation
 
@@ -35,6 +41,7 @@ To run this project, you will need the following libraries and software installe
 - **Pyomo**: A Python library for optimization modeling.
 - **SCIP**: A powerful solver for mathematical programming, which might need a separate installation process.
 - **Neuromancer**: This project uses the Neuromancer library for differentiable programming.
+
 
 ## Code Structure
 
@@ -79,21 +86,19 @@ To run this project, you will need the following libraries and software installe
 └── README.md                      # README file for the project
 ```
 
+
 ## Reproducibility
 
 ### Integer Quadratic Problems
 
-
 ```Python
 python run_qp.py --size 5
 ```
-
 ### Integer Non-Convex Problems
 
 ```Python
 python run_nc.py --size 5
 ```
-
 ### Mixed-Integer Rosenbrock Problems
 
 ```Python
