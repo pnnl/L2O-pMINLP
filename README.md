@@ -7,15 +7,17 @@ This repository provides the official implementation of our paper: **"[Learning 
 
 ## Overview
 
-Our approach introduces the first general Learning-to-Optimize (L2O) framework designed for Mixed-Integer Nonlinear Programming (MINLP). As illustrated above, the approach consists of two core components: **integer correction layers** and a **feasibility projection heuristic**. Our experiments show that our methods efficiently solve MINLPs with up to tens of thousands of variables, providing high-quality solutions within milliseconds, even for problems where traditional solvers and heuristics fail.
+Our approach introduces the first general Learning-to-Optimize (L2O) framework designed for Mixed-Integer Nonlinear Programming (MINLP). As illustrated above, the approach consists of two core components: **integer correction layers** and a **feasibility projection heuristic**. 
+
+Traditional solvers struggle with large-scale MINLPs due to combinatorial complexity and non-convexity. With up to tens of thousands of variables, traditional solvers and heuristics even fail to find any feasible solution. Our framework leverages deep learning to predict high-quality solutions with orders-of-magnitude speedup, enabling optimization in scenarios where exact solvers fail.
 
 
 ## Key Features
 
-- **Self-supervised learning**: Eliminates the need for optimal solutions as labels.
-- **Efficient integer correction**: Ensures integer feasibility through a learnable correction layer.
-- **Efficient feasibility correction**: Refine constraints violation via a gradient-based post-processing.
-- **Scalability**: Handles problems with up to **20,000 variables** within subsecond inference.  
+- 🤖 **Self-supervised learning**: Eliminates the need for optimal solutions as labels.
+- 🔢 **Efficient integer correction**: Ensures integer feasibility through a learnable correction layer.
+- 🎯 **Efficient feasibility correction**: Refine constraints violation via a gradient-based post-processing.
+- 🚀 **Scalability**: Handles problems with up to **20,000 variables** within subsecond inference.  
 
 
 ## Citation
@@ -46,7 +48,7 @@ To run this project, you will need the following libraries and software installe
 ## Code Structure
 
 ```
-├── archive                        # Archive for older files and documents
+├── test                           # Some testing and visualization with Jupyter notebooks
 ├── img                            # Image resources for the project
 ├── src                            # Main source code directory
 │   ├── __init__.py                # Initializes the src package
@@ -89,6 +91,14 @@ To run this project, you will need the following libraries and software installe
 
 ## Reproducibility
 
+Our framework supports three benchmark problems:
+
+- Integer Quadratic Problems (IQP): A convex quadratic objective with linear constraints and integer variables.
+- Integer Non-Convex Problems (INP): A more challenging variant incorporating trigonometric terms, introducing non-convexity.
+- Mixed-Integer Rosenbrock Problems (MIRB): A highly nonlinear benchmark derived from the Rosenbrock function, with linear and non-linear constraints.
+
+To reproduce experiments, use the following commands:
+
 ### Integer Quadratic Problems
 
 ```Python
@@ -97,10 +107,16 @@ python run_qp.py --size 5
 ### Integer Non-Convex Problems
 
 ```Python
-python run_nc.py --size 5
+python run_nc.py --size 10 --penalty 1 --project
 ```
 ### Mixed-Integer Rosenbrock Problems
 
 ```Python
-python run_rb.py --size 10
+python run_rb.py --size 100 --penalty 10 --project
 ```
+
+### Arguments
+
+- `--size`: Specifies the problem size. Larger values correspond to more decision variables.
+- `--penalty`: Sets the penalty weight for constraint violations (default: 100).
+- `--project:` Enables feasibility projection as a post-processing step.
