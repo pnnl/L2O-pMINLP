@@ -46,7 +46,7 @@ To run this project, you will need the following libraries and software installe
 ## Code Structure
 
 ```
-├── archive                        # Archive for older files and documents
+├── test                           # Some testing and visualization with Jupyter notebooks
 ├── img                            # Image resources for the project
 ├── src                            # Main source code directory
 │   ├── __init__.py                # Initializes the src package
@@ -89,6 +89,14 @@ To run this project, you will need the following libraries and software installe
 
 ## Reproducibility
 
+Our framework supports three benchmark problems:
+
+- Integer Quadratic Problems (IQP): A convex quadratic objective with linear constraints and integer variables.
+- Integer Non-Convex Problems (INP): A more challenging variant incorporating trigonometric terms, introducing non-convexity.
+- Mixed-Integer Rosenbrock Problems (MIRB): A highly nonlinear benchmark derived from the Rosenbrock function, with linear and non-linear constraints.
+
+To reproduce experiments, use the following commands:
+
 ### Integer Quadratic Problems
 
 ```Python
@@ -97,10 +105,16 @@ python run_qp.py --size 5
 ### Integer Non-Convex Problems
 
 ```Python
-python run_nc.py --size 5
+python run_nc.py --size 10 --penalty 1 --project
 ```
 ### Mixed-Integer Rosenbrock Problems
 
 ```Python
-python run_rb.py --size 10
+python run_rb.py --size 100 --penalty 10 --project
 ```
+
+### Arguments
+
+- `--size`: Specifies the problem size. Larger values correspond to more decision variables.
+- `--penalty`: Sets the penalty weight for constraint violations (default: 100).
+- `--project:` Enables feasibility projection as a post-processing step.
