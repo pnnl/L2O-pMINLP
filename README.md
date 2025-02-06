@@ -50,7 +50,9 @@ We design two learnable integer correction layers to enforce integrality in the 
 
 ### Integer Feasibility Projection
 
-While the correction layers enforce integer constraints, feasibility with respect to problem constraints is not guaranteed. We introduce a gradient-based projection that iteratively refines infeasible solutions.
+While the correction layers enforce integer constraints, feasibility with respect to problem constraints is not guaranteed. We introduce a gradient-based projection that iteratively refines infeasible solutions. The figure below illustrates how the projection step adjusts a solution over multiple iterations.
+
+<div align="center"> <img src="img/example2.png" alt="Feasibility Projection Iteraions" width="40%"/> </div>
 
 By integrating feasibility projection with our integer correction layers, we extend RC and LT into RC-P and LT-P, respectively. These extended methods leverage the projection step to correct infeasibilities while preserving the advantages of fast inference and high-quality integer solutions.
 
