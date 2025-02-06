@@ -134,9 +134,15 @@ Our framework supports three benchmark problems:
 
 - **Integer Quadratic Problems (IQP)**: A convex quadratic objective with linear constraints and integer variables.
 - **Integer Non-Convex Problems (INP)**: A more challenging variant incorporating trigonometric terms, introducing non-convexity.
-- **Mixed-Integer Rosenbrock Problems (MIRB)**: A benchmark derived from the Rosenbrock function, with linear and non-linear constraints.
+- **Mixed-Integer Rosenbrock Problems (MIRB)**: A benchmark derived from the Rosenbrock function with linear and non-linear constraints.
 
 To reproduce experiments, use the following commands:
+
+#### Arguments
+
+- `--size`: Specifies the problem size. Larger values correspond to more decision variables.
+- `--penalty`: Sets the penalty weight for constraint violations (default: 100).
+- `--project:` Enables feasibility projection as a post-processing step.
 
 ### Integer Quadratic Problems
 
@@ -153,9 +159,3 @@ python run_nc.py --size 10 --penalty 1 --project
 ```Python
 python run_rb.py --size 100 --penalty 10 --project
 ```
-
-### Arguments
-
-- `--size`: Specifies the problem size. Larger values correspond to more decision variables.
-- `--penalty`: Sets the penalty weight for constraint violations (default: 100).
-- `--project:` Enables feasibility projection as a post-processing step.
