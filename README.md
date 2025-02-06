@@ -9,7 +9,7 @@ This repository provides the official implementation of our paper: **"[Learning 
 
 Our approach introduces the first general Learning-to-Optimize (L2O) framework designed for Mixed-Integer Nonlinear Programming (MINLP). As illustrated above, the approach consists of two core components: **integer correction layers** and a **feasibility projection heuristic**. 
 
-Traditional solvers struggle with large-scale MINLPs due to combinatorial complexity and non-convexity. With up to **tens of thousands of discrete variables**, traditional solvers and heuristics even fail to find any feasible solution. Our framework leverages deep learning to predict high-quality solutions with orders-of-magnitude speedup, enabling optimization in scenarios where exact solvers fail.
+Traditional solvers struggle with large-scale MINLPs due to combinatorial complexity and non-convexity. With up to **tens of thousands of discrete variables**, traditional solvers and heuristics even fail to find a feasible solution. Our framework leverages deep learning to predict high-quality solutions with orders-of-magnitude speedup, enabling optimization in scenarios where exact solvers fail.
 
 
 ## Key Features
@@ -30,6 +30,23 @@ Traditional solvers struggle with large-scale MINLPs due to combinatorial comple
   year={2024}
 }
 ```
+
+## Methodology
+
+Our approach introduces two key components:
+
+### Integer Correction Layers
+
+To enforce integrality in the neural network output, we design two learnable integer correction layers:
+
+- **Rounding Classification (RC)**: Learns a classification strategy to determine rounding directions for integer variables.
+- **Learnable Thresholding (LT)**: Learns a threshold value for each integer variable to decide whether to round up or down.
+
+### Feasibility Projection
+
+While the correction layers enforce integer constraints, feasibility with respect to problem constraints is not guaranteed. We introduce a gradient-based projection that iteratively refines infeasible solutions.
+
+By integrating feasibility projection with our integer correction layers, we extend RC and LT into RC-P and LT-P, respectively. These extended methods leverage the projection step to correct infeasibilities while preserving the advantages of fast inference and high-quality integer solutions.
 
 ## Performance Comparison
 
