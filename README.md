@@ -37,10 +37,16 @@ Our approach introduces two key components:
 
 ### Integer Correction Layers
 
-To enforce integrality in the neural network output, we design two learnable integer correction layers:
+We design two learnable integer correction layers to enforce integrality in the neural network output. The figures below illustrate the workflow of integer rounding correction.
+
+<div align="center">
+    <img src="img/method_RC.png" alt="example for RC" width="48%"/>
+    <img src="img/method_LT.png" alt="example for RT" width="48%"/>
+</div>
 
 - **Rounding Classification (RC)**: Learns a classification strategy to determine rounding directions for integer variables.
 - **Learnable Thresholding (LT)**: Learns a threshold value for each integer variable to decide whether to round up or down.
+
 
 ### Integer Feasibility Projection
 
