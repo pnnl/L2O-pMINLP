@@ -47,14 +47,17 @@ The top plots show the proportion of feasible solutions, while the bottom plots 
 
 To run this project, you will need the following libraries and software installed:
 
-- **Python**: The project is developed using Python. Ensure you have Python 3.9 or later installed.
-- **Scikit-Learn**: Useful for performing various machine learning tasks.
-- **PyTorch**: Used for building and training neural network models.
-- **NumPy**: Essential for numerical operations.
-- **Pandas**: Useful for data manipulation and analysis.
-- **Pyomo**: A Python library for optimization modeling.
-- **SCIP**: A powerful solver for mathematical programming, which might need a separate installation process.
-- **Neuromancer**: This project uses the Neuromancer library for differentiable programming.
+- **[Python](https://www.python.org):** The project is developed using Python. Ensure you have Python 3.9 or later installed.
+- **[PyTorch](https://pytorch.org):** an open source deep learning (ML) framework for creating deep neural networks.
+- **[Scikit-Learn](https://scikit-learn.org/stable):** an open-source machine learning library for the Python programming language.
+- **[NeuroMANCER](https://pnnl.github.io/neuromancer):** an open-source differentiable programming (DP) library for parametric constrained problems.
+- **[Pyomo](https://www.pyomo.org):** a Python-based open-source optimization modeling language for  mathematical programming.
+- **[Gurobi](https://www.gurobi.com):** a state-of-the-art solver for mathematical programming.
+- **[SCIP](https://www.scipopt.org):** a fast non-commercial solvers for mixed-integer linear and non-linear programming (MILP/MINLP).
+- **[IPOPT](https://coin-or.github.io/Ipopt):** an open source software package for large-scale nonlinear optimization.
+- **[NumPy](https://numpy.org):** a library to support high-level mathematical operations for large, multi-dimensional arrays and matrices.
+- **[Pandas](https://pandas.pydata.org):** a fast, powerful, flexible and easy to use open source data analysis and manipulation tool.
+- **[tqdm](https://tqdm.github.io):** a Python library that provides a fast, extensible progress bar for loops and iterables.
 
 
 ## Code Structure
@@ -105,9 +108,9 @@ To run this project, you will need the following libraries and software installe
 
 Our framework supports three benchmark problems:
 
-- Integer Quadratic Problems (IQP): A convex quadratic objective with linear constraints and integer variables.
-- Integer Non-Convex Problems (INP): A more challenging variant incorporating trigonometric terms, introducing non-convexity.
-- Mixed-Integer Rosenbrock Problems (MIRB): A highly nonlinear benchmark derived from the Rosenbrock function, with linear and non-linear constraints.
+- **Integer Quadratic Problems (IQP)**: A convex quadratic objective with linear constraints and integer variables.
+- **Integer Non-Convex Problems (INP)**: A more challenging variant incorporating trigonometric terms, introducing non-convexity.
+- **Mixed-Integer Rosenbrock Problems (MIRB)**: A benchmark derived from the Rosenbrock function, with linear and non-linear constraints.
 
 To reproduce experiments, use the following commands:
 
