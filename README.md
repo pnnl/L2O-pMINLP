@@ -76,7 +76,7 @@ To run this project, you will need the following libraries and software installe
 │       ├── layer.py               # Pre-defined neural network layers
 │       ├── ste.py                 # Straight-through estimators for non-differentiable operations
 │       ├── rnd.py                 # Modules for differentiable and learnable rounding
-│       └── proj.py                # Modules for differentiable and learnable projection
+│       └── proj.py                # Modules for differentiable and learnable projection (archived)
 │   ├── postprocess                # Modules for the postprocessing
 │       ├── __init__.py            # Initializes the postprocessing submodule
 │       └── project.py             # postprocessing for the feasibility projection
