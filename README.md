@@ -32,7 +32,7 @@ Traditional solvers struggle with large-scale MINLPs due to combinatorial comple
 ```
 
 ## Slides
-Our recent tutorial will be at the ICS 2025. You can view the talk slides [here](https://github.com/pnnl/L2O-pMINLP/blob/master/slides/L2O-MINLP.pdf).
+Our recent talk will be at the ICS 2025. You can view the talk slides [here](https://github.com/pnnl/L2O-pMINLP/blob/master/slides/L2O-MINLP.pdf).
 
 ## Methodology
 
