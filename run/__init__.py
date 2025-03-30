@@ -3,4 +3,5 @@ from run import quadratic_proj
 from run import nonconvex
 from run import nonconvex_proj
 from run import rosenbrock
+from run import rosenbrock_proj
 from run import utils
