@@ -26,7 +26,7 @@ torch.backends.cudnn.benchmark = False
 parser = argparse.ArgumentParser()
 parser.add_argument("--size",
                     type=int,
-                    default=5,
+                    default=1000,
                     choices=[5, 10, 20, 50, 100, 200, 500, 1000],
                     help="problem type")
 parser.add_argument("--samples",
