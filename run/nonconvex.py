@@ -94,7 +94,7 @@ def relRnd(loader_test, config):
     d_test = loader_test.dataset.datadict["d"][:100]
     for b, d in tqdm(list(zip(b_test, d_test))):
         # set params
-        model.set_param_val({"b":b.cpu().numpy()})
+        model.set_param_val({"b":b.cpu().numpy(), "d":d.cpu().numpy()})
         # relax
         model_rel = model.relax()
         # solve
