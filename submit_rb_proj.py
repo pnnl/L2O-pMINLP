@@ -12,7 +12,7 @@ import pandas as pd
 import torch
 from torch import nn
 from tqdm import tqdm
-#import submitit
+import submitit
 
 # random seed
 random.seed(42)
@@ -75,8 +75,8 @@ loader_val = DataLoader(data_val, batch_size, num_workers=0, collate_fn=data_val
 
 import run
 print("Rosenbrock")
-run.rosenbrock_proj.rndCls(loader_train, loader_test, loader_val, config)
-run.rosenbrock_proj.rndThd(loader_train, loader_test, loader_val, config)
+#run.rosenbrock_proj.rndCls(loader_train, loader_test, loader_val, config)
+#run.rosenbrock_proj.rndThd(loader_train, loader_test, loader_val, config)
 print(config)
 # rounding classification
 executor = submitit.AutoExecutor(folder="logs")
