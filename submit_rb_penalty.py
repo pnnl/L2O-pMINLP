@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 """
-Submit experiments for QP
+Submit experiments for RB
 """
 import argparse
 import itertools
