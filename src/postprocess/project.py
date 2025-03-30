@@ -15,18 +15,23 @@ class gradientProjection(nn.Module):
         self.loss_fn = loss_fn
         self.target_key = target_key
         self.max_iters = max_iters
+        self.num_iters = 0
         self.step_size = step_size
         self.decay = decay
 
     def forward(self, input_dict):
-        # initialize decay multiplier
+        # init decay multiplier
         d = 1.0
+        # init iter count
+        self.num_iters = 0
         # get target variables
         for comp in self.pre_components:
             input_dict.update(comp(input_dict))
         x = input_dict[self.target_key]
         # project gradient
-        for _ in range(self.max_iters):
+        for i in range(self.max_iters):
+            # number of iterations
+            self.num_iters = i + 1
             # forward pass in components
             for comp in self.post_components:
                 input_dict.update(comp(input_dict))
