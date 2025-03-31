@@ -30,7 +30,7 @@ parser.add_argument("--size",
                     choices=[5, 10, 20, 50, 100, 200, 500, 1000],
                     help="problem type")
 parser.add_argument("--step",
-                    type=int,
+                    type=float,
                     default=0.01,
                     choices=[0.001, 0.01, 0.1, 1],
                     help="projection step size")
