@@ -131,7 +131,7 @@ def evaluate(components, loss_fn, model, loader_test, project_step_size):
         proj(datapoints)
         tock = time.time()
         # assign params
-        model.set_param_val({"p":p, "a":a})
+        model.set_param_val({"b":b, "d":d})
         # assign vars
         x = datapoints["x_rnd"]
         for i in range(len(model.vars["x"])):
