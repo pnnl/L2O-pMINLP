@@ -70,7 +70,10 @@ def exact(loader_test, config):
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
-    df.to_csv(f"result/nc_exact_{num_var}-{num_ineq}_new.csv")
+    if config.ood:
+        df.to_csv(f"result/nc_exact_{num_var}-{num_ineq}_new-ood.csv")
+    else:
+        df.to_csv(f"result/nc_exact_{num_var}-{num_ineq}_new.csv")
 
 
 def relRnd(loader_test, config):
@@ -131,7 +134,10 @@ def relRnd(loader_test, config):
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
-    df.to_csv(f"result/nc_rel_{num_var}-{num_ineq}_new.csv")
+    if config.ood:
+        df.to_csv(f"result/nc_rel_{num_var}-{num_ineq}_new-ood.csv")
+    else:
+        df.to_csv(f"result/nc_rel_{num_var}-{num_ineq}_new.csv")
 
 
 def root(loader_test, config):
@@ -189,7 +195,10 @@ def root(loader_test, config):
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
-    df.to_csv(f"result/nc_root_{num_var}-{num_ineq}_new.csv")
+    if config.ood:
+        df.to_csv(f"result/nc_root_{num_var}-{num_ineq}_new-ood.csv")
+    else:
+        df.to_csv(f"result/nc_root_{num_var}-{num_ineq}_new.csv")
 
 
 def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
@@ -238,6 +247,8 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
         df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}-g_new.csv")
     elif config.project:
         df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}-p_new.csv")
+    elif config.ood:
+        df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}_new-ood.csv")
     else:
         df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}_new.csv")
 
@@ -288,6 +299,8 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
         df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}-g_new.csv")
     elif config.project:
         df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}-p_new.csv")
+    elif config.ood:
+        df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}_new-ood.csv")
     else:
         df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}_new.csv")
 
@@ -369,6 +382,8 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     if penalty_growth:
         df.to_csv(f"result/nc_lrn{penalty_weight}_{num_var}-{num_ineq}-g_new.csv")
+    elif config.ood:
+        df.to_csv(f"result/nc_lrn{penalty_weight}_{num_var}-{num_ineq}_new-ood.csv")
     else:
         df.to_csv(f"result/nc_lrn{penalty_weight}_{num_var}-{num_ineq}_new.csv")
 
@@ -413,6 +428,8 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
         df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}-g_new.csv")
     elif config.project:
         df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}-p_new.csv")
+    elif config.ood:
+        df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}_new-ood.csv")
     else:
         df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}_new.csv")
 

@@ -26,7 +26,7 @@ torch.backends.cudnn.benchmark = False
 parser = argparse.ArgumentParser()
 parser.add_argument("--size",
                     type=int,
-                    default=1000,
+                    default=5,
                     choices=[5, 10, 20, 50, 100, 200, 500, 1000],
                     help="problem type")
 parser.add_argument("--samples",
@@ -37,6 +37,9 @@ parser.add_argument("--samples",
 parser.add_argument("--project",
                     action="store_true",
                     help="project gradient")
+parser.add_argument("--ood",
+                    action="store_true",
+                    help="run OOD generalization test")
 config = parser.parse_args()
 
 # init problem
@@ -63,6 +66,10 @@ data = {"b":b_samples, "d":d_samples}
 # data split
 from src.utlis import data_split
 data_train, data_test, data_val = data_split(data, test_size=test_size, val_size=val_size)
+# test out of distribution
+if config.ood:
+    b_ood = torch.from_numpy(np.random.uniform(-2, 2, size=(num_data, num_ineq))).float()
+    data_test.datadict = {"b":b_ood, "d":data_test.datadict["d"]}
 # torch dataloaders
 from torch.utils.data import DataLoader
 loader_train = DataLoader(data_train, config.batch_size, num_workers=0,
