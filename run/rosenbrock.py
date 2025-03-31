@@ -70,7 +70,10 @@ def exact(loader_test, config):
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
-    df.to_csv(f"result/rb_exact_{num_blocks}.csv")
+    if config.ood:
+        df.to_csv(f"result/rb_exact_{num_blocks}-ood.csv")
+    else:
+        df.to_csv(f"result/rb_exact_{num_blocks}.csv")
 
 
 def relRnd(loader_test, config):
@@ -130,7 +133,10 @@ def relRnd(loader_test, config):
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
-    df.to_csv(f"result/rb_rel_{num_blocks}.csv")
+    if config.ood:
+        df.to_csv(f"result/rb_rel_{num_blocks}-ood.csv")
+    else:
+        df.to_csv(f"result/rb_rel_{num_blocks}.csv")
 
 
 def root(loader_test, config):
@@ -189,7 +195,10 @@ def root(loader_test, config):
     print(df.describe())
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     print("Number of unsolved instances: ", df["Sol"].isna().sum())
-    df.to_csv(f"result/rb_root_{num_blocks}.csv")
+    if config.ood:
+        df.to_csv(f"result/rb_root_{num_blocks}-ood.csv")
+    else:
+        df.to_csv(f"result/rb_root_{num_blocks}.csv")
 
 
 def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
@@ -233,6 +242,8 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     df = evaluate(components, loss_fn, model, loader_test, project)
     if penalty_growth:
         df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-g.csv")
+    elif config.ood:
+        df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-ood.csv")
     elif config.samples == 800:
         df.to_csv(f"result/rb_cls{penalty_weight}_{num_blocks}-s.csv")
     elif config.samples == 80000:
@@ -286,6 +297,8 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     df = evaluate(components, loss_fn, model, loader_test, project)
     if penalty_growth:
         df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-g.csv")
+    elif config.ood:
+        df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-ood.csv")
     elif config.samples == 800:
         df.to_csv(f"result/rb_thd{penalty_weight}_{num_blocks}-s.csv")
     elif config.samples == 80000:
@@ -376,6 +389,8 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     if penalty_growth:
         df.to_csv(f"result/rb_lrn{penalty_weight}_{num_blocks}-g.csv")
+    elif config.ood:
+        df.to_csv(f"result/rb_lrn{penalty_weight}_{num_blocks}-ood.csv")
     else:
         df.to_csv(f"result/rb_lrn{penalty_weight}_{num_blocks}.csv")
 

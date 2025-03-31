@@ -12,7 +12,7 @@ import pandas as pd
 import torch
 from torch import nn
 from tqdm import tqdm
-import submitit
+#import submitit
 
 # random seed
 random.seed(42)
@@ -37,6 +37,9 @@ parser.add_argument("--samples",
 parser.add_argument("--project",
                     action="store_true",
                     help="project gradient")
+parser.add_argument("--ood",
+                    action="store_true",
+                    help="run OOD generalization test")
 config = parser.parse_args()
 
 # init problem
@@ -59,7 +62,12 @@ config.penalty = 100                    # penalty weight
 p_low, p_high = 1.0, 8.0
 a_low, a_high = 0.5, 4.5
 p_train = np.random.uniform(p_low, p_high, (train_size, 1)).astype(np.float32)
-p_test  = np.random.uniform(p_low, p_high, (test_size, 1)).astype(np.float32)
+# test out of distribution
+if config.ood:
+    p_test  = np.random.uniform(p_low+3, p_high+3, (test_size, 1)).astype(np.float32)
+# test in distribution
+else:
+    p_test  = np.random.uniform(p_low, p_high, (test_size, 1)).astype(np.float32)
 p_val   = np.random.uniform(p_low, p_high, (val_size, 1)).astype(np.float32)
 a_train = np.random.uniform(a_low, a_high, (train_size, num_blocks)).astype(np.float32)
 a_test  = np.random.uniform(a_low, a_high, (test_size, num_blocks)).astype(np.float32)
@@ -78,13 +86,13 @@ loader_val = DataLoader(data_val, batch_size, num_workers=0, collate_fn=data_val
 
 import run
 print("Rosenbrock")
-#run.rosenbrock.exact(loader_test, config)
-#run.rosenbrock.relRnd(loader_test, config)
-#run.rosenbrock.root(loader_test, config)
-#run.rosenbrock.rndCls(loader_train, loader_test, loader_val, config)
-#run.rosenbrock.rndThd(loader_train, loader_test, loader_val, config)
-#run.rosenbrock.lrnRnd(loader_train, loader_test, loader_val, config)
-#run.rosenbrock.rndSte(loader_train, loader_test, loader_val, config)
+run.rosenbrock.exact(loader_test, config)
+run.rosenbrock.relRnd(loader_test, config)
+run.rosenbrock.root(loader_test, config)
+run.rosenbrock.rndCls(loader_train, loader_test, loader_val, config)
+run.rosenbrock.rndThd(loader_train, loader_test, loader_val, config)
+run.rosenbrock.lrnRnd(loader_train, loader_test, loader_val, config)
+run.rosenbrock.rndSte(loader_train, loader_test, loader_val, config)
 print(config)
 # exact solver
 executor = submitit.AutoExecutor(folder="logs")
