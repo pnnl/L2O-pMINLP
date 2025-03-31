@@ -245,10 +245,10 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     df = evaluate(components, loss_fn, model, loader_test, project)
     if penalty_growth:
         df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}-g_new.csv")
-    elif config.project:
-        df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}-p_new.csv")
     elif config.ood:
         df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}_new-ood.csv")
+    elif config.project:
+        df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}-p_new.csv")
     else:
         df.to_csv(f"result/nc_cls{penalty_weight}_{num_var}-{num_ineq}_new.csv")
 
@@ -297,10 +297,10 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     df = evaluate(components, loss_fn, model, loader_test, project)
     if penalty_growth:
         df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}-g_new.csv")
-    elif config.project:
-        df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}-p_new.csv")
     elif config.ood:
         df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}_new-ood.csv")
+    elif config.project:
+        df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}-p_new.csv")
     else:
         df.to_csv(f"result/nc_thd{penalty_weight}_{num_var}-{num_ineq}_new.csv")
 
@@ -426,10 +426,10 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     df = evaluate(components, loss_fn, model, loader_test, project)
     if penalty_growth:
         df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}-g_new.csv")
-    elif config.project:
-        df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}-p_new.csv")
     elif config.ood:
         df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}_new-ood.csv")
+    elif config.project:
+        df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}-p_new.csv")
     else:
         df.to_csv(f"result/nc_ste{penalty_weight}_{num_var}-{num_ineq}_new.csv")
 

@@ -239,6 +239,8 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
     df = evaluate(components, loss_fn, model, loader_test, project)
     if penalty_growth:
         df.to_csv(f"result/cq_cls{penalty_weight}_{num_var}-{num_ineq}-g.csv")
+    elif config.ood:
+        df.to_csv(f"result/cq_cls{penalty_weight}_{num_var}-{num_ineq}-ood.csv")
     elif config.samples == 800:
         df.to_csv(f"result/cq_cls{penalty_weight}_{num_var}-{num_ineq}-s.csv")
     elif config.samples == 80000:
@@ -249,8 +251,6 @@ def rndCls(loader_train, loader_test, loader_val, config, penalty_growth=False):
         df.to_csv(f"result/cq_cls{penalty_weight}_{num_var}-{num_ineq}-s-p.csv")
     elif config.project and config.samples == 80000:
         df.to_csv(f"result/cq_cls{penalty_weight}_{num_var}-{num_ineq}-l-p.csv")
-    elif config.ood:
-        df.to_csv(f"result/cq_cls{penalty_weight}_{num_var}-{num_ineq}-ood.csv")
     else:
         df.to_csv(f"result/cq_cls{penalty_weight}_{num_var}-{num_ineq}.csv")
 
@@ -299,6 +299,8 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     df = evaluate(components, loss_fn, model, loader_test, project)
     if penalty_growth:
         df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}-g.csv")
+    elif config.ood:
+        df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}-ood.csv")
     elif config.samples == 800:
         df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}-s.csv")
     elif config.samples == 80000:
@@ -309,8 +311,6 @@ def rndThd(loader_train, loader_test, loader_val, config, penalty_growth=False):
         df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}-s-p.csv")
     elif config.project and config.samples == 80000:
         df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}-l-p.csv")
-    elif config.ood:
-        df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}-ood.csv")
     else:
         df.to_csv(f"result/cq_thd{penalty_weight}_{num_var}-{num_ineq}.csv")
 
@@ -389,12 +389,12 @@ def lrnRnd(loader_train, loader_test, loader_val, config, penalty_growth=False):
     print("Number of infeasible solutions: {}".format(np.sum(df["Num Violations"] > 0)))
     if penalty_growth:
         df.to_csv(f"result/cq_lrn{penalty_weight}_{num_var}-{num_ineq}-g.csv")
+    elif config.ood:
+        df.to_csv(f"result/cq_lrn{penalty_weight}_{num_var}-{num_ineq}-ood.csv")
     elif config.samples == 800:
         df.to_csv(f"result/cq_lrn{penalty_weight}_{num_var}-{num_ineq}-s.csv")
     elif config.samples == 80000:
         df.to_csv(f"result/cq_lrn{penalty_weight}_{num_var}-{num_ineq}-l.csv")
-    elif config.ood:
-        df.to_csv(f"result/cq_lrn{penalty_weight}_{num_var}-{num_ineq}-ood.csv")
     else:
         df.to_csv(f"result/cq_lrn{penalty_weight}_{num_var}-{num_ineq}.csv")
 
@@ -437,6 +437,8 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
     df = evaluate(components, loss_fn, model, loader_test, project)
     if penalty_growth:
         df.to_csv(f"result/cq_ste{penalty_weight}_{num_var}-{num_ineq}-g.csv")
+    elif config.ood:
+        df.to_csv(f"result/cq_ste{penalty_weight}_{num_var}-{num_ineq}-ood.csv")
     elif config.samples == 800:
         df.to_csv(f"result/cq_ste{penalty_weight}_{num_var}-{num_ineq}-s.csv")
     elif config.samples == 80000:
@@ -447,8 +449,6 @@ def rndSte(loader_train, loader_test, loader_val, config, penalty_growth=False):
         df.to_csv(f"result/cq_ste{penalty_weight}_{num_var}-{num_ineq}-s-p.csv")
     elif config.project and config.samples == 80000:
         df.to_csv(f"result/cq_ste{penalty_weight}_{num_var}-{num_ineq}-l-p.csv")
-    elif config.ood:
-        df.to_csv(f"result/cq_ste{penalty_weight}_{num_var}-{num_ineq}-ood.csv")
     else:
         df.to_csv(f"result/cq_ste{penalty_weight}_{num_var}-{num_ineq}.csv")
 
