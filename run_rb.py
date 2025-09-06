@@ -39,7 +39,7 @@ config = parser.parse_args()
 
 # init problem
 config.steepness = 50            # steepness factor
-num_blocks = config.size         # number of blocks
+num_blocks = config.size         # number of blocks 
 train_size = 8000                # number of train
 test_size = 100                  # number of test size
 val_size = 1000                  # number of validation size
@@ -51,6 +51,8 @@ config.hlayers_sol = 5                  # number of hidden layers for solution m
 config.hlayers_rnd = 4                  # number of hidden layers for solution mapping
 config.hsize = hsize_dict[config.size]  # width of hidden layers for solution mapping
 config.lr = 1e-3                        # learning rate
+# note: added config.samples
+config.samples = 800
 
 # parameters as input data
 p_low, p_high = 1.0, 8.0
@@ -82,3 +84,5 @@ run.rosenbrock.rndCls(loader_train, loader_test, loader_val, config)
 run.rosenbrock.rndThd(loader_train, loader_test, loader_val, config)
 run.rosenbrock.lrnRnd(loader_train, loader_test, loader_val, config)
 run.rosenbrock.rndSte(loader_train, loader_test, loader_val, config)
+# Performance comparison: Direct Gurobi vs ML-guided warm start 
+run.rosenbrock.warmstart(loader_test,config)
