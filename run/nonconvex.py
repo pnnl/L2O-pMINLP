@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 """
-Experiment pipeline for QP
+Experiment pipeline for INC
 """
 import random
 import time
@@ -41,7 +41,7 @@ def exact(loader_test, config):
         tick = time.time()
         params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
         try:
-            xval, objval = model.solve("scip")
+            xval, objval = model.solve()
             tock = time.time()
             # eval
             sols.append(list(list(xval.values())[0].values()))
@@ -101,7 +101,7 @@ def relRnd(loader_test, config):
         tick = time.time()
         params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
         try:
-            xval_rel, _ = model_rel.solve("scip")
+            xval_rel, _ = model_rel.solve()
             xval, objval = naive_round(xval_rel, model)
             tock = time.time()
             # eval
@@ -160,7 +160,7 @@ def root(loader_test, config):
         tick = time.time()
         params.append(list(b.cpu().numpy())+list(d.cpu().numpy()))
         try:
-            xval, objval = model_heur.solve("scip")
+            xval, objval = model_heur.solve()
             tock = time.time()
             # eval
             sols.append(list(list(xval.values())[0].values()))
@@ -423,6 +423,8 @@ def evaluate(components, loss_fn, model, loader_test, project):
         from src.postprocess.project import gradientProjection
         # project
         proj = gradientProjection([components[0]], [components[1]], loss_fn, "x")
+    # eval model
+    components.eval()
     # init res
     params, sols, objvals, mean_viols, max_viols, num_viols, elapseds = [], [], [], [], [], [], []
     b_test = loader_test.dataset.datadict["b"][:100]
@@ -433,7 +435,6 @@ def evaluate(components, loss_fn, model, loader_test, project):
                       "d": torch.unsqueeze(d, 0).to("cuda"),
                       "name": "test"}
         # infer
-        components.eval()
         tick = time.time()
         with torch.no_grad():
             for comp in components:
