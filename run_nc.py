@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 """
-Submit experiments for nonconvex
+Submit experiments for INC
 """
 import argparse
 import itertools
