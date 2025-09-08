@@ -5,6 +5,7 @@ Parametric Mixed Integer Nonlinear Programming with SCIP
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 import copy
+from pathlib import Path
 
 import numpy as np
 from pyomo import environ as pe
@@ -27,9 +28,10 @@ class abcParamSolver(ABC):
                 raise ValueError("Solver '{}' does not support setting a time limit.".format(solver))
         # init attributes
         self.model = None # pyomo model
-        self.params ={} # dict for pyomo mutable parameters
+        self.params = {} # dict for pyomo mutable parameters
         self.vars = {} # dict for pyomo decision variable
         self.cons = None # pyomo constraints
+        self._has_warm_start = False # warm start
 
     @property
     def int_ind(self):
@@ -57,16 +59,27 @@ class abcParamSolver(ABC):
                     bin_ind[key].append(i)
         return bin_ind
 
-    def solve(self, max_iter=None, tee=False, keepfiles=False):
+    def solve(self, tee=False, keepfiles=False, logfile=None):
         """
         Solve the model and return variable values and the objective value
         """
+        # check logfile dir
+        if logfile:
+            Path(logfile).parent.mkdir(parents=True, exist_ok=True)
         # clear value
-        for var in self.model.component_objects(pe.Var, active=True):
-            for index in var:
-                var[index].value = None
+        if not self._has_warm_start:
+            for var in self.model.component_objects(pe.Var, active=True):
+                for index in var:
+                    var[index].value = None
         # solve the model
-        self.res = self.opt.solve(self.model, tee=tee, keepfiles=keepfiles)
+        if self.solver in ["gurobi", "cplex", "xpress"]:
+            self.res = self.opt.solve(self.model, warmstart=self._has_warm_start,
+                                      tee=tee, keepfiles=keepfiles, logfile=logfile)
+        else:
+            self.res = self.opt.solve(self.model, tee=tee, keepfiles=keepfiles,
+                                      logfile=logfile)
+        # reset warm start
+        self._has_warm_start = False
         # get variable values and objective value
         xval, objval = self.get_val()
         return xval, objval
@@ -85,6 +98,8 @@ class abcParamSolver(ABC):
             # set single value
             else:
                 param.set_value(val)
+        # reset warm start
+        self._has_warm_start = False
 
     def get_val(self):
         """
@@ -102,6 +117,26 @@ class abcParamSolver(ABC):
             # no value
             solvals, objval = None, None
         return solvals, objval
+
+    def set_warm_start(self, init_sol):
+        """
+        set an init solution as warm starting
+        """
+        for key, vals in init_sol.items():
+            # key error
+            if key not in self.vars:
+                raise KeyError(f"Variable group '{key}' not found in self.vars")
+            # get variable component
+            var_comp = self.vars[key]
+            for i, v in vals.items():
+                # index error
+                if i not in self.vars[key]:
+                    raise KeyError(f"Index '{i}' not in variable group '{key}'")
+                # assign warm start
+                self.vars[key][i].set_value(v)
+                self.vars[key][i].stale = False
+        # set flag for warm start
+        self._has_warm_start = True
 
     def check_violation(self):
         """
@@ -161,7 +196,7 @@ class abcParamSolver(ABC):
         elif self.solver == "gurobi":
             model_rel.opt.options["NodeLimit"] = 100
         else:
-            raise ValueError("Solver '{}' does not support setting a total nodes limit.".format(solver))
+            raise ValueError("Solver '{}' does not support setting a total nodes limit.".format(self.solver))
         return model_rel
 
     def penalty(self, weight):
@@ -208,7 +243,7 @@ class abcParamSolver(ABC):
         elif self.solver == "gurobi":
             model_heur.opt.options["SolutionLimit"] = nodes_limit
         else:
-            raise ValueError("Solver '{}' does not support setting a solution limit.".format(solver))
+            raise ValueError("Solver '{}' does not support setting a solution limit.".format(self.solver))
         return model_heur
 
     def primal_heuristic(self, heuristic_name="rens"):
@@ -252,5 +287,5 @@ class abcParamSolver(ABC):
             model_heur.opt.options[f"heuristics/{heuristic_name}/freq"] = 1
             model_heur.opt.options[f"heuristics/{heuristic_name}/priority"] = 536870911
         else:
-            raise ValueError("Solver '{}' does not support setting a solution limit.".format(solver))
+            raise ValueError("Solver '{}' does not support setting a solution limit.".format(self.solver))
         return model_heur

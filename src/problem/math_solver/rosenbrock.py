@@ -57,7 +57,24 @@ if __name__ == "__main__":
     print("======================================================")
     print("Solve MINLP problem:")
     model.set_param_val(params)
-    ms_test_solve(model, tee=False)
+    solvals, _ = ms_test_solve(model, tee=True)
+
+    # warm starting
+    print()
+    print("======================================================")
+    print("Warm start:")
+    model.set_param_val(params)
+    model.set_warm_start(solvals)
+    ms_test_solve(model, tee=True)
+
+    # solve the penalty
+    print()
+    print("======================================================")
+    print("Solve penalty problem:")
+    model_pen = model.penalty(100)
+    model_pen.set_param_val(params)
+    # scip
+    ms_test_solve(model_pen)
 
     # solve the relaxation
     print()
@@ -66,13 +83,4 @@ if __name__ == "__main__":
     model_rel = model.relax()
     model_rel.set_param_val(params)
     # scip
-    ms_test_solve(model_rel, tee=False)
-
-    # solve the relaxation
-    print()
-    print("======================================================")
-    print("Solve primal heuristic:")
-    model_heur = model.primal_heuristic()
-    model_heur.set_param_val(params)
-    # scip
-    ms_test_solve(model_heur, tee=True)
+    ms_test_solve(model_rel)

@@ -58,7 +58,15 @@ if __name__ == "__main__":
     print("======================================================")
     print("Solve MINLP problem:")
     model.set_param_val(params)
-    ms_test_solve(model)
+    solvals, _ = ms_test_solve(model, tee=True)
+
+    # warm starting
+    print()
+    print("======================================================")
+    print("Warm start:")
+    model.set_param_val(params)
+    model.set_warm_start(solvals)
+    ms_test_solve(model, tee=True)
 
     # solve the penalty
     print()
