@@ -5,6 +5,9 @@ Parametric Mixed Integer Nonlinear Programming with SCIP
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 import copy
+from pathlib import Path
+import time
+import re
 
 import numpy as np
 from pyomo import environ as pe
@@ -27,9 +30,11 @@ class abcParamSolver(ABC):
                 raise ValueError("Solver '{}' does not support setting a time limit.".format(solver))
         # init attributes
         self.model = None # pyomo model
-        self.params ={} # dict for pyomo mutable parameters
+        self.params = {} # dict for pyomo mutable parameters
         self.vars = {} # dict for pyomo decision variable
         self.cons = None # pyomo constraints
+        self._has_warm_start = False # warm start
+        self.last_solve_info = {} # solving info
 
     @property
     def int_ind(self):
@@ -57,19 +62,154 @@ class abcParamSolver(ABC):
                     bin_ind[key].append(i)
         return bin_ind
 
-    def solve(self, max_iter=None, tee=False, keepfiles=False):
+    def solve(self, tee=False, keepfiles=False, logfile=None):
         """
         Solve the model and return variable values and the objective value
         """
+        # check logfile dir
+        if logfile:
+            Path(logfile).parent.mkdir(parents=True, exist_ok=True)
         # clear value
-        for var in self.model.component_objects(pe.Var, active=True):
-            for index in var:
-                var[index].value = None
+        if not self._has_warm_start:
+            for var in self.model.component_objects(pe.Var, active=True):
+                for index in var:
+                    var[index].value = None
+                    var[index].stale = True
         # solve the model
-        self.res = self.opt.solve(self.model, tee=tee, keepfiles=keepfiles)
+        tick = time.time()
+        if self.solver in ["gurobi", "cplex", "xpress"]:
+            self.res = self.opt.solve(self.model, warmstart=self._has_warm_start,
+                                      tee=tee, keepfiles=keepfiles, logfile=logfile,
+                                      load_solutions=True)
+        else:
+            self.res = self.opt.solve(self.model, tee=tee, keepfiles=keepfiles,
+                                      logfile=logfile, load_solutions=True)
+        tock = time.time()
+        if logfile is not None:
+            print(f"Logfile is saved to {logfile}.")
         # get variable values and objective value
         xval, objval = self.get_val()
+        # collect summary
+        if logfile and self.solver == "scip":
+            incumbent, best_bound, gap, nodes, iterations, warmstart_used = self._parse_scip_log(logfile)
+        elif logfile and self.solver == "gurobi":
+            incumbent, best_bound, gap, nodes, iterations, warmstart_used = self._parse_gurobi_log(logfile)
+        else:
+            nodes, iterations, warmstart_used = None, None, None
+        self.last_solve_info = {
+            "solver": self.solver,
+            "solve_time_sec": tock - tick,
+            "status": str(getattr(self.res.solver, "status", "")),
+            "termination": str(getattr(self.res.solver, "termination_condition", "")),
+            "obj_value": objval,
+            "incumbent": incumbent,
+            "best_bound": best_bound,
+            "mip_gap": gap,
+            "warmstart_requested": self._has_warm_start,
+            "lp_iters": iterations,
+            "nodes_count": nodes,
+            "warmstart_used": warmstart_used,
+            "logfile": logfile,
+        }
+        #print(self.last_solve_info)
+        # reset warm start
+        self._has_warm_start = False
         return xval, objval
+
+    def _parse_scip_log(self, logfile):
+        """
+        parse a SCIP log file to extract
+        """
+        # init
+        incumbent, best_bound, gap, nodes, iterations, warmstart_used = None, None, None, None, None, False
+        # regular expression
+        re_nodes = re.compile(r"Solving\s+Nodes\s*:\s*([\d,]+)", re.IGNORECASE)
+        re_ws_candidate = re.compile(r"feasible solution given by solution candidate storage", re.IGNORECASE)
+        re_pb = re.compile(r"Primal Bound\s*:\s*([+\-Ee0-9\.]+)", re.IGNORECASEre.IGNORECASE)
+        re_db = re.compile(r"Dual Bound\s*:\s*([+\-Ee0-9\.]+)", re.IGNORECASE)
+        re_gap = re.compile(r"Gap\s*:\s*([0-9\.]+)\s*%", re.IGNORECASE)
+        # succeed to read
+        try:
+            # open file
+            with open(logfile, "r", encoding="utf-8", errors="ignore") as f:
+                # read line
+                for line in f:
+                    s = line.strip()
+                    # nodes
+                    m_nodes = re_nodes.search(s)
+                    if m_nodes:
+                        try: nodes = int(m_nodes.group(1))
+                        except: pass
+                    # warm start
+                    if re_ws_candidate.search(s):
+                        warmstart_used = True
+                    m = re_pb.search(s)
+                    # incumbent
+                    if m:
+                        try: incumbent = float(m.group(1))
+                        except: pass
+                    # best bound
+                    m = re_db.search(s)
+                    if m:
+                        try: best_bound = float(m.group(1))
+                        except: pass
+                    # gap
+                    m = re_gap.search(s)
+                    if m:
+                        try: gap = float(m.group(1)) / 100.0
+                        except: pass
+                    # get iterations
+                    if '|' in line and not s.lower().startswith('time |'):
+                        parts = [p.strip() for p in line.split('|')]
+                        if len(parts) >= 4:
+                            try: iterations = int(float(parts[3]))
+                            except:pass
+        # fail to read
+        except:
+            pass
+        return incumbent, best_bound, gap, nodes, iterations, warmstart_used
+
+    def _parse_gurobi_log(self, logfile):
+        """
+        parse a gurobi log file to extract
+        """
+        # init
+        incumbent, best_bound, gap, nodes, iterations, warmstart_used = None, None, None, None, None, False
+        # regular expression
+        re_summary = re.compile(r"Explored\s+([\d,]+)\s+nodes\s+\(([\d,]+)\s+simplex iterations\)", re.IGNORECASE)
+        re_ws_used = re.compile(r"(Loaded|Read)\s+user\s+MIP start.*(objective|obj)", re.IGNORECASE)
+        re_final = re.compile(r"Best objective\s+([+\-Ee0-9\.]+),\s*best bound\s+([+\-Ee0-9\.]+),\s*gap\s+([0-9\.]+)%", re.IGNORECASE)
+        # succeed to read
+        try:
+            # open file
+            with open(logfile, "r", encoding="utf-8", errors="ignore") as f:
+                for line in f:
+                    # read line
+                    s = line.strip()
+                    # nodes & iterations
+                    m = re_summary.search(s)
+                    if m:
+                        try:
+                            nodes = int(m.group(1).replace(",", ""))
+                            iterations = int(m.group(2).replace(",", ""))
+                        except:
+                            pass
+                    # warm-start usage
+                    if re_ws_used.search(s):
+                        warmstart_used = True
+                    # bounds & gap
+                    m = re_final.search(s)
+                    if m:
+                        try:
+                            incumbent = float(m.group(1))
+                            best_bound = float(m.group(2))
+                            gap = float(m.group(3)) / 100.0
+                        except:
+                            pass
+        # fail to read
+        except:
+            pass
+        return incumbent, best_bound, gap, nodes, iterations, warmstart_used
 
     def set_param_val(self, param_dict):
         """
@@ -85,6 +225,8 @@ class abcParamSolver(ABC):
             # set single value
             else:
                 param.set_value(val)
+        # reset warm start
+        self._has_warm_start = False
 
     def get_val(self):
         """
@@ -102,6 +244,26 @@ class abcParamSolver(ABC):
             # no value
             solvals, objval = None, None
         return solvals, objval
+
+    def set_warm_start(self, init_sol):
+        """
+        set an init solution as warm starting
+        """
+        for key, vals in init_sol.items():
+            # key error
+            if key not in self.vars:
+                raise KeyError(f"Variable group '{key}' not found in self.vars")
+            # get variable component
+            var_comp = self.vars[key]
+            for i, v in vals.items():
+                # index error
+                if i not in self.vars[key]:
+                    raise KeyError(f"Index '{i}' not in variable group '{key}'")
+                # assign warm start
+                self.vars[key][i].set_value(v)
+                self.vars[key][i].stale = False
+        # set flag for warm start
+        self._has_warm_start = True
 
     def check_violation(self):
         """
@@ -161,7 +323,7 @@ class abcParamSolver(ABC):
         elif self.solver == "gurobi":
             model_rel.opt.options["NodeLimit"] = 100
         else:
-            raise ValueError("Solver '{}' does not support setting a total nodes limit.".format(solver))
+            raise ValueError("Solver '{}' does not support setting a total nodes limit.".format(self.solver))
         return model_rel
 
     def penalty(self, weight):
@@ -208,7 +370,7 @@ class abcParamSolver(ABC):
         elif self.solver == "gurobi":
             model_heur.opt.options["SolutionLimit"] = nodes_limit
         else:
-            raise ValueError("Solver '{}' does not support setting a solution limit.".format(solver))
+            raise ValueError("Solver '{}' does not support setting a solution limit.".format(self.solver))
         return model_heur
 
     def primal_heuristic(self, heuristic_name="rens"):
@@ -252,5 +414,5 @@ class abcParamSolver(ABC):
             model_heur.opt.options[f"heuristics/{heuristic_name}/freq"] = 1
             model_heur.opt.options[f"heuristics/{heuristic_name}/priority"] = 536870911
         else:
-            raise ValueError("Solver '{}' does not support setting a solution limit.".format(solver))
+            raise ValueError("Solver '{}' does not support setting a solution limit.".format(self.solver))
         return model_heur

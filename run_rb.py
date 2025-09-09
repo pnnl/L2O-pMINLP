@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 """
-Submit experiments for QP
+Submit experiments for MIRB
 """
 import argparse
 import itertools
@@ -35,6 +35,9 @@ parser.add_argument("--penalty",
 parser.add_argument("--project",
                     action="store_true",
                     help="project gradient")
+parser.add_argument("--warmstart",
+                    action="store_true",
+                    help="warm start")
 config = parser.parse_args()
 
 # init problem
@@ -68,18 +71,28 @@ data_test = DictDataset({"p":p_test, "a":a_test}, name="test")
 data_val = DictDataset({"p":p_val, "a":a_val}, name="dev")
 # torch dataloaders
 from torch.utils.data import DataLoader
-batch_size = 64
-loader_train = DataLoader(data_train, batch_size, num_workers=0, collate_fn=data_train.collate_fn, shuffle=True)
-loader_test = DataLoader(data_test, batch_size, num_workers=0, collate_fn=data_test.collate_fn, shuffle=False)
-loader_val = DataLoader(data_val, batch_size, num_workers=0, collate_fn=data_val.collate_fn, shuffle=True)
+loader_train = DataLoader(data_train, config.batch_size, num_workers=0, collate_fn=data_train.collate_fn, shuffle=True)
+loader_test = DataLoader(data_test, config.batch_size, num_workers=0, collate_fn=data_test.collate_fn, shuffle=False)
+loader_val = DataLoader(data_val, config.batch_size, num_workers=0, collate_fn=data_val.collate_fn, shuffle=True)
 
 import run
 print("Rosenbrock")
-run.rosenbrock.exact(loader_test, config)
-run.rosenbrock.relRnd(loader_test, config)
-run.rosenbrock.root(loader_test, config)
-run.rosenbrock.rndCls(loader_train, loader_test, loader_val, config)
-run.rosenbrock.rndThd(loader_train, loader_test, loader_val, config)
-run.rosenbrock.lrnRnd(loader_train, loader_test, loader_val, config)
-run.rosenbrock.rndSte(loader_train, loader_test, loader_val, config)
-run.rosenbrock.warmstart(loader_test,config)
+if config.project is True and config.warmstart is True:
+    print("Warm Starting:")
+    run.rosenbrock.exact(loader_test, config)
+    run.rosenbrock.rndCls(loader_train, loader_test, loader_val, config)
+    run.rosenbrock.rndThd(loader_train, loader_test, loader_val, config)
+elif config.project is True:
+    print("Feasibility projection:")
+    run.rosenbrock.rndCls(loader_train, loader_test, loader_val, config)
+    run.rosenbrock.rndThd(loader_train, loader_test, loader_val, config)
+    run.rosenbrock.lrnRnd(loader_train, loader_test, loader_val, config)
+    run.rosenbrock.rndSte(loader_train, loader_test, loader_val, config)
+else:
+    run.rosenbrock.exact(loader_test, config)
+    run.rosenbrock.relRnd(loader_test, config)
+    run.rosenbrock.root(loader_test, config)
+    run.rosenbrock.rndCls(loader_train, loader_test, loader_val, config)
+    run.rosenbrock.rndThd(loader_train, loader_test, loader_val, config)
+    run.rosenbrock.lrnRnd(loader_train, loader_test, loader_val, config)
+    run.rosenbrock.rndSte(loader_train, loader_test, loader_val, config)
